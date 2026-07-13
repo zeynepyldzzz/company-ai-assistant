@@ -1,7 +1,7 @@
 # Sprint Planı — Faz 2 (4 Hafta / 3 Full-Stack Geliştirici)
 ## Yapay Zeka Destekli Şirket İçi Asistan — Mobil Uygulama + Chatbot L2
 
-> Kaynak: `requirementAnalysis2.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `erDiagram.md`, `tech_stack.md`, `sprintPlan.md` (Faz 1/MVP), `issue.md` (Faz 1 issue kırılımı). Bu doküman, Faz 1'de web + Chatbot L1 ile teslim edilen MVP'nin üzerine **mobil uygulama** ve **Chatbot L2 (RAG/LLM)**'yi ekleyen ikinci 4 haftalık sprintin modül bazlı iş bölümünü tanımlar. Ekip aynı: 3 full-stack geliştirici.
+> Kaynak: `requirementAnalysis2.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`, `sprintPlan.md` (Faz 1/MVP), `issue.md` (Faz 1 issue kırılımı). Bu doküman, Faz 1'de web + Chatbot L1 ile teslim edilen MVP'nin üzerine **mobil uygulama** ve **Chatbot L2 (RAG/LLM)**'yi ekleyen ikinci 4 haftalık sprintin modül bazlı iş bölümünü tanımlar. Ekip aynı: 3 full-stack geliştirici.
 
 ---
 
@@ -95,4 +95,4 @@ Her kişi kendi modülünde mobil UI + gerekli backend eklentilerinin (yeni endp
 
 - `sprintPlan.md` / `issue.md` — Faz 1 (MVP) planı ve issue kırılımı
 - `issuePhase2.md` — Bu planın atanabilir issue seviyesindeki detayı (story point dahil)
-- `apiEndpoints.md`, `erDiagram.md`, `tech_stack.md` — Faz 1'de kurulan ve bu fazda yeniden kullanılan altyapı
+- `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md` — Faz 1'de kurulan ve bu fazda yeniden kullanılan altyapı

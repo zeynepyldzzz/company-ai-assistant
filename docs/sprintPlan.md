@@ -1,7 +1,7 @@
 # Sprint Planı ve Issue Kırılımı (4 Hafta / 3 Full-Stack Geliştirici)
 ## Yapay Zeka Destekli Şirket İçi Asistan — MVP
 
-> Kaynak: `requirementAnalysis2.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `erDiagram.md`, `tech_stack.md`. Bu doküman, 4 haftalık MVP teslimatı için modül bazlı iş bölümünü ve issue kırılımını tanımlar. Her madde doğrudan bir GitHub issue'suna çevrilebilir.
+> Kaynak: `requirementAnalysis2.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`. Bu doküman, 4 haftalık MVP teslimatı için modül bazlı iş bölümünü ve issue kırılımını tanımlar. Her madde doğrudan bir GitHub issue'suna çevrilebilir.
 
 ---
 
@@ -41,7 +41,7 @@ Her kişi kendi modülünde DB migration → API endpoint → web/admin UI zinci
 Bu adımlar paylaşılmadan modüller birbirinden bağımsız ilerleyemez; tüm ekip birlikte tamamlamalı.
 
 - [ ] **ISSUE-000:** Repo/monorepo iskeleti (pnpm workspace: `apps/web`, `apps/admin` veya tek app + role-based routing, `apps/api`, `packages/shared`)
-- [ ] **ISSUE-001:** PostgreSQL + Docker Compose kurulumu, `erDiagram.md`'deki şemanın Flyway migration'larına dönüştürülmesi
+- [ ] **ISSUE-001:** PostgreSQL + Docker Compose kurulumu, `diagrams/ERDiagram.png`'deki şemanın Flyway migration'larına dönüştürülmesi
 - [ ] **ISSUE-002:** Spring Boot 3 (Java 21) modüler monolit proje iskeleti (modül paketleri: Auth, Menu, Shuttle, Directory, Vehicle, Survey, Announcement, Schedule, Chatbot)
 - [ ] **ISSUE-003:** BP-01 — Auth: `/auth/login`, `/auth/session`, `/auth/refresh`, `/auth/logout`, RBAC middleware, rol/izin seed verisi
 - [ ] **ISSUE-004:** CI pipeline (GitHub Actions): build + lint + test on PR

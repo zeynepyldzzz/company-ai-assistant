@@ -1,7 +1,7 @@
 # Issue Backlog — Faz 2
 ## Mobil Uygulama + Chatbot L2 (4 Hafta / 3 Full-Stack Geliştirici)
 
-> Kaynak: `sprintPlanPhase2.md`, `sprintPlan.md`/`issue.md` (Faz 1), `businessProcessMapping.md`, `apiEndpoints.md`, `erDiagram.md`, `tech_stack.md`. Bu doküman `sprintPlanPhase2.md`'deki haftalık planı atanabilir issue seviyesine indirger. Faz 1'de kurulan backend API'lerin büyük kısmı burada **yeniden kullanılır** — Faz 2'nin asıl işi mobil istemci katmanı ve Chatbot'un RAG/LLM altyapısıdır.
+> Kaynak: `sprintPlanPhase2.md`, `sprintPlan.md`/`issue.md` (Faz 1), `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`. Bu doküman `sprintPlanPhase2.md`'deki haftalık planı atanabilir issue seviyesine indirger. Faz 1'de kurulan backend API'lerin büyük kısmı burada **yeniden kullanılır** — Faz 2'nin asıl işi mobil istemci katmanı ve Chatbot'un RAG/LLM altyapısıdır.
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## 1. Etiket Lejantı
 
-`sprint-0` · `mobile` · `backend` · `fullstack` · `rag` · `llm` · `chatbot` · `push` · `maps` · `voice` · `storage` · `directory` · `shuttle` · `vehicle` · `menu` · `schedule` · `survey` · `announcement` · `admin` · `buffer`
+`sprint-0` · `mobile` · `backend` · `frontend` · `fullstack` · `infra` · `rag` · `llm` · `chatbot` · `push` · `maps` · `voice` · `storage` · `directory` · `shuttle` · `vehicle` · `menu` · `schedule` · `survey` · `announcement` · `admin` · `test` · `buffer`
 
 ---
 
@@ -26,13 +26,15 @@
 
 | Geliştirici | Hafta 1 | Hafta 2 | Hafta 3 | Hafta 4 | **Toplam (Hafta 1-4)** | Hafta 0 | **Genel Toplam** |
 |---|---|---|---|---|---|---|---|
-| **A** — Chatbot L2 (RAG + LLM) | 16 | 13 | 21 | 8 | **58** | 8 | **66** |
-| **B** — Mobil: Auth/Dashboard/Rehber/Servis+Maps/Araç (çalışan + admin) | 10 | 16 | 13 | 16 | **55** | 15 | **70** |
-| **C** — Mobil: Menü/My Schedule/Anket/Duyuru+Push (çalışan + admin) | 11 | 15 | 18 | 19 | **63** | 8 | **71** |
+| **A** — Chatbot L2 (RAG + LLM) | 19 | 16 | 21 | 10 | **66** | 8 | **74** |
+| **B** — Mobil: Auth/Dashboard/Rehber/Servis+Maps/Araç (çalışan + admin) | 12 | 16 | 13 | 16 | **57** | 15 | **72** |
+| **C** — Mobil: Menü/My Schedule/Anket/Duyuru+Push (çalışan + admin) | 13 | 15 | 18 | 19 | **65** | 8 | **73** |
 
 **Hafta 0 (Ortak Temel):** 31 SP, tüm ekip (2-3 gün).
 
-**Admin mobil ekranlarının eklenmesiyle** (bkz. `sprintPlanPhase2.md` Bölüm 1) B ve C'nin toplamı önemli ölçüde arttı (B: 39→55, C: 42→63, Hafta 1-4). Genel toplamda üç geliştirici artık birbirine yakın (66/70/71) — A hâlâ en riskli tek modülü taşıyor, B ve C ise hem çalışan hem admin mobil ekranlarının toplam hacmiyle dengeleniyor. **Hafta 3 ve 4, B ve C için en yoğun haftalar** (13-19 SP/hafta) çünkü admin ekranları çoğunlukla ilgili çalışan ekranından sonra, aynı domain'in devamı olarak bu haftalara yerleştirildi. Bu haftalarda buffer neredeyse yok — `sprintPlanPhase2.md` Bölüm 5'teki fallback sırası (admin mobil ekranları önce kesilir) bu riski karşılamak için var.
+**Admin mobil ekranlarının eklenmesiyle** (bkz. `sprintPlanPhase2.md` Bölüm 1) B ve C'nin toplamı önemli ölçüde arttı (B: 39→55, C: 42→63, Hafta 1-4). **Hafta 3 ve 4, B ve C için en yoğun haftalar** (13-19 SP/hafta) çünkü admin ekranları çoğunlukla ilgili çalışan ekranından sonra, aynı domain'in devamı olarak bu haftalara yerleştirildi. Bu haftalarda buffer neredeyse yok — `sprintPlanPhase2.md` Bölüm 5'teki fallback sırası (admin mobil ekranları önce kesilir) bu riski karşılamak için var.
+
+**Test issue'ları (`X2-T<hafta>`):** `Contributing.md` Bölüm 3 uyarınca test yazımı hafta içinde ilerler. B ve C'nin Hafta 2-4'ü zaten dolu olduğundan (buffer'sız), her ikisine sadece Hafta 1'de birer test issue'su eklendi (B2-T1: +2 SP, C2-T1: +2 SP) — bunlar sırasıyla en kritik iki riski (admin mobil 2FA, FR-64 mobil/web tutarlılığı) kapatır; kalan haftaların test beklentisi B2-10/C2-11'in kapsamına eklendi (SP değişmedi). A'nın Hafta 1/2/4'üne üç test issue'su eklendi (A2-T1/A2-T2/A2-T3, toplam +8 SP) — A'nın Hafta 4'ü diğerlerinden daha hafif olduğu için A2-T3 kasıtlı olarak oraya kondu, zaten en yoğun hafta olan Hafta 3'e (21 SP) dokunulmadı. Bu değişiklikle genel toplamlar daha dengeli hale geldi (eskiden 66/70/71, şimdi 74/72/73) çünkü ek yükün büyük kısmı görece daha rahat olan A'ya gitti.
 
 ---
 
@@ -177,6 +179,20 @@
 
 ---
 
+#### A2-T1: Hafta 1 Testleri (Ollama Fallback + Embedding Pipeline)
+**Etiketler:** `backend`, `llm`, `rag`, `test`
+**Story Point:** 3
+
+**Açıklama:** A2-1/A2-2'nin testleri. Bkz. `Contributing.md` Bölüm 3 — test yazımı hafta içinde ilerler, Hafta 4'e bırakılmaz.
+
+**Kabul Kriterleri:**
+- [ ] Ollama zaman aşımına uğradığında L1 template fallback'inin devreye girdiği test ediliyor (A2-1)
+- [ ] Toplu embedding job'ının tüm `PolicyVersion` kayıtları için chunk+embed ürettiği, yeni versiyon yayımlandığında otomatik tetiklendiği test ediliyor (A2-2)
+
+**Bağımlılık:** A2-1, A2-2
+
+---
+
 ### Hafta 2
 
 #### A2-3: RAG Retrieval Servisi
@@ -208,6 +224,20 @@
 - [ ] FR-14, 58 izlenebilirlik kısıtı karşılanıyor
 
 **Bağımlılık:** A2-3
+
+---
+
+#### A2-T2: Hafta 2 Testleri (Halüsinasyon Engeli + Citation Doğruluğu)
+**Etiketler:** `backend`, `rag`, `chatbot`, `test`
+**Story Point:** 3
+
+**Açıklama:** A2-3/A2-4'ün testleri — FR-14 kritik kısıtı (uydurma yanıt vermeme) ve citation'ın gerçekten kullanılan kaynağa işaret etmesi.
+
+**Kabul Kriterleri:**
+- [ ] Alakalı chunk bulunamadığında (düşük benzerlik skoru) "bu konuda bilgim yok" tarzı güvenli yanıtın döndüğü, uydurma yanıt üretilmediği test ediliyor (A2-3, FR-14)
+- [ ] `CHAT_CITATION.policyVersionId`'nin, yanıtı üretirken gerçekten kullanılan chunk'ın versiyonuna işaret ettiği test ediliyor (A2-4)
+
+**Bağımlılık:** A2-3, A2-4
 
 ---
 
@@ -281,6 +311,20 @@
 
 ---
 
+#### A2-T3: Hafta 4 Testleri (Dosya İzolasyonu + Sesli Giriş Etiketleme)
+**Etiketler:** `backend`, `rag`, `storage`, `test`
+**Story Point:** 2
+
+**Açıklama:** A2-5/A2-6'nın testleri. Hafta 3 zaten A'nın en yoğun haftası (21 SP) olduğu için bu test issue'su, A'nın daha hafif olan Hafta 4'üne (A2-8 ile birlikte) planlandı.
+
+**Kabul Kriterleri:**
+- [ ] Bir sohbette yüklenen dosyanın embedding'inin yalnızca o sohbet oturumunda kullanıldığı, başka kullanıcıların RAG context'ine karışmadığı test ediliyor (A2-5, izolasyon kritik)
+- [ ] Sesli girişle gönderilen mesajın `CHAT_MESSAGE.inputType`'ının `voice` olarak kaydedildiği test ediliyor (A2-6)
+
+**Bağımlılık:** A2-5, A2-6
+
+---
+
 ## 5. Geliştirici B — Mobil: Auth/Dashboard, Rehberler, Servis (+ Gerçek Maps), Araç Rezervasyonu (+ Admin: Servis/Araç Yönetimi, BP-10 Çalışan/Departman CRUD)
 
 ### Hafta 1
@@ -314,6 +358,20 @@
 - [ ] FR-28–37, 48–50 mobilde karşılanıyor
 
 **Bağımlılık:** F2-ISSUE-000, F2-ISSUE-001
+
+---
+
+#### B2-T1: Hafta 1 Testleri (Admin 2FA + Rol Bazlı Navigasyon)
+**Etiketler:** `mobile`, `auth`, `test`
+**Story Point:** 2
+
+**Açıklama:** F2-ISSUE-001'in testleri. Bu, B'nin tüm fazdaki tek bağımsız test issue'su — B'nin Hafta 2-4'ü zaten yoğun olduğundan (bkz. Bölüm 2), kalan haftaların test beklentisi B2-10'un kapsamına eklendi. Burası özellikle kritik çünkü NFR-07 (admin 2FA) web'de var, mobile taşınırken atlanma riski `Kritik Riskler`de (Bölüm 7) ayrıca işaretlendi.
+
+**Kabul Kriterleri:**
+- [ ] Admin rolündeki kullanıcının 2FA adımını tamamlamadan admin mobil ekranlarına erişemediği test ediliyor (F2-ISSUE-001, NFR-07)
+- [ ] `employee` rolünün hiçbir admin navigasyon öğesini görmediği, her admin alt tipinin yalnızca kendi ekranlarını gördüğü test ediliyor (F2-ISSUE-001)
+
+**Bağımlılık:** F2-ISSUE-001
 
 ---
 
@@ -443,6 +501,7 @@
 - [ ] Tüm B modülü ekranları (çalışan + admin) hem iOS hem Android'de manuel test edildi
 - [ ] TestFlight (iOS) ve Play Store internal testing (Android) kanalları hazır, build yüklendi
 - [ ] Cross-review'da bulunan kritik buglar kapatıldı
+- [ ] `Contributing.md` Bölüm 3'teki minimum test şartı bu haftaların işi için de sağlanıyor: Maps API başarısız olduğunda B2-4'ün Faz 1 hesaplamasına fallback yaptığı, `shuttle_admin`/`fleet_admin`/`hr_admin` dışındaki rollerin ilgili admin mobil ekranlarına (B2-7/B2-8/B2-9) erişemediği test ediliyor
 
 **Bağımlılık:** B2-1..B2-9
 
@@ -481,6 +540,19 @@
 - [ ] FR-59–64 mobilde karşılanıyor
 
 **Bağımlılık:** F2-ISSUE-000, F2-ISSUE-001, Faz 1 C-5a (tasarım referansı)
+
+---
+
+#### C2-T1: Hafta 1 Testleri (FR-64 Mobil/Web Tek Kaynak Tutarlılığı)
+**Etiketler:** `mobile`, `schedule`, `test`
+**Story Point:** 2
+
+**Açıklama:** C2-2'nin testi. C'nin tüm fazdaki tek bağımsız test issue'su — Hafta 2-4 zaten en yoğun haftalar olduğundan (bkz. Bölüm 2), kalan haftaların test beklentisi C2-11'in kapsamına eklendi. Bu kontrol özellikle kritik çünkü ayrı bir mobil-özel state/cache katmanı FR-64'ü ihlal eder (bkz. Bölüm 7).
+
+**Kabul Kriterleri:**
+- [ ] Mobilde kaydedilen bir haftalık plan değişikliğinin web'deki `/my-schedule`'da (aynı `GET/PUT /schedules/me` ucu üzerinden) anında göründüğü, ayrı bir mobil önbelleğin veri tutmadığı test ediliyor (C2-2, FR-64)
+
+**Bağımlılık:** C2-2
 
 ---
 
@@ -626,6 +698,7 @@
 - [ ] Tüm C modülü ekranları (çalışan + admin) hem iOS hem Android'de manuel test edildi
 - [ ] Push bildirimleri gerçek cihazda (uygulama arka planda/kapalıyken dahil) doğrulandı
 - [ ] Cross-review'da bulunan kritik buglar kapatıldı
+- [ ] `Contributing.md` Bölüm 3'teki minimum test şartı bu haftaların işi için de sağlanıyor: C2-3 anonim feedback'te `employeeId` alanının gönderilmediği, `canteen_admin`/yönetici rollerinin dışındaki kullanıcıların ilgili admin mobil ekranlarına (C2-5/C2-8/C2-9/C2-10) erişemediği test ediliyor
 
 **Bağımlılık:** C2-1..C2-10
 
@@ -639,6 +712,7 @@
 - **NFR-02 riski:** RAG+LLM latency'si L1'den çok daha yüksek; A2-8'de gerçek ölçüm yapılmadan "5 sn karşılanıyor" varsayılmamalı.
 - **Admin mobil 2FA:** F2-ISSUE-001'de admin rolleri için mobilde de 2FA zorunlu kılınmazsa NFR-07 ihlal edilir — web'de var olan bu güvenlik kontrolü mobile taşınırken atlanmamalı.
 - **Cihaz mağazası süreçleri:** Apple/Google review süreçleri günler alabilir; Hafta 4'e bırakılırsa demo/teslim tarihini riske atar — TestFlight/Play internal testing Hafta 3 sonunda hazır olmalı (public store review MVP demo'su için gerekli değil, internal testing yeterli).
+- **Test issue'larının eklenmesiyle artan yük:** `X2-T<hafta>` issue'ları toplam SP'yi artırdı (A: 66→74, B: 70→72, C: 71→73). B ve C'de zaten buffer'sız olan Hafta 2-4'e yeni issue eklenmedi; onun yerine B2-10/C2-11'in kabul kriterlerine test bulletları eklendi (SP sabit kaldı) — bu haftalarda gecikme olursa `sprintPlanPhase2.md` Bölüm 5'teki fallback sırası (admin mobil ekranları önce ertelenir) yine geçerli, test bulletları kesilmemeli.
 
 ---
 
@@ -647,5 +721,6 @@
 - `sprintPlanPhase2.md` — Bu dokümanın kaynağı olan haftalık/modül bazlı özet plan
 - `sprintPlan.md` / `issue.md` — Faz 1 (MVP) planı ve issue kırılımı
 - `apiEndpoints.md` — Faz 2'de yeniden kullanılan (ve `POST /me/device-tokens` ile genişleyen) REST uçları
-- `erDiagram.md` — `POLICY_EMBEDDING`, `CHAT_ATTACHMENT`, `CHAT_CITATION` (Faz 1'de zaten modellenmişti, bu fazda kullanıma alınıyor)
+- `diagrams/ERDiagram.png` — `POLICY_EMBEDDING`, `CHAT_ATTACHMENT`, `CHAT_CITATION` (Faz 1'de zaten modellenmişti, bu fazda kullanıma alınıyor)
 - `tech_stack.md` — Ollama, MinIO aktivasyonu, Google Maps API, Firebase FCM
+- `Contributing.md` — PR/review kuralları ve Bölüm 3'teki test yazım kuralı (hangi durumda test zorunlu, hangi durumda değil)
