@@ -1,4 +1,5 @@
 # Sprint Planı — Faz 2 (4 Hafta / 3 Full-Stack Geliştirici)
+
 ## Yapay Zeka Destekli Şirket İçi Asistan — Mobil Uygulama + Chatbot L2
 
 > Kaynak: `requirementAnalysis2.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`, `sprintPlan.md` (Faz 1/MVP), `issue.md` (Faz 1 issue kırılımı). Bu doküman, Faz 1'de web + Chatbot L1 ile teslim edilen MVP'nin üzerine **mobil uygulama** ve **Chatbot L2 (RAG/LLM)**'yi ekleyen ikinci 4 haftalık sprintin modül bazlı iş bölümünü tanımlar. Ekip aynı: 3 full-stack geliştirici.
@@ -8,12 +9,14 @@
 ## 1. Kapsam Kararı
 
 **Faz 2'ye dahil (4 hafta):**
+
 - **Mobil uygulama (Expo/React Native) — çalışan self-servis ekranları:** Auth/Dashboard (BP-01), Chatbot (BP-02), Menü (BP-03 çalışan alt-süreci), Servis (BP-04 çalışan alt-süreci + gerçek Maps entegrasyonu), Rehberler (BP-05), Araç Rezervasyonu (BP-06 çalışan alt-süreci), Anket/Feedback (BP-07 çalışan alt-süreci), Duyuru/Bildirim (BP-08 çalışan alt-süreci + gerçek push), Çalışma Düzeni / My Schedule (BP-09 çalışan alt-süreci)
 - **Mobil uygulama — admin/yönetici ekranları:** `requirementAnalysis2.md` bölüm 9'da admin paneli "masaüstü web uygulaması" olarak tanımlansa da, bu fazda **web'deki admin akışlarının mobil karşılığı da sağlanır**: BP-03/04/06/07/08'in yönetici alt-süreçleri (Excel menü yükleme, güzergah/araç yönetimi, anket oluşturma, duyuru yayımlama+sabitleme) ve BP-10'un tamamı (Çalışan/Departman CRUD, RBAC rol atama, rapor oluşturma/export) mobilde de kullanılabilir olacak. Rol bazlı navigasyon ile yalnızca ilgili admin rolündeki kullanıcılara gösterilir. Yeni bir gereksinim analizi gerekmez — bu ekranların backend'i Faz 1'de zaten tamamlanmıştı (FR-21, 68–82), tek eksik olan mobil istemci katmanıdır.
 - **Chatbot L2** — RAG pipeline (pgvector embedding retrieval), local LLM entegrasyonu (Ollama + Phi-4 Mini/Qwen), dosya yükleyerek soru sorma (FR-15), sesli giriş (FR-16), kaynak gösterme/citation (FR-14 izlenebilirliği)
 - Bu üçünü destekleyen altyapı: Push notification (Firebase FCM), gerçek Google Maps API entegrasyonu (FR-27), dosya depolama için MinIO aktivasyonu (`tech_stack.md`'de "Future" işaretliydi, bu fazda devreye giriyor)
 
 **Faz 2'ye dahil DEĞİL:**
+
 - **`requirementAnalysis2.md` Bölüm 12 — "Gelecek Geliştirmeler" listesi** (izin talep iş akışı, fazla mesai onay iş akışı, masraf yönetimi, toplantı odası rezervasyonu, devam takibi, QR giriş, takvim/Teams/Slack entegrasyonu, doküman yönetim sistemi, AI destekli analitik vb.) — bu 14 madde için henüz FR/BP tanımlanmadı; planlanabilmesi için önce ayrı bir gereksinim analizi turu gerekir. Bkz. Bölüm 6 (Faz 3+ Backlog).
 
 **Kapsam tamamlandığında:** Faz 1 (web + admin + Chatbot L1) ile Faz 2 (mobil — hem çalışan hem admin ekranları + Chatbot L2) birlikte `requirementAnalysis2.md`'deki **FR-01–FR-82'nin tamamını hem web hem mobil üzerinden** karşılar.
@@ -24,11 +27,11 @@
 
 ## 2. Ekip ve Sorumluluk Alanları (Faz 1'deki Modül Sahipliğinin Devamı)
 
-| Kişi | Faz 2 Modülleri | Kapsam |
-|---|---|---|
-| **Geliştirici A** | Chatbot L2 (RAG + LLM + dosya yükleme + sesli giriş + citation) | Faz 1'de BP-02'yi kurduğu için devam ediyor; en riskli/karmaşık tek parça |
-| **Geliştirici B** | Mobil altyapı (Expo iskelet, Auth, Location/Maps) + Rehberler + Servis (çalışan + admin, gerçek Maps) + Araç Rezervasyonu (çalışan + admin) mobil ekranları + BP-10'dan Çalışan/Departman CRUD mobil | Faz 1'de BP-05/04/06 sahibiydi; şimdi aynı domainlerin admin mobil ekranlarını da kurar |
-| **Geliştirici C** | Push notification altyapısı + Menü (çalışan + admin) + Çalışma Düzeni (My Schedule) + Anket (çalışan + admin) + Duyuru (çalışan + admin) mobil ekranları + BP-10'dan RBAC/Rapor mobil | Faz 1'de BP-03/09/07/08 sahibiydi; şimdi aynı domainlerin admin mobil ekranlarını da kurar |
+| Kişi              | Faz 2 Modülleri                                                                                                                                                                                      | Kapsam                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Geliştirici A** | Chatbot L2 (RAG + LLM + dosya yükleme + sesli giriş + citation)                                                                                                                                      | Faz 1'de BP-02'yi kurduğu için devam ediyor; en riskli/karmaşık tek parça                  |
+| **Geliştirici B** | Mobil altyapı (Expo iskelet, Auth, Location/Maps) + Rehberler + Servis (çalışan + admin, gerçek Maps) + Araç Rezervasyonu (çalışan + admin) mobil ekranları + BP-10'dan Çalışan/Departman CRUD mobil | Faz 1'de BP-05/04/06 sahibiydi; şimdi aynı domainlerin admin mobil ekranlarını da kurar    |
+| **Geliştirici C** | Push notification altyapısı + Menü (çalışan + admin) + Çalışma Düzeni (My Schedule) + Anket (çalışan + admin) + Duyuru (çalışan + admin) mobil ekranları + BP-10'dan RBAC/Rapor mobil                | Faz 1'de BP-03/09/07/08 sahibiydi; şimdi aynı domainlerin admin mobil ekranlarını da kurar |
 
 Her kişi kendi modülünde mobil UI + gerekli backend eklentilerinin (yeni endpoint, push dispatch, embedding job vb.) tamamından sorumludur. Backend'in büyük kısmı Faz 1'de zaten kuruldu — bu fazda asıl iş mobil istemci katmanı ve Chatbot'un AI altyapısı.
 
@@ -49,12 +52,12 @@ Her kişi kendi modülünde mobil UI + gerekli backend eklentilerinin (yeni endp
 
 ## 4. Haftalık Plan (Hafta 1-4)
 
-| Hafta | Geliştirici A | Geliştirici B | Geliştirici C |
-|---|---|---|---|
-| 1 | Ollama LLM entegrasyonu + PolicyVersion embedding pipeline (pgvector) | Auth/Dashboard + Rehberler mobil ekranları | Menü mobil ekranı + My Schedule mobil ekranı |
-| 2 | RAG retrieval servisi + citation (`CHAT_CITATION`) entegrasyonu | Servis mobil ekranı + gerçek Google Maps entegrasyonu (FR-27) + arkaplan konum takibi | Anket/Feedback mobil ekranı + Duyuru mobil ekranı + Menü admin mobil (Excel yükleme) |
-| 3 | Dosya yükleyerek soru sorma (FR-15) + sesli giriş (FR-16) + Chatbot mobil UI | Araç Rezervasyonu mobil ekranı + Servis Yönetimi admin mobil | Push bildirim dispatch entegrasyonu (FCM) + Bildirim tercihleri ekranı + Duyuru Yönetimi admin mobil |
-| 4 | RAG doğruluk/performans tuning (NFR-02 riski), entegrasyon, demo senaryoları | Araç Yönetimi admin mobil + Çalışan/Departman CRUD admin mobil (BP-10) + entegrasyon (azaltılmış buffer) | Anket Yönetimi admin mobil + RBAC/Rapor admin mobil (BP-10) + entegrasyon (azaltılmış buffer) |
+| Hafta | Geliştirici A                                                                | Geliştirici B                                                                                            | Geliştirici C                                                                                        |
+| ----- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 1     | Ollama LLM entegrasyonu + PolicyVersion embedding pipeline (pgvector)        | Auth/Dashboard + Rehberler mobil ekranları                                                               | Menü mobil ekranı + My Schedule mobil ekranı                                                         |
+| 2     | RAG retrieval servisi + citation (`CHAT_CITATION`) entegrasyonu              | Servis mobil ekranı + gerçek Google Maps entegrasyonu (FR-27) + arkaplan konum takibi                    | Anket/Feedback mobil ekranı + Duyuru mobil ekranı + Menü admin mobil (Excel yükleme)                 |
+| 3     | Dosya yükleyerek soru sorma (FR-15) + sesli giriş (FR-16) + Chatbot mobil UI | Araç Rezervasyonu mobil ekranı + Servis Yönetimi admin mobil                                             | Push bildirim dispatch entegrasyonu (FCM) + Bildirim tercihleri ekranı + Duyuru Yönetimi admin mobil |
+| 4     | RAG doğruluk/performans tuning (NFR-02 riski), entegrasyon, demo senaryoları | Araç Yönetimi admin mobil + Çalışan/Departman CRUD admin mobil (BP-10) + entegrasyon (azaltılmış buffer) | Anket Yönetimi admin mobil + RBAC/Rapor admin mobil (BP-10) + entegrasyon (azaltılmış buffer)        |
 
 **Hafta 4 artık salt buffer değil** — admin mobil ekranlarının çoğu Hafta 3-4'e yığıldı, bu yüzden entegrasyon/bug-bash süresi Faz 1'e göre daha kısıtlı. B ve C için Hafta 3-4 en yoğun haftalar (bkz. `issuePhase2.md` Bölüm 2, güncel SP dağılımı); Hafta 2 sonunda ilerleme netleşmezse Bölüm 5'teki fallback sırası devreye girmeli.
 
