@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.companyaiassistant</groupId>
+    <artifactId>flyway-migration-test</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <!--
+      NOT: Bu geçici/minik bir pom.xml. Amacı, ISSUE-000'daki tam Spring Boot
+      proje iskeleti hazır olmadan, sadece V1__init.sql migration'ının doğru
+      çalıştığını test edebilmek. ISSUE-000 tamamlanınca, aşağıdaki
+      flyway-maven-plugin ayarları gerçek Spring Boot projesinin pom.xml'ine
+      taşınmalı ve bu dosya silinmeli.
+    -->
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>10.15.0</version>
+                <configuration>
+                    <url>jdbc:postgresql://localhost:5432/company_ai_assistant</url>
+                    <user>app_user</user>
+                    <password>app_password</password>
+                    <locations>
+                        <location>filesystem:src/main/resources/db/migration</location>
+                    </locations>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.7.4</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-database-postgresql</artifactId>
+                        <version>10.15.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+</project>
