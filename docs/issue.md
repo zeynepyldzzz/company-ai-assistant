@@ -1,7 +1,7 @@
 # Issue Backlog
 ## Yapay Zeka Destekli Şirket İçi Asistan — MVP (4 Hafta / 3 Full-Stack Geliştirici)
 
-> Kaynak: `sprintPlan.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `erDiagram.md`, `tech_stack.md`. Bu doküman `sprintPlan.md`'deki modül/hafta planını **atanabilir issue** seviyesine indirger: her madde başlık, açıklama, kabul kriterleri, story point ve önerilen atananla birlikte doğrudan GitHub/Jira'ya kopyalanabilir. Üç geliştirici de full-stack çalışır — her issue kendi modülünde DB migration → API → web/admin UI zincirinin tamamını kapsar.
+> Kaynak: `sprintPlan.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`. Bu doküman `sprintPlan.md`'deki modül/hafta planını **atanabilir issue** seviyesine indirger: her madde başlık, açıklama, kabul kriterleri, story point ve önerilen atananla birlikte doğrudan GitHub/Jira'ya kopyalanabilir. Üç geliştirici de full-stack çalışır — her issue kendi modülünde DB migration → API → web/admin UI zincirinin tamamını kapsar.
 
 ---
 
@@ -20,7 +20,7 @@ Story point'ler göreceli efor tahminidir, kesin süre garantisi değildir; spri
 
 ## 1. Etiket Lejantı
 
-`sprint-0` · `backend` · `frontend` · `fullstack` · `design` · `auth` · `chatbot` · `directory` · `shuttle` · `vehicle` · `menu` · `schedule` · `survey` · `announcement` · `admin` · `stretch` · `buffer`
+`sprint-0` · `backend` · `frontend` · `fullstack` · `infra` · `design` · `auth` · `chatbot` · `directory` · `shuttle` · `vehicle` · `menu` · `schedule` · `survey` · `announcement` · `admin` · `test` · `stretch` · `buffer`
 
 ---
 
@@ -28,13 +28,15 @@ Story point'ler göreceli efor tahminidir, kesin süre garantisi değildir; spri
 
 | Geliştirici | Hafta 1 | Hafta 2 | Hafta 3 | Hafta 4 | **Toplam** |
 |---|---|---|---|---|---|
-| **A** — Chatbot L1 + KB Admin (BP-02) | 18 | 16 | 13 (10 + 3 stretch) | 8 | **55** |
-| **B** — Rehberler + Servis + Araç (BP-05/04/06) | 13 | 15 | 13 | 8 | **49** |
-| **C** — Menü + Çalışma Düzeni + Anket + Duyuru + Admin (BP-03/09/07/08/10) | 11 | 18 | 15 | 13 | **57** |
+| **A** — Chatbot L1 + KB Admin (BP-02) | 21 | 19 | 15 (12 + 3 stretch) | 8 | **63** |
+| **B** — Rehberler + Servis + Araç (BP-05/04/06) | 15 | 18 | 16 | 8 | **57** |
+| **C** — Menü + Çalışma Düzeni + Anket + Duyuru + Admin (BP-03/09/07/08/10) | 13 | 21 | 18 | 16 | **68** |
 
 **Hafta 0 (Ortak Temel — Sprint 0):** 29 SP, tüm ekip paralel/pair çalışır (2-3 gün).
 
-Toplamlar birebir eşit değil (A: 55, B: 49, C: 57) — bu, orijinal plandaki "A en riskli/karmaşık tek modül, C çok sayıda ama görece basit modül" dengesini yansıtıyor. Atama sırasında Hafta 4'ü sıkıştırmayın; B ve A için Hafta 4 tamamen entegrasyon/bug-bash bufferı, C için hâlâ öznitelik geliştirmesi (BP-10) içeriyor.
+Toplamlar birebir eşit değil (A: 63, B: 57, C: 68) — bu, orijinal plandaki "A en riskli/karmaşık tek modül, C çok sayıda ama görece basit modül" dengesini yansıtıyor. Atama sırasında Hafta 4'ü sıkıştırmayın; B ve A için Hafta 4 tamamen entegrasyon/bug-bash bufferı, C için hâlâ öznitelik geliştirmesi (BP-10) içeriyor.
+
+**Test issue'ları (`X-T<hafta>`):** Her geliştiricinin haftalık listesine, o haftanın işini test eden ayrı bir küçük issue eklendi (`Contributing.md` Bölüm 3 — test yazımı Hafta 4'e bırakılmıyor, hafta içinde ilerliyor). Bu, üç geliştiricinin toplamına +8/+8/+11 SP ekledi (eski toplamlar: A 55, B 49, C 57). Hafta 4'ü zaten tamamen entegrasyon/bug-bash'e ayrılan A-10 ve B-11, o haftanın testlerini de kapsar — bu yüzden A ve B için ayrı bir Hafta 4 test issue'su yok. C'nin Hafta 4'ünde böyle bir buffer olmadığından (C-10/C-11 hâlâ öznitelik geliştirmesi), C-T4 ayrı bir issue olarak eklendi.
 
 ---
 
@@ -64,7 +66,7 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 **Önerilen Atanan:** Geliştirici C
 **Story Point:** 5
 
-**Açıklama:** `erDiagram.md`'deki şemanın (EMPLOYEE, DEPARTMENT, ROLE/PERMISSION, VEHICLE/RESERVATION, SHUTTLE_ROUTE/STOP, MENU/MEAL/MENU_ITEM, SURVEY/SURVEY_QUESTION/SURVEY_RESPONSE/FEEDBACK, ANNOUNCEMENT/NOTIFICATION, CHAT_*, POLICY_*) Flyway migration dosyalarına (`V1__init.sql`, vb.) dönüştürülmesi. Docker Compose ile yerel PostgreSQL 16 + pgvector + pg_trgm extension kurulumu. `weekly_schedule` alanı ER diyagramına göre `EMPLOYEE` tablosunda `jsonb` olarak tutulur; ayrı `WEEKLY_SCHEDULE`/`SCHEDULE_DAY` tablosu yoktur.
+**Açıklama:** `diagrams/ERDiagram.png`'deki şemanın (EMPLOYEE, DEPARTMENT, ROLE/PERMISSION, VEHICLE/RESERVATION, SHUTTLE_ROUTE/STOP, MENU/MEAL/MENU_ITEM, SURVEY/SURVEY_QUESTION/SURVEY_RESPONSE/FEEDBACK, ANNOUNCEMENT/NOTIFICATION, CHAT_*, POLICY_*) Flyway migration dosyalarına (`V1__init.sql`, vb.) dönüştürülmesi. Docker Compose ile yerel PostgreSQL 16 + pgvector + pg_trgm extension kurulumu. `weekly_schedule` alanı ER diyagramına göre `EMPLOYEE` tablosunda `jsonb` olarak tutulur; ayrı `WEEKLY_SCHEDULE`/`SCHEDULE_DAY` tablosu yoktur.
 
 **Kabul Kriterleri:**
 - [ ] `docker compose up` ile PostgreSQL + pgvector + pg_trgm ayağa kalkıyor
@@ -199,6 +201,21 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### A-T1: Hafta 1 Testleri (Intent Sınıflandırma + Mesaj Akışı)
+**Etiketler:** `backend`, `chatbot`, `test`
+**Story Point:** 3
+
+**Açıklama:** A-1/A-2/A-3'ün testleri. Bkz. `Contributing.md` Bölüm 3 — bu, hafta sonuna bırakılmayan, o haftanın işiyle birlikte yazılan test issue'sudur.
+
+**Kabul Kriterleri:**
+- [ ] En az 10 örnek soru için intent sınıflandırma doğruluğu bir testle doğrulanıyor (A-1)
+- [ ] Eşik altı benzerlikte "intent bulunamadı" fallback'inin tetiklendiği test ediliyor (A-1)
+- [ ] `POST /chatbot/messages` happy path + boş/geçersiz girişte 400 dönüşü test ediliyor (A-3)
+
+**Bağımlılık:** A-1, A-2, A-3
+
+---
+
 ### Hafta 2
 
 #### A-4: `GET/POST /chatbot/conversations` — Sohbet Geçmişi
@@ -250,6 +267,21 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### A-T2: Hafta 2 Testleri (KB Admin RBAC + Versiyonlama + Prosedür Yönlendirme)
+**Etiketler:** `backend`, `chatbot`, `admin`, `test`
+**Story Point:** 3
+
+**Açıklama:** A-4/A-5/A-6'nın testleri, özellikle KB admin uçlarının yetkilendirmesi ve versiyonlama davranışı (denetim izi kritik, NFR-06).
+
+**Kabul Kriterleri:**
+- [ ] `hr_admin`/`system_admin` dışındaki rollerin `/admin/knowledge-base/*` uçlarına 403 aldığı test ediliyor (A-6)
+- [ ] Yeni doküman versiyonu yüklendiğinde eski versiyonun `isCurrent=false` olduğu ve silinmediği test ediliyor (A-6)
+- [ ] `GET /hr/procedures?topic=` en az 3 farklı topic için doğru prosedürü döndüğü test ediliyor (A-5)
+
+**Bağımlılık:** A-4, A-5, A-6
+
+---
+
 ### Hafta 3
 
 #### A-7: Admin Bilgi Tabanı Doküman Yönetim Ekranı
@@ -294,6 +326,20 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 - [ ] `CHAT_CITATION` kaydı, ilgili `POLICY_VERSION`'a referans veriyor
 
 **Bağımlılık:** A-5, A-6 — **Not:** Bu issue MVP kapsamı için zorunlu değil, Hafta 4'te zaman kalırsa alınmalı.
+
+---
+
+#### A-T3: Hafta 3 Testleri (Chatbot UI + Admin Doküman Ekranı)
+**Etiketler:** `frontend`, `chatbot`, `test`
+**Story Point:** 2
+
+**Açıklama:** A-7/A-8 için temel smoke/erişim testleri.
+
+**Kabul Kriterleri:**
+- [ ] Chatbot UI'da mesaj gönderip yanıt görüntüleme happy path'i bir component/E2E testiyle kapsanıyor (A-8)
+- [ ] Yetkisiz rolün admin doküman yönetim ekranını göremediği test ediliyor (A-7)
+
+**Bağımlılık:** A-7, A-8
 
 ---
 
@@ -380,6 +426,20 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### B-T1: Hafta 1 Testleri (Rehber Arama + Telefon)
+**Etiketler:** `backend`, `directory`, `test`
+**Story Point:** 2
+
+**Açıklama:** B-1/B-3'ün testleri — fuzzy arama ve click-to-call uçlarının davranışı.
+
+**Kabul Kriterleri:**
+- [ ] İsme göre kısmi eşleşmenin (pg_trgm fuzzy search) beklenen sonuçları döndüğü test ediliyor (B-1)
+- [ ] `POST /phonebook/{extension}/call` geçersiz dahili numarada anlamlı hata döndüğü test ediliyor (B-3)
+
+**Bağımlılık:** B-1, B-2, B-3
+
+---
+
 ### Hafta 2 — Servis
 
 #### B-5: `ShuttleRoute`/`ShuttleStop` CRUD (Admin) + Liste
@@ -429,6 +489,20 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### B-T2: Hafta 2 Testleri (Servis RBAC + Güzergah Önerisi)
+**Etiketler:** `backend`, `shuttle`, `admin`, `test`
+**Story Point:** 3
+
+**Açıklama:** B-5/B-6'nın testleri — admin yetkilendirmesi ve mesafe/öneri hesabının doğruluğu.
+
+**Kabul Kriterleri:**
+- [ ] `shuttle_admin` dışındaki rollerin `/admin/shuttle-routes` uçlarına 403 aldığı test ediliyor (B-5)
+- [ ] Bilinen bir lat/lng için en yakın durak ve güzergah hesabının doğru sonuç verdiği test ediliyor (B-6)
+
+**Bağımlılık:** B-5, B-6
+
+---
+
 ### Hafta 3 — Araç Rezervasyonu
 
 #### B-8: `Vehicle`/`Reservation` CRUD
@@ -475,6 +549,20 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 - [ ] FR-38–41 karşılanıyor
 
 **Bağımlılık:** B-8, ISSUE-005
+
+---
+
+#### B-T3: Hafta 3 Testleri (Rezervasyon Çakışma Engeli + Araç RBAC)
+**Etiketler:** `backend`, `vehicle`, `test`
+**Story Point:** 3
+
+**Açıklama:** B-8'in testleri — FR-38-41 kritik iş kuralı (çakışan rezervasyonun reddi) ve admin yetkilendirmesi.
+
+**Kabul Kriterleri:**
+- [ ] Çakışan zaman aralığında yapılan rezervasyonun reddedildiği test ediliyor (B-8, FR-38-41 kritik kural)
+- [ ] `fleet_admin` dışındaki rollerin `/admin/vehicles` uçlarına 403 aldığı test ediliyor (B-8)
+
+**Bağımlılık:** B-8
 
 ---
 
@@ -545,6 +633,20 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### C-T1: Hafta 1 Testleri (Excel İçe Aktarma Hata/Başarı Yolları)
+**Etiketler:** `backend`, `menu`, `test`
+**Story Point:** 2
+
+**Açıklama:** C-2'nin testleri — Excel import'un başarı ve hata yolları.
+
+**Kabul Kriterleri:**
+- [ ] Geçerli şablonla içe aktarmanın `MENU`/`MEAL`/`MENU_ITEM` kayıtlarını doğru oluşturduğu test ediliyor (C-2)
+- [ ] Hatalı/eksik şablonda 422 + anlamlı hata mesajı döndüğü test ediliyor (C-2)
+
+**Bağımlılık:** C-2
+
+---
+
 ### Hafta 2 — Çalışma Düzeni
 
 #### C-4: `WeeklySchedule`/`ScheduleDay` — Tek Kaynak API
@@ -612,6 +714,21 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### C-T2: Hafta 2 Testleri (Tek Kaynak Kuralı + Sahiplik)
+**Etiketler:** `backend`, `schedule`, `test`
+**Story Point:** 3
+
+**Açıklama:** C-4'ün testleri — FR-64 tek kaynak kısıtı ve veri sahipliği, ileride Faz 2 mobilin de aynı uca bağlanacağı için burada kırılırsa iki platformu birden etkiler.
+
+**Kabul Kriterleri:**
+- [ ] Kullanıcının yalnızca kendi haftalık planını güncelleyebildiği (başka bir çalışanın verisini değiştirme denemesinin reddedildiği) test ediliyor (C-4, FR-63)
+- [ ] `(employeeId, weekStartDate)` unique kısıtının ihlal edilemediği test ediliyor (C-4)
+- [ ] `GET /admin/schedules`'ın `C-4` ile aynı veriyi okuduğu, ayrı bir kopya oluşturmadığı test ediliyor (C-6)
+
+**Bağımlılık:** C-4, C-6
+
+---
+
 ### Hafta 3 — Anket + Duyuru
 
 #### C-7: `Survey`/`SurveyResponse`/`Feedback` Endpoint'leri
@@ -660,6 +777,20 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### C-T3: Hafta 3 Testleri (Anonimlik + Anket Yetkilendirme)
+**Etiketler:** `backend`, `survey`, `test`
+**Story Point:** 3
+
+**Açıklama:** C-7/C-8'in testleri — FR-43 anonimlik kritik gizlilik kuralı ve admin yetkilendirmesi.
+
+**Kabul Kriterleri:**
+- [ ] `POST /feedback` ile oluşturulan kayıtta `employeeId` alanının ne request'te ne DB şemasında bulunmadığı test ediliyor (C-7, FR-43 kritik)
+- [ ] Anket oluşturma/yayımlama uçlarının yetkisiz rollerce çağrılamadığı test ediliyor (C-8)
+
+**Bağımlılık:** C-7, C-8
+
+---
+
 ### Hafta 4 — Admin CRUD + RBAC + Rapor
 
 #### C-10: Admin Çalışan/Departman CRUD Ekranları
@@ -694,6 +825,21 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ---
 
+#### C-T4: Hafta 4 Testleri (Admin CRUD RBAC + Rapor Export)
+**Etiketler:** `backend`, `admin`, `test`
+**Story Point:** 3
+
+**Açıklama:** C-10/C-11'in testleri — BP-10 admin CRUD ve RBAC/rapor uçlarının yetkilendirmesi. C için ayrı bir Hafta 4 entegrasyon/bug-bash buffer'ı yok (bkz. Bölüm 7), bu yüzden bu testler C-10/C-11'in kendi haftasında yazılır.
+
+**Kabul Kriterleri:**
+- [ ] `hr_admin` dışındaki rollerin çalışan/departman CRUD uçlarına erişemediği test ediliyor (C-10)
+- [ ] Yalnızca `system_admin`'in rol atama ucuna (`PUT /admin/users/{id}/roles`) erişebildiği test ediliyor (C-11)
+- [ ] `usage` rapor export'unun (xlsx veya pdf) geçerli bir dosya döndürdüğü test ediliyor (C-11)
+
+**Bağımlılık:** C-10, C-11
+
+---
+
 ## 7. Kritik Riskler ve Bağımlılıklar (sprintPlan.md'den taşındı)
 
 - **Auth gate (ISSUE-003):** Hafta 0 bitmeden hiçbir modül gerçek kullanıcı/rol context'iyle test edilemez. Bu adım gecikirse tüm plan bir hafta kayar — bu yüzden en deneyimli kişiye önerilir.
@@ -701,7 +847,8 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 - **C-4/C-6 (FR-64 tek kaynak kuralı):** `WeeklySchedule` verisi Faz 2'de mobil geldiğinde de aynı `/schedules/me` ucundan beslenmeli — C bu API sözleşmesini ileride mobilin de kullanacağını göz önünde tasarlamalı.
 - **C-5a (My Schedule tasarımı):** Figma'da referans yok — C-5'e başlamadan bu küçük tasarım adımı atlanmamalı, aksi halde geliştirme sırasında tasarım kararları geri döner ve gecikme yaratır.
 - **C-2 (Excel şablonu):** Şablon formatı netleşmeden implementasyona başlanmamalı — yemekhane yönetiminden örnek dosya istenmeli.
-- **Hafta 4 buffer'ı sıkıştırmayın:** A-10 ve B-11 tamamen entegrasyon/bug-bash; yeni özellik eklenmemeli. C-10/C-11 hâlâ öznitelik geliştirmesi içerdiği için C'nin Hafta 4 yükü diğerlerinden daha yüksek (13 SP) — gerekirse A veya B'den destek planlanmalı.
+- **Hafta 4 buffer'ı sıkıştırmayın:** A-10 ve B-11 tamamen entegrasyon/bug-bash; yeni özellik eklenmemeli. C-10/C-11 hâlâ öznitelik geliştirmesi içerdiği için C'nin Hafta 4 yükü diğerlerinden daha yüksek (16 SP, C-T4 dahil) — gerekirse A veya B'den destek planlanmalı.
+- **Test issue'larının eklenmesiyle artan yük:** `X-T<hafta>` issue'ları toplam SP'yi artırdı (A: 55→63, B: 49→57, C: 57→68). Hafta 2 sonunda gerçek ilerleme gözden geçirilmeli; sıkışma olursa önce A-9 (stretch, zaten opsiyonel) kesilmeli, test issue'ları kesilmemeli — bunlar RBAC/anonimlik/tek-kaynak gibi kritik kuralları koruyor (bkz. `Contributing.md` Bölüm 3).
 
 ---
 
@@ -710,5 +857,6 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 - `sprintPlan.md` — Bu dokümanın kaynağı olan haftalık/modül bazlı özet plan
 - `businessProcessMapping.md` — BP-01–BP-10 süreç tanımları
 - `apiEndpoints.md` — Bu issue'larda referans verilen tüm REST uçları
-- `erDiagram.md` — Veri modeli
+- `diagrams/ERDiagram.png` — Veri modeli
 - `tech_stack.md` — Teknoloji kararları (Java 21 + Spring Boot 3, PostgreSQL, React + TS)
+- `Contributing.md` — PR/review kuralları ve Bölüm 3'teki test yazım kuralı (hangi durumda test zorunlu, hangi durumda değil)

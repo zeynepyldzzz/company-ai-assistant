@@ -42,9 +42,10 @@ A pull request is **mandatory** for:
 
 ### Opening a PR
 
-- Link the PR to its issue: `Resolves #<issue-number>` in the PR body.
+- Before opening a PR, create a GitHub issue for the backlog item first (from `issue.md` / `issuePhase2.md`) and **put the backlog ID in the issue title**, e.g. `[A-3] POST /chatbot/messages — Yazılı Soru-Cevap Akışı`. GitHub assigns its own issue number (`#14`); the backlog ID (`A-3`) is not the same thing and won't match it — the title is what keeps them linked.
+- Link the PR to its issue: `Resolves #<issue-number>` in the PR body, and mention the backlog ID too, e.g. `Resolves #14 (A-3)`.
 - Write a short description of what was implemented and any notable decisions made.
-- Branch naming: `feature/issue-<number>-<short-description>`
+- Branch naming: `feature/issue-<number>-<short-description>`, e.g. `feature/issue-14-a3-chatbot-messages` — use the GitHub issue number, and fold the backlog ID into the description part so both are visible at a glance.
 - Request a review from at least one of the other two teammates when you open the PR.
 
 ### Review Requirements
@@ -65,7 +66,7 @@ Reviewers must check all of the following before approving:
 | **Business rules** | Does it follow the process defined in `docs/businessProcessMapping.md`? No undocumented deviations. |
 | **Security** | Is the endpoint's role guard wired in `SecurityConfig` (RBAC per `docs/apiEndpoints.md` role column)? No plaintext secrets in code or logs. |
 | **Error handling** | Are failure cases handled explicitly? No silent exception swallowing. |
-| **Tests** | Are there tests for new service methods and endpoints? Do existing tests still pass? |
+| **Tests** | Existing tests still pass. New tests are only *required* for what's listed under "Minimum required tests" in Section 3 — don't block a PR over missing tests for a plain CRUD form or layout change. |
 | **Build** | Does the PR compile cleanly? No introduced compile errors or broken imports (backend Maven build, frontend pnpm build + lint). |
 
 ### Review Etiquette
@@ -77,7 +78,23 @@ Reviewers must check all of the following before approving:
 
 ---
 
-## 3. Commit Message Convention
+## 3. Testing Convention
+
+We're not saving testing for a cleanup week at the end. Every week of the backlog carries its own small test issue per developer (`A-T1`, `B-T1`, `C-T1`, ... — one per week, see `issue.md` / `issuePhase2.md`) that covers the tests for that week's feature issues. Test as you go, not all at once in Week 4.
+
+### Minimum required tests
+
+Not everything needs a test to merge — for a 4-week MVP, full coverage isn't the goal. What **does** need at least one test:
+
+- RBAC/security-guarded endpoints — a role that should be rejected actually gets rejected (e.g. `employee` → 403 on `/admin/*`)
+- Business-critical invariants called out in the issue itself (e.g. FR-43 anonymity, FR-64 single source of truth for schedules, RAG "don't hallucinate" fallback)
+- Any bug fix — add a regression test that fails without the fix
+
+What does **not** need one to merge: plain admin CRUD forms, layout/styling changes, stretch/buffer issues. A test there is welcome but never blocks review.
+
+---
+
+## 4. Commit Message Convention
 
 | Prefix | When to use |
 |--------|-------------|
@@ -93,7 +110,7 @@ Example: `feat: implement chatbot conversation history endpoint (#42)`
 
 ---
 
-## 4. Code Quality Expectations
+## 5. Code Quality Expectations
 
 - Every new service method must handle failure cases explicitly — no silent exception swallowing.
 - Established architectural decisions (module boundaries, RAG pipeline design, etc.) are finalized. Do not deviate without raising it with the other two developers first — a quick team sync is enough, no separate approval role needed.
@@ -102,7 +119,7 @@ Example: `feat: implement chatbot conversation history endpoint (#42)`
 
 ---
 
-## 5. What Blocks a Merge
+## 6. What Blocks a Merge
 
 A PR will not be merged if any of the following are true:
 
