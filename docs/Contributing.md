@@ -36,6 +36,10 @@ A pull request is **mandatory** for:
 - Frontend page or component additions
 - Anything that touches a module owned by another team member (see module ownership in `sprintPlan.md`)
 
+### Direct Push Exception
+
+Docs-only changes under `docs/` (typo fixes, keeping planning docs in sync, this file) can be pushed straight to `main` — no PR, no review. Anything that isn't purely documentation (code, config, migrations) still goes through a PR as above.
+
 ---
 
 ## 2. Pull Request Rules

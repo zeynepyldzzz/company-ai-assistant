@@ -88,7 +88,7 @@
 **Önerilen Atanan:** Geliştirici C
 **Story Point:** 5
 
-**Açıklama:** Firebase FCM projesi kurulumu, `expo-notifications` ile cihaz push token'ı alma. Backend'e **yeni endpoint**: `POST /me/device-tokens` (kayıt), `DELETE /me/device-tokens/{token}` (kaldırma). Bu endpoint `apiEndpoints.md`'deki 71 uca ek olarak Faz 2'de eklenir.
+**Açıklama:** Firebase FCM projesi kurulumu, `expo-notifications` ile cihaz push token'ı alma. Backend'e **yeni endpoint**: `POST /me/device-tokens` (kayıt), `DELETE /me/device-tokens/{token}` (kaldırma). Bu endpoint `apiEndpoints.md`'deki 69 Faz 1 ucuna ek olarak Faz 2'de eklenir (attachments ile birlikte Faz 2'ye toplam 3 uç eklenmiş olur, genel toplam 72).
 
 **Kabul Kriterleri:**
 

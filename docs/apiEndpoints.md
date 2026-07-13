@@ -34,19 +34,19 @@
 
 ## 2. BP-02 — Yapay Zeka Chatbot ve Bilgi Tabanı Yönetimi
 
-| Method | Endpoint                                        | Açıklama                                                                          | Rol                  | FR               |
-| ------ | ----------------------------------------------- | --------------------------------------------------------------------------------- | -------------------- | ---------------- |
-| POST   | `/chatbot/messages`                             | Soru gönderir (yazılı/sesli), yanıt döner                                         | Çalışan              | FR-08–10, 14, 16 |
-| POST   | `/chatbot/conversations/{id}/attachments`       | Sohbete dosya yükler                                                              | Çalışan              | FR-15            |
-| GET    | `/chatbot/conversations`                        | Sohbet geçmişi listesi                                                            | Çalışan              | FR-09            |
-| GET    | `/chatbot/conversations/{id}`                   | Tek sohbetin detayı                                                               | Çalışan              | FR-09            |
-| GET    | `/hr/procedures?topic=`                         | Prosedür/politika bazlı yönlendirme (onboarding, izin, fazla mesai, mazeret izni) | Çalışan              | FR-11–13, 51–57  |
-| GET    | `/hr/procedures/{id}`                           | Prosedür detayı + güncel versiyon/geçerlilik tarihi                               | Çalışan              | FR-58            |
-| GET    | `/admin/knowledge-base/documents`               | Chatbot bilgi tabanı doküman listesi                                              | HR/Sistem Yöneticisi | FR-77            |
-| POST   | `/admin/knowledge-base/documents`               | Yeni bilgi tabanı / İK doküman yükleme                                            | HR/Sistem Yöneticisi | FR-77–78         |
-| PUT    | `/admin/knowledge-base/documents/{id}`          | Doküman/politika güncelleme (yeni versiyon)                                       | HR/Sistem Yöneticisi | FR-78, 58        |
-| DELETE | `/admin/knowledge-base/documents/{id}`          | Doküman kaldırma                                                                  | HR/Sistem Yöneticisi | FR-78            |
-| GET    | `/admin/knowledge-base/documents/{id}/versions` | Doküman versiyon geçmişi                                                          | HR/Sistem Yöneticisi | FR-58, 78        |
+| Method | Endpoint | Açıklama | Rol | FR |
+|---|---|---|---|---|
+| POST | `/chatbot/messages` | Soru gönderir (yazılı/sesli), yanıt döner | Çalışan | FR-08–10, 14, 16 |
+| POST | `/chatbot/conversations/{id}/attachments` | Sohbete dosya yükler (Faz 2) | Çalışan | FR-15 |
+| GET | `/chatbot/conversations` | Sohbet geçmişi listesi | Çalışan | FR-09 |
+| GET | `/chatbot/conversations/{id}` | Tek sohbetin detayı | Çalışan | FR-09 |
+| GET | `/hr/procedures?topic=` | Prosedür/politika bazlı yönlendirme (onboarding, izin, fazla mesai, mazeret izni) | Çalışan | FR-11–13, 51–57 |
+| GET | `/hr/procedures/{id}` | Prosedür detayı + güncel versiyon/geçerlilik tarihi | Çalışan | FR-58 |
+| GET | `/admin/knowledge-base/documents` | Chatbot bilgi tabanı doküman listesi | HR/Sistem Yöneticisi | FR-77 |
+| POST | `/admin/knowledge-base/documents` | Yeni bilgi tabanı / İK doküman yükleme | HR/Sistem Yöneticisi | FR-77–78 |
+| PUT | `/admin/knowledge-base/documents/{id}` | Doküman/politika güncelleme (yeni versiyon) | HR/Sistem Yöneticisi | FR-78, 58 |
+| DELETE | `/admin/knowledge-base/documents/{id}` | Doküman kaldırma | HR/Sistem Yöneticisi | FR-78 |
+| GET | `/admin/knowledge-base/documents/{id}/versions` | Doküman versiyon geçmişi | HR/Sistem Yöneticisi | FR-58, 78 |
 
 ---
 
@@ -119,15 +119,14 @@
 
 ## 8. BP-08 — Duyuru ve Bildirim Görüntüleme, Yayımlama ve Yönetimi
 
-| Method | Endpoint                        | Açıklama                             | Rol      | FR            |
-| ------ | ------------------------------- | ------------------------------------ | -------- | ------------- |
-| GET    | `/announcements`                | Duyuru listesi (sabitlenenler üstte) | Çalışan  | FR-45, 47     |
-| GET    | `/announcements/{id}`           | Duyuru detayı                        | Çalışan  | FR-45         |
-| GET    | `/notifications`                | Anlık/acil durum bildirimleri        | Çalışan  | FR-46, 65, 66 |
-| PUT    | `/notifications/preferences`    | Bildirim tercihlerini güncelleme     | Çalışan  | FR-67         |
-| POST   | `/admin/announcements`          | Duyuru oluşturma ve yayımlama        | Yönetici | FR-75         |
-| PUT    | `/admin/announcements/{id}/pin` | Duyuruyu sabitleme                   | Yönetici | FR-47, 75     |
-| PUT    | `/admin/notifications/settings` | Bildirim/izin yönetimi (admin taraf) | Yönetici | FR-80         |
+| Method | Endpoint | Açıklama | Rol | FR |
+|---|---|---|---|---|
+| GET | `/announcements` | Duyuru listesi (sabitlenenler üstte) | Çalışan | FR-45, 47 |
+| GET | `/announcements/{id}` | Duyuru detayı | Çalışan | FR-45 |
+| GET | `/notifications` | Anlık/acil durum bildirimleri | Çalışan | FR-46, 65, 66 |
+| PUT | `/notifications/preferences` | Bildirim tercihlerini güncelleme | Çalışan | FR-67 |
+| POST | `/admin/announcements` | Duyuru oluşturma ve yayımlama | Yönetici | FR-75 |
+| PUT | `/admin/announcements/{id}/pin` | Duyuruyu sabitleme | Yönetici | FR-47, 75 |
 
 ---
 
@@ -163,16 +162,17 @@
 
 ## 11. Sayı Özeti
 
-| Business Process                  | Endpoint Sayısı |
-| --------------------------------- | --------------- |
-| BP-01 (Faz 2: +2 `device-tokens`) | 9               |
-| BP-02                             | 11              |
-| BP-03                             | 6               |
-| BP-04                             | 7               |
-| BP-05                             | 6               |
-| BP-06                             | 7               |
-| BP-07                             | 6               |
-| BP-08                             | 7               |
-| BP-09                             | 4               |
-| BP-10                             | 10              |
-| **Toplam (Faz 1: 71 + Faz 2: 2)** | **73**          |
+| Business Process | Endpoint Sayısı |
+|---|---|
+| BP-01 (Faz 2: +2 `device-tokens`) | 9 |
+| BP-02 (Faz 2: +1 `attachments`) | 11 |
+| BP-03 | 6 |
+| BP-04 | 7 |
+| BP-05 | 6 |
+| BP-06 | 7 |
+| BP-07 | 6 |
+| BP-08 | 6 |
+| BP-09 | 4 |
+| BP-10 | 10 |
+| **Toplam (Faz 1: 69 + Faz 2: 3)** | **72** |
+
