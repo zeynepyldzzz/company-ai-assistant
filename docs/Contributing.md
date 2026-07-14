@@ -36,6 +36,10 @@ A pull request is **mandatory** for:
 - Frontend page or component additions
 - Anything that touches a module owned by another team member (see module ownership in `sprintPlan.md`)
 
+### Direct Push Exception
+
+Docs-only changes under `docs/` (typo fixes, keeping planning docs in sync, this file) can be pushed straight to `main` — no PR, no review. Anything that isn't purely documentation (code, config, migrations) still goes through a PR as above.
+
 ---
 
 ## 2. Pull Request Rules
@@ -59,15 +63,15 @@ A pull request is **mandatory** for:
 
 Reviewers must check all of the following before approving:
 
-| Area | What to verify |
-|------|---------------|
-| **Correctness** | Does the implementation do what the linked issue describes? |
-| **API contract** | Does it match `docs/apiEndpoints.md` — paths, methods, request/response shapes, status codes? |
-| **Business rules** | Does it follow the process defined in `docs/businessProcessMapping.md`? No undocumented deviations. |
-| **Security** | Is the endpoint's role guard wired in `SecurityConfig` (RBAC per `docs/apiEndpoints.md` role column)? No plaintext secrets in code or logs. |
-| **Error handling** | Are failure cases handled explicitly? No silent exception swallowing. |
-| **Tests** | Existing tests still pass. New tests are only *required* for what's listed under "Minimum required tests" in Section 3 — don't block a PR over missing tests for a plain CRUD form or layout change. |
-| **Build** | Does the PR compile cleanly? No introduced compile errors or broken imports (backend Maven build, frontend pnpm build + lint). |
+| Area               | What to verify                                                                                                                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Correctness**    | Does the implementation do what the linked issue describes?                                                                                                                                          |
+| **API contract**   | Does it match `docs/apiEndpoints.md` — paths, methods, request/response shapes, status codes?                                                                                                        |
+| **Business rules** | Does it follow the process defined in `docs/businessProcessMapping.md`? No undocumented deviations.                                                                                                  |
+| **Security**       | Is the endpoint's role guard wired in `SecurityConfig` (RBAC per `docs/apiEndpoints.md` role column)? No plaintext secrets in code or logs.                                                          |
+| **Error handling** | Are failure cases handled explicitly? No silent exception swallowing.                                                                                                                                |
+| **Tests**          | Existing tests still pass. New tests are only _required_ for what's listed under "Minimum required tests" in Section 3 — don't block a PR over missing tests for a plain CRUD form or layout change. |
+| **Build**          | Does the PR compile cleanly? No introduced compile errors or broken imports (backend Maven build, frontend pnpm build + lint).                                                                       |
 
 ### Review Etiquette
 
@@ -96,15 +100,15 @@ What does **not** need one to merge: plain admin CRUD forms, layout/styling chan
 
 ## 4. Commit Message Convention
 
-| Prefix | When to use |
-|--------|-------------|
-| `feat:` | New feature or endpoint |
-| `fix:` | Bug fix |
-| `refactor:` | Code restructure with no behavior change |
-| `chore:` | Config, dependency, or tooling change |
-| `docs:` | Documentation only |
-| `test:` | Tests only |
-| `QA:` | Postman collections, test data, QA scripts |
+| Prefix      | When to use                                |
+| ----------- | ------------------------------------------ |
+| `feat:`     | New feature or endpoint                    |
+| `fix:`      | Bug fix                                    |
+| `refactor:` | Code restructure with no behavior change   |
+| `chore:`    | Config, dependency, or tooling change      |
+| `docs:`     | Documentation only                         |
+| `test:`     | Tests only                                 |
+| `QA:`       | Postman collections, test data, QA scripts |
 
 Example: `feat: implement chatbot conversation history endpoint (#42)`
 

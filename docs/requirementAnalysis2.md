@@ -1,4 +1,5 @@
 # Gereksinim Analizi
+
 ## Yapay Zeka Destekli Şirket İçi Asistan Mobil ve Web Uygulaması
 
 ---
@@ -6,6 +7,7 @@
 # 1. Proje Genel Bakış
 
 ## Proje Adı
+
 **Yapay Zeka Destekli Şirket İçi Asistan**
 
 ## Proje Açıklaması
@@ -280,7 +282,6 @@ FR-58 Sistem, prosedürlerin güncel versiyonlarını, geçerlilik tarihlerini v
 ---
 
 ## My Work Schedule (Çalışma Düzenim)
-
 
 FR-59 Çalışanlar kendi haftalık çalışma düzenlerini yönetebilmelidir.
 

@@ -1,4 +1,5 @@
 # Issue Backlog — Faz 2
+
 ## Mobil Uygulama + Chatbot L2 (4 Hafta / 3 Full-Stack Geliştirici)
 
 > Kaynak: `sprintPlanPhase2.md`, `sprintPlan.md`/`issue.md` (Faz 1), `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`. Bu doküman `sprintPlanPhase2.md`'deki haftalık planı atanabilir issue seviyesine indirger. Faz 1'de kurulan backend API'lerin büyük kısmı burada **yeniden kullanılır** — Faz 2'nin asıl işi mobil istemci katmanı ve Chatbot'un RAG/LLM altyapısıdır.
@@ -7,14 +8,14 @@
 
 ## 0. Story Point Ölçeği
 
-| SP | Anlamı |
-|---|---|
-| 1 | Birkaç saatlik, tek katmanlı basit iş |
-| 2 | Yarım gün |
-| 3 | ~1 gün, tek katmanlı ya da çok basit uçtan uca iş |
-| 5 | 2-3 gün, standart uçtan uca iş |
-| 8 | 3-4 gün, karmaşık/riskli veya çok adımlı iş |
-| 13 | Neredeyse bir hafta, yüksek belirsizlik içeren iş |
+| SP  | Anlamı                                            |
+| --- | ------------------------------------------------- |
+| 1   | Birkaç saatlik, tek katmanlı basit iş             |
+| 2   | Yarım gün                                         |
+| 3   | ~1 gün, tek katmanlı ya da çok basit uçtan uca iş |
+| 5   | 2-3 gün, standart uçtan uca iş                    |
+| 8   | 3-4 gün, karmaşık/riskli veya çok adımlı iş       |
+| 13  | Neredeyse bir hafta, yüksek belirsizlik içeren iş |
 
 ## 1. Etiket Lejantı
 
@@ -24,11 +25,11 @@
 
 ## 2. Yük Dağılımı Özeti (Story Point)
 
-| Geliştirici | Hafta 1 | Hafta 2 | Hafta 3 | Hafta 4 | **Toplam (Hafta 1-4)** | Hafta 0 | **Genel Toplam** |
-|---|---|---|---|---|---|---|---|
-| **A** — Chatbot L2 (RAG + LLM) | 19 | 16 | 21 | 10 | **66** | 8 | **74** |
-| **B** — Mobil: Auth/Dashboard/Rehber/Servis+Maps/Araç (çalışan + admin) | 12 | 16 | 13 | 16 | **57** | 15 | **72** |
-| **C** — Mobil: Menü/My Schedule/Anket/Duyuru+Push (çalışan + admin) | 13 | 15 | 18 | 19 | **65** | 8 | **73** |
+| Geliştirici                                                             | Hafta 1 | Hafta 2 | Hafta 3 | Hafta 4 | **Toplam (Hafta 1-4)** | Hafta 0 | **Genel Toplam** |
+| ----------------------------------------------------------------------- | ------- | ------- | ------- | ------- | ---------------------- | ------- | ---------------- |
+| **A** — Chatbot L2 (RAG + LLM)                                          | 19      | 16      | 21      | 10      | **66**                 | 8       | **74**           |
+| **B** — Mobil: Auth/Dashboard/Rehber/Servis+Maps/Araç (çalışan + admin) | 12      | 16      | 13      | 16      | **57**                 | 15      | **72**           |
+| **C** — Mobil: Menü/My Schedule/Anket/Duyuru+Push (çalışan + admin)     | 13      | 15      | 18      | 19      | **65**                 | 8       | **73**           |
 
 **Hafta 0 (Ortak Temel):** 31 SP, tüm ekip (2-3 gün).
 
@@ -41,6 +42,7 @@
 ## 3. Sprint 0 — Ortak Temel (Tüm Ekip, Hafta 0, ~2-3 gün)
 
 ### F2-ISSUE-000: Expo Mobil App İskeleti
+
 **Etiketler:** `sprint-0`, `mobile`
 **Önerilen Atanan:** Geliştirici B
 **Story Point:** 5
@@ -48,6 +50,7 @@
 **Açıklama:** `apps/mobile` klasörü pnpm workspace'e eklenir (Expo/React Native). NativeWind kurulumu, React Navigation (tab + stack navigator: Ana Panel, Chatbot, Menü, Servis, Rehber, Araç, Anket, Duyuru, My Schedule sekmeleri). Ortak component kütüphanesi (`packages/shared`'daki Zod şemaları web ile paylaşılır).
 
 **Kabul Kriterleri:**
+
 - [ ] `pnpm --filter mobile start` ile Expo geliştirme sunucusu ayağa kalkıyor
 - [ ] Tab navigasyonu (boş placeholder ekranlarla) çalışıyor
 - [ ] NativeWind ile temel stil (renk paleti, tipografi) web ile tutarlı
@@ -58,6 +61,7 @@
 ---
 
 ### F2-ISSUE-001: Mobil Auth Entegrasyonu
+
 **Etiketler:** `sprint-0`, `mobile`, `auth`
 **Önerilen Atanan:** Geliştirici B
 **Story Point:** 5
@@ -65,6 +69,7 @@
 **Açıklama:** Login ekranı, `expo-secure-store` ile token saklama, auth guard (token yoksa login'e yönlendirme), session refresh. Mevcut `/auth/login`, `/auth/refresh`, `/auth/session`, `/auth/logout` endpoint'lerini yeniden kullanır — **yeni backend işi gerekmiyor**. Ana Panel (Dashboard) ekranının iskeleti de bu issue kapsamında (hızlı erişim kartları, bekleyen bildirimler). **Admin ekranları da mobile taşındığı için** (bkz. `sprintPlanPhase2.md`), rol bazlı navigasyon (employee/`hr_admin`/`fleet_admin`/`shuttle_admin`/`canteen_admin`/`system_admin`) ve admin girişinde 2FA (`/auth/2fa/verify`, NFR-07) bu issue'nun kapsamına girer.
 
 **Kabul Kriterleri:**
+
 - [ ] Kullanıcı mobilde giriş yapabiliyor, token güvenli şekilde saklanıyor
 - [ ] Token süresi dolduğunda otomatik refresh çalışıyor
 - [ ] Auth guard, token yoksa login ekranına yönlendiriyor
@@ -78,13 +83,15 @@
 ---
 
 ### F2-ISSUE-002: Push Notification Altyapısı
+
 **Etiketler:** `sprint-0`, `mobile`, `backend`, `push`
 **Önerilen Atanan:** Geliştirici C
 **Story Point:** 5
 
-**Açıklama:** Firebase FCM projesi kurulumu, `expo-notifications` ile cihaz push token'ı alma. Backend'e **yeni endpoint**: `POST /me/device-tokens` (kayıt), `DELETE /me/device-tokens/{token}` (kaldırma). Bu endpoint `apiEndpoints.md`'deki 71 uca ek olarak Faz 2'de eklenir.
+**Açıklama:** Firebase FCM projesi kurulumu, `expo-notifications` ile cihaz push token'ı alma. Backend'e **yeni endpoint**: `POST /me/device-tokens` (kayıt), `DELETE /me/device-tokens/{token}` (kaldırma). Bu endpoint `apiEndpoints.md`'deki 69 Faz 1 ucuna ek olarak Faz 2'de eklenir (attachments ile birlikte Faz 2'ye toplam 3 uç eklenmiş olur, genel toplam 72).
 
 **Kabul Kriterleri:**
+
 - [ ] Mobil app açıldığında push izni istiyor, izin verilirse FCM token backend'e kaydediliyor
 - [ ] `POST /me/device-tokens` token'ı `EMPLOYEE` ile ilişkilendirip saklıyor
 - [ ] Test push bildirimi (Firebase console'dan) cihaza ulaşıyor
@@ -95,6 +102,7 @@
 ---
 
 ### F2-ISSUE-003: Location / Maps Altyapısı
+
 **Etiketler:** `sprint-0`, `mobile`, `maps`
 **Önerilen Atanan:** Geliştirici B
 **Story Point:** 5
@@ -102,6 +110,7 @@
 **Açıklama:** `expo-location` + `expo-task-manager` izin akışı (ön planda ve arka planda konum izni), Google Maps API proje/key kurulumu (Directions API, Geocoding API aktivasyonu).
 
 **Kabul Kriterleri:**
+
 - [ ] Konum izni istemi doğru şekilde gösteriliyor (ön plan + arka plan)
 - [ ] `expo-location` ile anlık konum alınabiliyor
 - [ ] Google Maps API key kısıtlamalarıyla (paket adı/bundle ID) birlikte kuruldu
@@ -112,6 +121,7 @@
 ---
 
 ### F2-ISSUE-004: RAG / AI Altyapısı
+
 **Etiketler:** `sprint-0`, `backend`, `rag`, `llm`, `storage`
 **Önerilen Atanan:** Geliştirici A
 **Story Point:** 8
@@ -119,6 +129,7 @@
 **Açıklama:** Ollama'nın Docker Compose'a container olarak eklenmesi, Phi-4 Mini / Qwen 2.5 modelinin çekilmesi ve servis edilmesi. `POLICY_EMBEDDING` tablosuna yazacak embedding job iskeleti (bge-m3/multilingual-e5-large ile chunk + embed). Dosya yükleme (FR-15) ve KB doküman ekleri için MinIO container'ının aktive edilmesi (`tech_stack.md`'de "Future" işaretliydi).
 
 **Kabul Kriterleri:**
+
 - [ ] `docker compose up` ile Ollama container'ı ayağa kalkıyor, seçilen model yüklü
 - [ ] Backend'den Ollama'ya örnek bir prompt gönderilip yanıt alınabiliyor
 - [ ] MinIO container'ı ayakta, backend'den dosya yükleme/indirme testi başarılı
@@ -129,6 +140,7 @@
 ---
 
 ### F2-ISSUE-005: CI Güncellemesi (Mobil Build Pipeline)
+
 **Etiketler:** `sprint-0`, `mobile`, `infra`
 **Önerilen Atanan:** Geliştirici C
 **Story Point:** 3
@@ -136,6 +148,7 @@
 **Açıklama:** GitHub Actions'a mobil için EAS (Expo Application Services) build/test job'ı eklenir. PR'da en azından lint + TypeScript check; ana branch'e merge'de opsiyonel EAS preview build.
 
 **Kabul Kriterleri:**
+
 - [ ] PR açıldığında mobil app için lint + tsc çalışıyor
 - [ ] Ana branch'e merge'de EAS build tetiklenebiliyor (manuel veya otomatik)
 
@@ -148,12 +161,14 @@
 ### Hafta 1
 
 #### A2-1: Ollama LLM Entegrasyonu (Backend)
+
 **Etiketler:** `backend`, `llm`, `chatbot`
 **Story Point:** 8
 
 **Açıklama:** Backend'den Ollama'ya prompt gönderme servisi: sistem prompt tasarımı ("yalnızca verilen bağlama dayan, uydurma" — FR-14 kısıtı), context enjeksiyonu için placeholder, timeout ve hata durumunda fallback (L1 template yanıtına düşme).
 
 **Kabul Kriterleri:**
+
 - [ ] Backend, Ollama'dan senkron/stream yanıt alabiliyor
 - [ ] Sistem prompt, yanıtların yalnızca verilen bağlama dayanmasını zorluyor (FR-14)
 - [ ] Ollama zaman aşımına uğrarsa L1 template fallback'i devreye giriyor
@@ -164,12 +179,14 @@
 ---
 
 #### A2-2: PolicyVersion Embedding Pipeline
+
 **Etiketler:** `backend`, `rag`
 **Story Point:** 8
 
 **Açıklama:** Mevcut `PolicyVersion.content` alanının chunklanması (ör. 500-800 token'lık parçalar) ve her chunk için embedding üretilip `POLICY_EMBEDDING` tablosuna yazılması. Yeni bir `PolicyVersion` yayımlandığında (Faz 1'deki A-6 admin CRUD akışı) otomatik embedding tetiklenmeli.
 
 **Kabul Kriterleri:**
+
 - [ ] Mevcut tüm `PolicyVersion` kayıtları için toplu embedding job'ı çalıştırılabiliyor
 - [ ] Yeni versiyon yayımlandığında embedding otomatik oluşuyor
 - [ ] Chunk boyutu ve overlap parametreleri yapılandırılabilir
@@ -180,12 +197,14 @@
 ---
 
 #### A2-T1: Hafta 1 Testleri (Ollama Fallback + Embedding Pipeline)
+
 **Etiketler:** `backend`, `llm`, `rag`, `test`
 **Story Point:** 3
 
 **Açıklama:** A2-1/A2-2'nin testleri. Bkz. `Contributing.md` Bölüm 3 — test yazımı hafta içinde ilerler, Hafta 4'e bırakılmaz.
 
 **Kabul Kriterleri:**
+
 - [ ] Ollama zaman aşımına uğradığında L1 template fallback'inin devreye girdiği test ediliyor (A2-1)
 - [ ] Toplu embedding job'ının tüm `PolicyVersion` kayıtları için chunk+embed ürettiği, yeni versiyon yayımlandığında otomatik tetiklendiği test ediliyor (A2-2)
 
@@ -196,12 +215,14 @@
 ### Hafta 2
 
 #### A2-3: RAG Retrieval Servisi
+
 **Etiketler:** `backend`, `rag`
 **Story Point:** 8
 
 **Açıklama:** Kullanıcı sorusunun embedding'i ile `POLICY_EMBEDDING` üzerinde pgvector benzerlik araması (cosine similarity, top-k chunk). Bulunan chunk'ların LLM prompt'una context olarak enjekte edilmesi. A2-1 (LLM) ve A2-2 (embedding pipeline) burada birleşiyor.
 
 **Kabul Kriterleri:**
+
 - [ ] Bir soru için en alakalı top-5 chunk pgvector ile doğru şekilde getiriliyor
 - [ ] Getirilen chunk'lar LLM prompt'una context olarak ekleniyor, yanıt üretiliyor
 - [ ] Alakalı chunk bulunamazsa (düşük benzerlik skoru) "bu konuda bilgim yok" tarzı güvenli yanıt dönüyor (halüsinasyon engelleme, FR-14)
@@ -212,12 +233,14 @@
 ---
 
 #### A2-4: Citation / Kaynak Gösterme
+
 **Etiketler:** `backend`, `frontend`, `rag`, `chatbot`
 **Story Point:** 5
 
 **Açıklama:** Her RAG yanıtı için `CHAT_CITATION` kaydı oluşturulması — hangi `PolicyVersion`/chunk'tan yanıt üretildiği. Faz 1'deki A-9 (stretch, yapılmadıysa) kapsamının tam/zorunlu versiyonu.
 
 **Kabul Kriterleri:**
+
 - [ ] Her İK prosedür yanıtının altında "Kaynak: [doküman adı, versiyon, geçerlilik tarihi]" gösteriliyor
 - [ ] `CHAT_CITATION.policyVersionId`, gerçekten kullanılan chunk'ın versiyonuna işaret ediyor
 - [ ] Kaynağa tıklandığında (mobil/web) ilgili doküman detayına gidiliyor
@@ -228,12 +251,14 @@
 ---
 
 #### A2-T2: Hafta 2 Testleri (Halüsinasyon Engeli + Citation Doğruluğu)
+
 **Etiketler:** `backend`, `rag`, `chatbot`, `test`
 **Story Point:** 3
 
 **Açıklama:** A2-3/A2-4'ün testleri — FR-14 kritik kısıtı (uydurma yanıt vermeme) ve citation'ın gerçekten kullanılan kaynağa işaret etmesi.
 
 **Kabul Kriterleri:**
+
 - [ ] Alakalı chunk bulunamadığında (düşük benzerlik skoru) "bu konuda bilgim yok" tarzı güvenli yanıtın döndüğü, uydurma yanıt üretilmediği test ediliyor (A2-3, FR-14)
 - [ ] `CHAT_CITATION.policyVersionId`'nin, yanıtı üretirken gerçekten kullanılan chunk'ın versiyonuna işaret ettiği test ediliyor (A2-4)
 
@@ -244,12 +269,14 @@
 ### Hafta 3
 
 #### A2-5: Dosya Yükleyerek Soru Sorma (FR-15)
+
 **Etiketler:** `backend`, `mobile`, `rag`, `storage`
 **Story Point:** 8
 
 **Açıklama:** `POST /chatbot/conversations/{id}/attachments` — kullanıcı bir dosya yükler (MinIO'ya kaydedilir), dosya içeriği geçici olarak chunklanıp embed edilir, o sohbet oturumu için RAG context'ine dahil edilir (diğer kullanıcıların bilgi tabanına karışmaz — oturum bazlı, izole).
 
 **Kabul Kriterleri:**
+
 - [ ] Kullanıcı mobil/web'den dosya (PDF/DOCX) yükleyebiliyor, MinIO'ya kaydediliyor
 - [ ] Dosya içeriği chunklanıp embed ediliyor, yalnızca o sohbet oturumunda kullanılıyor
 - [ ] Yüklenen dosyaya dair soru sorulduğunda yanıt dosya içeriğine dayanıyor
@@ -261,12 +288,14 @@
 ---
 
 #### A2-6: Sesli Giriş (FR-16)
+
 **Etiketler:** `mobile`, `voice`, `chatbot`
 **Story Point:** 5
 
 **Açıklama:** `expo-speech-recognition` ile mobilde konuşmadan metne çevirme (cihaz üzerinde/on-device). Transkript edilen metin, mevcut `POST /chatbot/messages` akışına `inputType=voice` ile gönderilir — **yeni backend endpoint'i gerekmiyor**, `CHAT_MESSAGE.inputType` alanı zaten Faz 1 ER diagram'ında tanımlı.
 
 **Kabul Kriterleri:**
+
 - [ ] Mikrofon butonuna basılı tutarak konuşma metne çevriliyor
 - [ ] Transkript, mesaj kutusuna otomatik doluyor, kullanıcı onaylayıp gönderiyor
 - [ ] Gönderilen mesajın `inputType` alanı `voice` olarak kaydediliyor
@@ -277,12 +306,14 @@
 ---
 
 #### A2-7: Chatbot Mobil UI
+
 **Etiketler:** `mobile`, `chatbot`
 **Story Point:** 8
 
 **Açıklama:** Mesaj listesi, mesaj gönderme kutusu, sesli giriş butonu (A2-6), dosya ekleme butonu (A2-5), kaynak gösterimi (A2-4), sohbet geçmişi listesi.
 
 **Kabul Kriterleri:**
+
 - [ ] Mobilde yazılı/sesli soru sorulabiliyor, yanıt + kaynak gösteriliyor
 - [ ] Dosya eklenip o dosyaya dair soru sorulabiliyor
 - [ ] Sohbet geçmişi listelenip eski konuşmalar açılabiliyor
@@ -296,12 +327,14 @@
 ### Hafta 4
 
 #### A2-8: RAG Performans/Doğruluk Tuning, Entegrasyon, Demo
+
 **Etiketler:** `buffer`, `rag`, `llm`
 **Story Point:** 8
 
 **Açıklama:** NFR-02 (5 sn yanıt) riski gerçek RAG+LLM ile yeniden değerlendirilir — gerekirse streaming yanıt (kullanıcı üretilen metni parça parça görür) ile algılanan hız iyileştirilir. Retrieval doğruluğu (yanlış/alakasız chunk getirme oranı) manuel test setiyle değerlendirilir. Demo senaryoları (yazılı soru, sesli soru, dosya yükleyerek soru, kaynak gösterme) hazırlanır.
 
 **Kabul Kriterleri:**
+
 - [ ] En az 20 soruluk test setinde RAG yanıtlarının doğruluğu manuel değerlendirildi
 - [ ] Ortalama/95p yanıt süresi ölçüldü; NFR-02 karşılanamıyorsa streaming ile algılanan gecikme azaltıldı
 - [ ] En az 4 uçtan uca demo senaryosu (yazılı/sesli/dosyalı soru + kaynak gösterme) prova edildi
@@ -312,12 +345,14 @@
 ---
 
 #### A2-T3: Hafta 4 Testleri (Dosya İzolasyonu + Sesli Giriş Etiketleme)
+
 **Etiketler:** `backend`, `rag`, `storage`, `test`
 **Story Point:** 2
 
 **Açıklama:** A2-5/A2-6'nın testleri. Hafta 3 zaten A'nın en yoğun haftası (21 SP) olduğu için bu test issue'su, A'nın daha hafif olan Hafta 4'üne (A2-8 ile birlikte) planlandı.
 
 **Kabul Kriterleri:**
+
 - [ ] Bir sohbette yüklenen dosyanın embedding'inin yalnızca o sohbet oturumunda kullanıldığı, başka kullanıcıların RAG context'ine karışmadığı test ediliyor (A2-5, izolasyon kritik)
 - [ ] Sesli girişle gönderilen mesajın `CHAT_MESSAGE.inputType`'ının `voice` olarak kaydedildiği test ediliyor (A2-6)
 
@@ -330,12 +365,14 @@
 ### Hafta 1
 
 #### B2-1: Auth + Dashboard Mobil Ekranları
+
 **Etiketler:** `mobile`
 **Story Point:** 5
 
 **Açıklama:** F2-ISSUE-001'in UI tamamlama işi: login ekranı görsel son hali, Dashboard'da hızlı erişim kartları (menü/servis/rehber/araç/anket/duyuru/schedule kısayolları), bekleyen bildirimler özeti, profil bilgisi.
 
 **Kabul Kriterleri:**
+
 - [ ] Dashboard'da tüm modüllere hızlı erişim kartları var
 - [ ] Bekleyen bildirim sayısı/özeti gösteriliyor
 - [ ] Profil ekranı `GET /me` verisini gösteriyor
@@ -346,12 +383,14 @@
 ---
 
 #### B2-2: Rehber Mobil Ekranları
+
 **Etiketler:** `mobile`, `directory`
 **Story Point:** 5
 
 **Açıklama:** Çalışan/departman arama, telefon rehberi, click-to-call — Faz 1'deki B-1/B-2/B-3 API'lerinin mobil karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Çalışan arama + filtre + detay ekranı mobilde çalışıyor
 - [ ] Departman arama + detay ekranı mobilde çalışıyor
 - [ ] Telefon rehberinden tek dokunuşla arama (native `Linking.openURL('tel:...')`) tetikleniyor
@@ -362,12 +401,14 @@
 ---
 
 #### B2-T1: Hafta 1 Testleri (Admin 2FA + Rol Bazlı Navigasyon)
+
 **Etiketler:** `mobile`, `auth`, `test`
 **Story Point:** 2
 
 **Açıklama:** F2-ISSUE-001'in testleri. Bu, B'nin tüm fazdaki tek bağımsız test issue'su — B'nin Hafta 2-4'ü zaten yoğun olduğundan (bkz. Bölüm 2), kalan haftaların test beklentisi B2-10'un kapsamına eklendi. Burası özellikle kritik çünkü NFR-07 (admin 2FA) web'de var, mobile taşınırken atlanma riski `Kritik Riskler`de (Bölüm 7) ayrıca işaretlendi.
 
 **Kabul Kriterleri:**
+
 - [ ] Admin rolündeki kullanıcının 2FA adımını tamamlamadan admin mobil ekranlarına erişemediği test ediliyor (F2-ISSUE-001, NFR-07)
 - [ ] `employee` rolünün hiçbir admin navigasyon öğesini görmediği, her admin alt tipinin yalnızca kendi ekranlarını gördüğü test ediliyor (F2-ISSUE-001)
 
@@ -378,12 +419,14 @@
 ### Hafta 2
 
 #### B2-3: Servis Mobil Ekranı
+
 **Etiketler:** `mobile`, `shuttle`
 **Story Point:** 3
 
 **Açıklama:** Güzergah listesi, durak/saat, güncel plaka — Faz 1'deki B-5 API'sinin mobil karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Güzergah listesi ve durak/saat detayı mobilde görüntüleniyor
 - [ ] Güncel plaka bilgisi gösteriliyor
 - [ ] FR-22–25 mobilde karşılanıyor
@@ -393,12 +436,14 @@
 ---
 
 #### B2-4: Gerçek Google Maps Entegrasyonu (FR-27 Tam Versiyonu)
+
 **Etiketler:** `backend`, `mobile`, `maps`, `shuttle`
 **Story Point:** 8
 
 **Açıklama:** Faz 1'deki B-6'nın basit Haversine mesafe hesabının yerine Google Maps Directions API ile gerçek rota ve trafik bazlı ETA hesaplaması. Backend'deki `GET /shuttle-routes/recommendation` servisinin Maps API çağrısı yapacak şekilde güncellenmesi.
 
 **Kabul Kriterleri:**
+
 - [ ] `GET /shuttle-routes/recommendation` artık Directions API'den gerçek süre/mesafe döndürüyor
 - [ ] Mobil ekranda önerilen güzergah + gerçekçi ETA gösteriliyor
 - [ ] Maps API çağrısı başarısız olursa Faz 1'deki basit hesaplamaya fallback yapılıyor (kesinti toleransı)
@@ -409,12 +454,14 @@
 ---
 
 #### B2-5: Arka Plan Konum Takibi Entegrasyonu
+
 **Etiketler:** `mobile`, `maps`
 **Story Point:** 5
 
 **Açıklama:** `expo-location` + `expo-task-manager` ile kullanıcının konumunu alıp B2-4'teki öneri servisine gönderme; arka planda çalışırken pil/performans etkisini minimize eden bir polling stratejisi (ör. sadece Servis ekranı açıkken aktif, sürekli arka plan takibi değil — FR'lerde sürekli canlı takip talebi yok).
 
 **Kabul Kriterleri:**
+
 - [ ] Konum izni verildiğinde güncel konum alınıp öneri servisine gönderiliyor
 - [ ] Servis ekranı kapatıldığında konum takibi duruyor (gereksiz pil tüketimi yok)
 - [ ] İzin reddedilirse manuel varış noktası girişi fallback'i var
@@ -426,12 +473,14 @@
 ### Hafta 3
 
 #### B2-6: Araç Rezervasyon Mobil Ekranı
+
 **Etiketler:** `mobile`, `vehicle`
 **Story Point:** 5
 
 **Açıklama:** Uygun araç listesi, rezervasyon formu, durum takibi, iptal — Faz 1'deki B-8 API'sinin mobil karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Uygun araçlar listeleniyor, bakımdakiler filtreleniyor
 - [ ] Rezervasyon oluşturma/iptal mobilde çalışıyor
 - [ ] Kullanıcı kendi rezervasyon durumunu görebiliyor
@@ -442,12 +491,14 @@
 ---
 
 #### B2-7: Servis Yönetimi Admin Mobil Ekranı
+
 **Etiketler:** `mobile`, `shuttle`, `admin`
 **Story Point:** 8
 
 **Açıklama:** Güzergah/durak/saat oluşturma-güncelleme formu, plaka güncelleme — `POST/PUT /admin/shuttle-routes`, `PUT /admin/shuttle-routes/{id}/plate` endpoint'lerinin mobil karşılığı. Faz 1'deki B-5 API'sinin web admin ekranıyla aynı akış, bu kez mobilde. Yalnızca `shuttle_admin` rolüne görünür.
 
 **Kabul Kriterleri:**
+
 - [ ] `shuttle_admin` rolündeki kullanıcı mobil navigasyonda "Servis Yönetimi" bölümünü görüyor, `employee` görmüyor
 - [ ] Güzergah/durak/saat oluşturma ve güncelleme formu mobilde çalışıyor
 - [ ] Plaka bilgisi mobilden güncellenebiliyor
@@ -460,12 +511,14 @@
 ### Hafta 4
 
 #### B2-8: Araç Yönetimi Admin Mobil Ekranı
+
 **Etiketler:** `mobile`, `vehicle`, `admin`
 **Story Point:** 5
 
 **Açıklama:** Araç ekleme/güncelleme, bakım durumu işaretleme — `POST/PUT /admin/vehicles`, `PUT /admin/vehicles/{id}/maintenance-status` mobil karşılığı. Faz 1'deki B-9 (web) ile aynı akış. Yalnızca `fleet_admin` rolüne görünür.
 
 **Kabul Kriterleri:**
+
 - [ ] `fleet_admin` rolündeki kullanıcı araç ekleyip güncelleyebiliyor
 - [ ] Bakım durumu mobilde tek dokunuşla değiştirilebiliyor
 - [ ] `employee` rolü bu ekranı göremiyor
@@ -476,12 +529,14 @@
 ---
 
 #### B2-9: Çalışan/Departman Yönetimi Admin Mobil Ekranı (BP-10)
+
 **Etiketler:** `mobile`, `admin`
 **Story Point:** 8
 
 **Açıklama:** `POST/PUT/DELETE /admin/employees`, `POST/PUT/DELETE /admin/departments` mobil karşılığı — Faz 1'deki C-10 (web) ile aynı akış, mobilde. Yalnızca `hr_admin` rolüne görünür.
 
 **Kabul Kriterleri:**
+
 - [ ] `hr_admin` rolündeki kullanıcı çalışan oluşturabiliyor, güncelleyebiliyor, silebiliyor
 - [ ] Departman oluşturma/güncelleme/silme mobilde çalışıyor
 - [ ] `employee` rolü bu ekranı göremiyor
@@ -492,12 +547,14 @@
 ---
 
 #### B2-10: Entegrasyon, Cross-Review, Bug Bash (iOS + Android)
+
 **Etiketler:** `buffer`, `mobile`
 **Story Point:** 3
 
 **Açıklama:** Gerçek cihaz/simülatör testleri (hem iOS hem Android), A ve C'nin ekranlarıyla navigasyon/entegrasyon testi, TestFlight/Play Store internal testing kanallarının hazırlanması. **Not:** Admin mobil ekranlarının eklenmesiyle bu haftaya ayrılan buffer süresi Faz 1'e göre daralmış durumda (3 SP) — B2-7/B2-8/B2-9'da gecikme olursa bu issue ilk sıkışacak olan, gerekirse `sprintPlanPhase2.md` Bölüm 5'teki fallback sırası (admin mobil ekranları önce ertelenir) devreye alınmalı.
 
 **Kabul Kriterleri:**
+
 - [ ] Tüm B modülü ekranları (çalışan + admin) hem iOS hem Android'de manuel test edildi
 - [ ] TestFlight (iOS) ve Play Store internal testing (Android) kanalları hazır, build yüklendi
 - [ ] Cross-review'da bulunan kritik buglar kapatıldı
@@ -512,12 +569,14 @@
 ### Hafta 1
 
 #### C2-1: Menü Mobil Ekranı
+
 **Etiketler:** `mobile`, `menu`
 **Story Point:** 3
 
 **Açıklama:** Bugün/haftalık sekme, kalori/alerjen gösterimi — Faz 1'deki C-1 API'sinin mobil karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Bugünün ve haftalık menü mobilde sekmeler arası geçişle gösteriliyor
 - [ ] Kalori/alerjen bilgisi görünür
 - [ ] FR-17–20 mobilde karşılanıyor
@@ -527,12 +586,14 @@
 ---
 
 #### C2-2: My Schedule Mobil Ekranı
+
 **Etiketler:** `mobile`, `schedule`
 **Story Point:** 8
 
 **Açıklama:** `requirementAnalysis2.md` bölüm 9'da özellikle belirtilen "My Work Schedule" ekranı ve takvim ikonlu menü öğesi. Pazartesi–Cuma gün durumu seçimi (Ofiste/Uzaktan/İzinli), haftalık özet — Faz 1'deki C-4 API'si (`/schedules/me`) ve C-5a'daki tasarım kararları temel alınır (Figma'da bu ekran yoktu, Faz 1'de mockup'ı hazırlanmıştı).
 
 **Kabul Kriterleri:**
+
 - [ ] Her iş günü için tek seçim yapılabiliyor, haftalık özet anlık güncelleniyor
 - [ ] Kaydet `PUT /schedules/me`'yi çağırıyor, veri kalıcı
 - [ ] Aynı veri web'deki `/my-schedule` ile birebir tutarlı (FR-64 tek kaynak — aynı endpoint'i okuyup yazıyor)
@@ -544,12 +605,14 @@
 ---
 
 #### C2-T1: Hafta 1 Testleri (FR-64 Mobil/Web Tek Kaynak Tutarlılığı)
+
 **Etiketler:** `mobile`, `schedule`, `test`
 **Story Point:** 2
 
 **Açıklama:** C2-2'nin testi. C'nin tüm fazdaki tek bağımsız test issue'su — Hafta 2-4 zaten en yoğun haftalar olduğundan (bkz. Bölüm 2), kalan haftaların test beklentisi C2-11'in kapsamına eklendi. Bu kontrol özellikle kritik çünkü ayrı bir mobil-özel state/cache katmanı FR-64'ü ihlal eder (bkz. Bölüm 7).
 
 **Kabul Kriterleri:**
+
 - [ ] Mobilde kaydedilen bir haftalık plan değişikliğinin web'deki `/my-schedule`'da (aynı `GET/PUT /schedules/me` ucu üzerinden) anında göründüğü, ayrı bir mobil önbelleğin veri tutmadığı test ediliyor (C2-2, FR-64)
 
 **Bağımlılık:** C2-2
@@ -559,12 +622,14 @@
 ### Hafta 2
 
 #### C2-3: Anket / Feedback Mobil Ekranı
+
 **Etiketler:** `mobile`, `survey`
 **Story Point:** 5
 
 **Açıklama:** Aktif anketlere katılım, anonim feedback gönderme — Faz 1'deki C-7 API'sinin mobil karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Aktif anketler listeleniyor, yanıt gönderilebiliyor
 - [ ] Anonim feedback formu (kullanıcı kimliği hiçbir şekilde gönderilmiyor) çalışıyor
 - [ ] FR-42–43 mobilde karşılanıyor
@@ -574,12 +639,14 @@
 ---
 
 #### C2-4: Duyuru Mobil Ekranı
+
 **Etiketler:** `mobile`, `announcement`
 **Story Point:** 5
 
 **Açıklama:** Duyuru listesi (sabitlenenler üstte) + detay — Faz 1'deki C-9 API'sinin mobil karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Duyuru listesinde sabitlenenler üstte gösteriliyor
 - [ ] Duyuru detay ekranı çalışıyor
 - [ ] FR-45, 47 mobilde karşılanıyor
@@ -589,12 +656,14 @@
 ---
 
 #### C2-5: Yemek Menüsü Admin Mobil Ekranı (Excel İçe Aktarma)
+
 **Etiketler:** `mobile`, `menu`, `admin`
 **Story Point:** 5
 
 **Açıklama:** `expo-document-picker` ile Excel dosyası seçip `POST /admin/menus/import`'a yükleme, menü kaydı kaldırma (`DELETE /admin/menus/{id}`) — Faz 1'deki C-2 backend'inin mobil karşılığı. Yalnızca `canteen_admin` rolüne görünür.
 
 **Kabul Kriterleri:**
+
 - [ ] `canteen_admin` rolündeki kullanıcı cihazdan Excel dosyası seçip yükleyebiliyor
 - [ ] Hatalı/eksik şablon formatında mobilde anlamlı hata mesajı gösteriliyor (422)
 - [ ] Menü kaydı mobilden kaldırılabiliyor
@@ -608,12 +677,14 @@
 ### Hafta 3
 
 #### C2-6: Push Bildirim Dispatch Entegrasyonu
+
 **Etiketler:** `backend`, `push`, `announcement`
 **Story Point:** 8
 
 **Açıklama:** Bir duyuru yayımlandığında veya acil durum bildirimi tetiklendiğinde, `NOTIFICATION` kaydı oluşturmanın yanı sıra F2-ISSUE-002'de kurulan altyapı üzerinden gerçek FCM push bildirimi gönderilmesi. Bildirim türüne göre (`info`/`urgent`) farklı push önceliği.
 
 **Kabul Kriterleri:**
+
 - [ ] `POST /admin/announcements` çağrıldığında ilgili kullanıcılara gerçek push bildirimi gidiyor
 - [ ] `urgent` tipi bildirimler yüksek öncelikli push olarak gönderiliyor (FR-66)
 - [ ] Kullanıcı bildirim tercihlerinde kapattığı kategoriler için push gönderilmiyor
@@ -624,12 +695,14 @@
 ---
 
 #### C2-7: Bildirim Listesi + Tercihleri Mobil Ekranı
+
 **Etiketler:** `mobile`, `announcement`
 **Story Point:** 5
 
 **Açıklama:** `GET /notifications`, `PUT /notifications/preferences` mobil UI karşılığı.
 
 **Kabul Kriterleri:**
+
 - [ ] Bildirim listesi (okundu/okunmadı durumuyla) mobilde gösteriliyor
 - [ ] Kullanıcı bildirim tercihlerini (kategori bazlı aç/kapa) mobilde güncelleyebiliyor
 - [ ] FR-65–67 mobilde karşılanıyor
@@ -639,12 +712,14 @@
 ---
 
 #### C2-8: Duyuru Yönetimi Admin Mobil Ekranı
+
 **Etiketler:** `mobile`, `announcement`, `admin`
 **Story Point:** 5
 
 **Açıklama:** `POST /admin/announcements`, `PUT /admin/announcements/{id}/pin` mobil karşılığı — Faz 1'deki C-9 (web) ile aynı akış. Yönetici rolüne görünür.
 
 **Kabul Kriterleri:**
+
 - [ ] Yönetici rolündeki kullanıcı duyuru oluşturup yayımlayabiliyor
 - [ ] Duyuru sabitleme mobilde çalışıyor
 - [ ] `employee` rolü bu ekranı göremiyor
@@ -657,12 +732,14 @@
 ### Hafta 4
 
 #### C2-9: Anket Yönetimi Admin Mobil Ekranı
+
 **Etiketler:** `mobile`, `survey`, `admin`
 **Story Point:** 8
 
 **Açıklama:** `POST /admin/surveys`, `PUT /admin/surveys/{id}/publish`, `GET /admin/surveys/{id}/results` mobil karşılığı — Faz 1'deki C-8 (web) ile aynı akış.
 
 **Kabul Kriterleri:**
+
 - [ ] Yönetici rolündeki kullanıcı anket oluşturup yayımlayabiliyor
 - [ ] Anket sonuçları mobilde özet/grafik halinde görüntülenebiliyor
 - [ ] `employee` rolü bu ekranı göremiyor
@@ -673,12 +750,14 @@
 ---
 
 #### C2-10: Rol/İzin Yönetimi (RBAC) + Rapor Mobil Ekranı (BP-10)
+
 **Etiketler:** `mobile`, `admin`
 **Story Point:** 8
 
 **Açıklama:** `GET /admin/roles`, `PUT /admin/users/{id}/roles`, `GET /admin/reports/{type}`, `GET /admin/reports/{id}/export?format=xlsx|pdf` mobil karşılığı — Faz 1'deki C-11 (web) ile aynı akış. Mobilde rapor export'u native paylaşım sheet'i (`Share` API) üzerinden indirilir/paylaşılır. Yalnızca `system_admin` rolüne görünür.
 
 **Kabul Kriterleri:**
+
 - [ ] `system_admin` rolündeki kullanıcı mobilde rol atayabiliyor/kaldırabiliyor
 - [ ] En az bir rapor tipi (`usage`) mobilde oluşturulup native share ile dışa aktarılabiliyor
 - [ ] `employee` rolü bu ekranı göremiyor
@@ -689,12 +768,14 @@
 ---
 
 #### C2-11: Entegrasyon, Cross-Review, Bug Bash (iOS + Android)
+
 **Etiketler:** `buffer`, `mobile`
 **Story Point:** 3
 
 **Açıklama:** Gerçek cihaz/simülatör testleri, A ve B'nin ekranlarıyla entegrasyon, push bildirimlerinin gerçek cihazda uçtan uca doğrulanması. **Not:** Admin mobil ekranlarının eklenmesiyle bu haftaya ayrılan buffer süresi Faz 1'e göre daralmış durumda (3 SP) — C2-8/C2-9/C2-10'da gecikme olursa bu issue ilk sıkışacak olan, gerekirse `sprintPlanPhase2.md` Bölüm 5'teki fallback sırası devreye alınmalı.
 
 **Kabul Kriterleri:**
+
 - [ ] Tüm C modülü ekranları (çalışan + admin) hem iOS hem Android'de manuel test edildi
 - [ ] Push bildirimleri gerçek cihazda (uygulama arka planda/kapalıyken dahil) doğrulandı
 - [ ] Cross-review'da bulunan kritik buglar kapatıldı

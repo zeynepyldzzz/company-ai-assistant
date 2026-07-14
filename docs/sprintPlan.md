@@ -1,4 +1,5 @@
 # Sprint Planı ve Issue Kırılımı (4 Hafta / 3 Full-Stack Geliştirici)
+
 ## Yapay Zeka Destekli Şirket İçi Asistan — MVP
 
 > Kaynak: `requirementAnalysis2.md`, `businessProcessMapping.md`, `apiEndpoints.md`, `diagrams/ERDiagram.png`, `tech_stack.md`. Bu doküman, 4 haftalık MVP teslimatı için modül bazlı iş bölümünü ve issue kırılımını tanımlar. Her madde doğrudan bir GitHub issue'suna çevrilebilir.
@@ -8,6 +9,7 @@
 ## 1. Kapsam Kararı
 
 **MVP'ye dahil (4 hafta):**
+
 - Web uygulaması (çalışan) + Web yönetim paneli (React + TS + Tailwind + shadcn/ui)
 - Backend API (Java 21 + Spring Boot 3, modüler monolit, Spring Data JPA, PostgreSQL)
 - Chatbot **L1 yalnızca**: Intent detection (embedding bazlı) + template yanıtlar + İK prosedürü template yönlendirmesi (FR-11–13, 51–58) — **LLM/RAG yok**
@@ -15,6 +17,7 @@
 - Tüm diğer modüller (Menu, Shuttle, Directory, Vehicle, Survey, Announcement, Schedule, Admin CRUD)
 
 **Faz 2'ye ertelendi (kapsam dışı):**
+
 - Mobil uygulama (Expo/React Native) — tamamı
 - Chatbot **L2**: RAG pipeline, local LLM (Phi-4 Mini/Qwen), pgvector embedding retrieval, dosya yükleme ile soru sorma (FR-15)
 - Sesli giriş (FR-16)
@@ -26,11 +29,11 @@
 
 ## 2. Ekip ve Sorumluluk Alanları (Modül Bazlı, Uçtan Uca)
 
-| Kişi | Modüller (BP) | Kapsam |
-|---|---|---|
-| **Geliştirici A** | BP-01 (Auth çekirdeği — ortak), BP-02 (Chatbot L1 + KB admin) | En karmaşık/riskli modül; en deneyimli kişiye önerilir |
-| **Geliştirici B** | BP-05 (Rehberler), BP-04 (Servis), BP-06 (Araç Rezervasyonu) | Orta karmaşıklıkta, birbirine benzeyen CRUD+arama akışları |
-| **Geliştirici C** | BP-03 (Yemek Menüsü), BP-09 (Çalışma Düzeni), BP-07 (Anket), BP-08 (Duyuru), BP-10 (Admin CRUD + RBAC + Rapor) | Çok sayıda ama görece basit modül |
+| Kişi              | Modüller (BP)                                                                                                  | Kapsam                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Geliştirici A** | BP-01 (Auth çekirdeği — ortak), BP-02 (Chatbot L1 + KB admin)                                                  | En karmaşık/riskli modül; en deneyimli kişiye önerilir     |
+| **Geliştirici B** | BP-05 (Rehberler), BP-04 (Servis), BP-06 (Araç Rezervasyonu)                                                   | Orta karmaşıklıkta, birbirine benzeyen CRUD+arama akışları |
+| **Geliştirici C** | BP-03 (Yemek Menüsü), BP-09 (Çalışma Düzeni), BP-07 (Anket), BP-08 (Duyuru), BP-10 (Admin CRUD + RBAC + Rapor) | Çok sayıda ama görece basit modül                          |
 
 Her kişi kendi modülünde DB migration → API endpoint → web/admin UI zincirinin tamamından sorumludur.
 
@@ -53,12 +56,12 @@ Bu adımlar paylaşılmadan modüller birbirinden bağımsız ilerleyemez; tüm 
 
 ## 4. Haftalık Plan (Hafta 1-4)
 
-| Hafta | Geliştirici A | Geliştirici B | Geliştirici C |
-|---|---|---|---|
-| 1 | BP-02 Chatbot L1 temeli (intent embedding servisi, template motor) | BP-05 Rehberler (Employee/Department/Phonebook arama) | BP-03 Yemek Menüsü (görüntüleme + admin Excel import) |
-| 2 | BP-02 İK prosedür template yönlendirme (FR-51–58) + KB admin CRUD | BP-04 Servis (güzergah/durak/plaka + basit öneri) | BP-09 Çalışma Düzeni (tek kaynak, FR-64 kritik) |
-| 3 | BP-02 test, sohbet geçmişi, admin doküman versiyonlama | BP-06 Araç Rezervasyonu (liste, rezervasyon, bakım durumu) | BP-07 Anket/Feedback + BP-08 Duyuru/Bildirim |
-| 4 | Entegrasyon, cross-review, bug bash, chatbot demo senaryoları | Entegrasyon, cross-review, bug bash | BP-10 Admin CRUD + RBAC ekranı + basit rapor/export, entegrasyon |
+| Hafta | Geliştirici A                                                      | Geliştirici B                                              | Geliştirici C                                                    |
+| ----- | ------------------------------------------------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| 1     | BP-02 Chatbot L1 temeli (intent embedding servisi, template motor) | BP-05 Rehberler (Employee/Department/Phonebook arama)      | BP-03 Yemek Menüsü (görüntüleme + admin Excel import)            |
+| 2     | BP-02 İK prosedür template yönlendirme (FR-51–58) + KB admin CRUD  | BP-04 Servis (güzergah/durak/plaka + basit öneri)          | BP-09 Çalışma Düzeni (tek kaynak, FR-64 kritik)                  |
+| 3     | BP-02 test, sohbet geçmişi, admin doküman versiyonlama             | BP-06 Araç Rezervasyonu (liste, rezervasyon, bakım durumu) | BP-07 Anket/Feedback + BP-08 Duyuru/Bildirim                     |
+| 4     | Entegrasyon, cross-review, bug bash, chatbot demo senaryoları      | Entegrasyon, cross-review, bug bash                        | BP-10 Admin CRUD + RBAC ekranı + basit rapor/export, entegrasyon |
 
 **Hafta 4 tamamı buffer/entegrasyon haftası olarak düşünülmeli** — 3 kişilik ekiplerde modüller birleşirken kaçınılmaz sürtünme (ör. shared component'ler, API sözleşme uyuşmazlıkları) çıkar.
 
@@ -66,7 +69,7 @@ Bu adımlar paylaşılmadan modüller birbirinden bağımsız ilerleyemez; tüm 
 
 ## 5. Detaylı Issue Listesi
 
-### Geliştirici A — BP-02 Chatbot (L1) 
+### Geliştirici A — BP-02 Chatbot (L1)
 
 - [ ] **A-1:** Intent embedding servisi entegrasyonu (bge-m3 veya multilingual-e5-large) — soru → intent sınıflandırma
 - [ ] **A-2:** Template yanıt motoru (intent → önceden tanımlı yanıt şablonu eşleme)
