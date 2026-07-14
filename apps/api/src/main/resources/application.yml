@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: assistant-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/company_ai_assistant
+    username: app_user
+    password: app_password
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  servlet:
+    context-path: /api/v1
