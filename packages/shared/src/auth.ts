@@ -36,3 +36,18 @@ export const LoginResponseSchema = z.object({
   user: UserSchema,
 });
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+
+// POST /auth/login: admin rolu icin normal token yerine bu donuyor,
+// devaminda POST /auth/2fa/verify cagrilmasi gerekiyor.
+export const TwoFactorChallengeSchema = z.object({
+  twoFactorRequired: z.literal(true),
+  challengeToken: z.string(),
+});
+export type TwoFactorChallenge = z.infer<typeof TwoFactorChallengeSchema>;
+
+// POST /auth/2fa/verify
+export const TwoFactorVerifyRequestSchema = z.object({
+  challengeToken: z.string(),
+  code: z.string().min(1),
+});
+export type TwoFactorVerifyRequest = z.infer<typeof TwoFactorVerifyRequestSchema>;

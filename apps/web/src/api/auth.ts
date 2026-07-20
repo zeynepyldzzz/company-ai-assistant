@@ -1,22 +1,32 @@
 import {
   LoginRequestSchema,
   LoginResponseSchema,
+  TwoFactorChallengeSchema,
   UserSchema,
   type LoginRequest,
   type LoginResponse,
+  type TwoFactorChallenge,
   type User,
 } from "@company/shared";
 import { apiFetch } from "./client";
 
-// TODO(ISSUE-003): bu isteğin bugün karşılığı olan gerçek bir backend endpoint'i yok
-// (AuthController şu an sadece /auth/ping stub'ı içeriyor). Kontrat
-// docs/apiEndpoints.md ile birebir uyumlu tutuldu; ISSUE-003 birleştiğinde
-// bu dosyada değişiklik gerekmemeli.
-export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+// Admin rolu icin backend token yerine 2FA challenge donuyor (docs/apiEndpoints.md #0).
+export async function login(credentials: LoginRequest): Promise<LoginResponse | TwoFactorChallenge> {
   const payload = LoginRequestSchema.parse(credentials);
   const data = await apiFetch<unknown>("/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+  if (typeof data === "object" && data !== null && "twoFactorRequired" in data) {
+    return TwoFactorChallengeSchema.parse(data);
+  }
+  return LoginResponseSchema.parse(data);
+}
+
+export async function verifyTwoFactor(challengeToken: string, code: string): Promise<LoginResponse> {
+  const data = await apiFetch<unknown>("/auth/2fa/verify", {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, code }),
   });
   return LoginResponseSchema.parse(data);
 }
