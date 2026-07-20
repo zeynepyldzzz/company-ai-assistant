@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
   java.util.Optional<Employee> findByEmail(String email);
 
@@ -21,4 +23,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             @Param("office") String office,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT e FROM Employee e
+        WHERE e.phone IS NOT NULL
+          AND (:search IS NULL
+               OR LOWER(e.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+               OR e.phone LIKE CONCAT('%', CAST(:search AS string), '%'))
+        """)
+    Page<Employee> searchPhonebook(@Param("search") String search, Pageable pageable);
+
+    Optional<Employee> findByPhone(String phone);
 }
