@@ -1,11 +1,16 @@
 package com.company.assistant.auth;
 
-import com.company.assistant.directory.Employee;
-import com.company.assistant.directory.EmployeeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.company.assistant.directory.Employee;
+import com.company.assistant.directory.EmployeeRepository;
 
 @RestController
 @RequestMapping("/auth")
@@ -74,6 +79,21 @@ public class AuthController {
     public void logout(@RequestBody AuthDtos.RefreshRequest request) {
         refreshTokenService.validate(request.refreshToken())
                 .ifPresent(refreshTokenService::revoke);
+
+    }
+
+    @GetMapping("/session")
+    public AuthDtos.UserDto session(org.springframework.security.core.Authentication authentication) {
+        Integer employeeId = Integer.valueOf(authentication.getName());
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .filter(Employee::isActive)
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "Session invalid"));
+
+        AuthDtos.RoleInfo roleInfo = AuthDtos.RoleInfo.from(employee);
+        return new AuthDtos.UserDto(employee.getId(), employee.getName(),
+                employee.getEmail(), roleInfo.role(), roleInfo.subRole());
     }
 
     private ResponseStatusException invalidCredentials() {
