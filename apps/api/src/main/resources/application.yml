@@ -10,6 +10,11 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  
+  
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
 
 server:
   servlet:
@@ -20,3 +25,6 @@ app:
     secret: ${JWT_SECRET:dev-secret-change-me-this-must-be-at-least-32-bytes-long!}
     access-ttl-minutes: 15
     refresh-ttl-days: 7
+  ollama:
+    base-url: http://localhost:11434
+    embedding-model: bge-m3
