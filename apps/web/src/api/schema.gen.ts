@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["verifyTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/vehicles/ping": {
         parameters: {
             query?: never;
@@ -116,6 +180,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -132,14 +212,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/employees/ping": {
+    "/employees": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_4"];
+        get: operations["searchEmployees"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/employees/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getEmployeeById"];
         put?: never;
         post?: never;
         delete?: never;
@@ -155,7 +251,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_5"];
+        get: operations["ping_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -164,14 +260,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/ping": {
+    "/auth/session": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_6"];
+        get: operations["session"];
         put?: never;
         post?: never;
         delete?: never;
@@ -187,7 +283,39 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_7"];
+        get: operations["ping_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ping_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/hr-ping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["hrPing"];
         put?: never;
         post?: never;
         delete?: never;
@@ -200,6 +328,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RefreshRequest: {
+            refreshToken?: string;
+        };
+        RefreshResponse: {
+            accessToken?: string;
+            refreshToken?: string;
+        };
+        LoginRequest: {
+            email?: string;
+            password?: string;
+        };
+        TwoFactorVerifyRequest: {
+            challengeToken?: string;
+            code?: string;
+        };
+        LoginResponse: {
+            accessToken?: string;
+            refreshToken?: string;
+            user?: components["schemas"]["UserDto"];
+        };
+        UserDto: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            email?: string;
+            role?: string;
+            subRole?: string;
+        };
         MealItemResponse: {
             /** Format: int32 */
             id?: number;
@@ -217,6 +373,26 @@ export interface components {
             weekNumber?: number;
             items?: components["schemas"]["MealItemResponse"][];
         };
+        EmployeeResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            email?: string;
+            phone?: string;
+            officeStatus?: string;
+            /** Format: int32 */
+            departmentId?: number;
+            departmentName?: string;
+        };
+        PagedResponseEmployeeResponse: {
+            data?: components["schemas"]["EmployeeResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -226,6 +402,100 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RefreshResponse"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    verifyTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoginResponse"];
+                };
+            };
+        };
+    };
     ping: {
         parameters: {
             query?: never;
@@ -368,6 +638,26 @@ export interface operations {
             };
         };
     };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserDto"];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;
@@ -390,6 +680,54 @@ export interface operations {
             };
         };
     };
+    searchEmployees: {
+        parameters: {
+            query?: {
+                search?: string;
+                department?: string;
+                office?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponseEmployeeResponse"];
+                };
+            };
+        };
+    };
+    getEmployeeById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EmployeeResponse"];
+                };
+            };
+        };
+    };
     ping_4: {
         parameters: {
             query?: never;
@@ -406,6 +744,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserDto"];
                 };
             };
         };
@@ -445,12 +803,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": {
+                        [key: string]: string;
+                    };
                 };
             };
         };
     };
-    ping_7: {
+    hrPing: {
         parameters: {
             query?: never;
             header?: never;
@@ -465,7 +825,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": {
+                        [key: string]: string;
+                    };
                 };
             };
         };
