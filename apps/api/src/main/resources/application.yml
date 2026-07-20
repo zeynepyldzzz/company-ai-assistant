@@ -14,3 +14,9 @@ spring:
 server:
   servlet:
     context-path: /api/v1
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-this-must-be-at-least-32-bytes-long!}
+    access-ttl-minutes: 15
+    refresh-ttl-days: 7
