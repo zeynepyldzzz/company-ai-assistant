@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
+  java.util.Optional<Employee> findByEmail(String email);
 
     @Query("""
         SELECT e FROM Employee e
