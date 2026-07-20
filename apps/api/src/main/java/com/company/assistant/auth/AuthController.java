@@ -17,9 +17,9 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
 
     public AuthController(EmployeeRepository employeeRepository,
-                          PasswordEncoder passwordEncoder,
-                          JwtService jwtService,
-                          RefreshTokenService refreshTokenService) {
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -52,12 +52,12 @@ public class AuthController {
     public AuthDtos.RefreshResponse refresh(@RequestBody AuthDtos.RefreshRequest request) {
         RefreshToken stored = refreshTokenService.validate(request.refreshToken())
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+                HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         Employee employee = employeeRepository.findById(stored.getEmployeeId())
                 .filter(Employee::isActive)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+                HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         // Rotasyon: eskisi iptal, yenisi üretilir
         refreshTokenService.revoke(stored);
@@ -68,6 +68,12 @@ public class AuthController {
                 employee.getId(), roleInfo.role(), roleInfo.subRole());
 
         return new AuthDtos.RefreshResponse(accessToken, newRefreshToken);
+    }
+
+    @PostMapping("/logout")
+    public void logout(@RequestBody AuthDtos.RefreshRequest request) {
+        refreshTokenService.validate(request.refreshToken())
+                .ifPresent(refreshTokenService::revoke);
     }
 
     private ResponseStatusException invalidCredentials() {
