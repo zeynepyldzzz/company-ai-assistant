@@ -34,7 +34,7 @@ export function Header() {
           <span className="text-sm">{user?.name ?? "Kullanıcı"}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => clearAuth()}>
+          <DropdownMenuItem onClick={() => clearAuth()}>
             <LogOut className="size-4" />
             Çıkış yap
           </DropdownMenuItem>
