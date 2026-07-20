@@ -20,14 +20,31 @@ public class MealItem {
 
     private String allergens;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", length = 30)
+    private MealCategory category;
+
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
+
     public MealMenu getMenu() { return menu; }
     public void setMenu(MealMenu menu) { this.menu = menu; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
     public Integer getCalories() { return calories; }
     public void setCalories(Integer calories) { this.calories = calories; }
+
     public String getAllergens() { return allergens; }
     public void setAllergens(String allergens) { this.allergens = allergens; }
+
+    public MealCategory getCategory() { return category; }
+    public void setCategory(MealCategory category) { this.category = category; }
+
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
 }
