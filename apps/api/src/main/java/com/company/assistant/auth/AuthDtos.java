@@ -25,6 +25,11 @@ public class AuthDtos {
     public record RefreshResponse(String accessToken, String refreshToken) {
 
     }
+    public record TwoFactorRequiredResponse(boolean twoFactorRequired, String challengeToken) {
+    }
+
+    public record TwoFactorVerifyRequest(String challengeToken, String code) {
+    }
 
     public record RoleInfo(String role, String subRole) {
 

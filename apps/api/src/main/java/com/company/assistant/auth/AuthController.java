@@ -1,6 +1,7 @@
 package com.company.assistant.auth;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,19 +21,22 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final TotpService totpService;
 
     public AuthController(EmployeeRepository employeeRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            TotpService totpService) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.totpService = totpService;
     }
 
     @PostMapping("/login")
-    public AuthDtos.LoginResponse login(@RequestBody AuthDtos.LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody AuthDtos.LoginRequest request) {
         Employee employee = employeeRepository.findByEmail(request.email())
                 .orElseThrow(this::invalidCredentials);
 
@@ -44,13 +48,20 @@ public class AuthController {
 
         AuthDtos.RoleInfo roleInfo = AuthDtos.RoleInfo.from(employee);
 
+        // Admin ise: token verme, 2FA adimina yonlendir
+        if ("admin".equals(roleInfo.role())) {
+            String challengeToken = jwtService.generateChallengeToken(employee.getId());
+            return ResponseEntity.ok(
+                    new AuthDtos.TwoFactorRequiredResponse(true, challengeToken));
+        }
+
         String accessToken = jwtService.generateAccessToken(
                 employee.getId(), roleInfo.role(), roleInfo.subRole());
         String refreshToken = refreshTokenService.issue(employee.getId());
 
-        return new AuthDtos.LoginResponse(accessToken, refreshToken,
+        return ResponseEntity.ok(new AuthDtos.LoginResponse(accessToken, refreshToken,
                 new AuthDtos.UserDto(employee.getId(), employee.getName(),
-                        employee.getEmail(), roleInfo.role(), roleInfo.subRole()));
+                        employee.getEmail(), roleInfo.role(), roleInfo.subRole())));
     }
 
     @PostMapping("/refresh")
@@ -80,6 +91,35 @@ public class AuthController {
         refreshTokenService.validate(request.refreshToken())
                 .ifPresent(refreshTokenService::revoke);
 
+    }
+
+    @PostMapping("/2fa/verify")
+    public AuthDtos.LoginResponse verifyTwoFactor(@RequestBody AuthDtos.TwoFactorVerifyRequest request) {
+        Integer employeeId;
+        try {
+            employeeId = jwtService.parseChallengeToken(request.challengeToken());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid challenge");
+        }
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .filter(Employee::isActive)
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "Invalid challenge"));
+
+        if (employee.getTotpSecret() == null
+                || !totpService.verify(employee.getTotpSecret(), request.code())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid code");
+        }
+
+        AuthDtos.RoleInfo roleInfo = AuthDtos.RoleInfo.from(employee);
+        String accessToken = jwtService.generateAccessToken(
+                employee.getId(), roleInfo.role(), roleInfo.subRole());
+        String refreshToken = refreshTokenService.issue(employee.getId());
+
+        return new AuthDtos.LoginResponse(accessToken, refreshToken,
+                new AuthDtos.UserDto(employee.getId(), employee.getName(),
+                        employee.getEmail(), roleInfo.role(), roleInfo.subRole()));
     }
 
     @GetMapping("/session")
