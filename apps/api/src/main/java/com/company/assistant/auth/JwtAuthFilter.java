@@ -3,6 +3,7 @@ package com.company.assistant.auth;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     return;
                 }
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase(Locale.ROOT)));
                 if (subRole != null) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_" + subRole.toUpperCase()));
                 }

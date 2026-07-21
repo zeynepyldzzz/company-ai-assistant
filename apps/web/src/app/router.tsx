@@ -9,6 +9,7 @@ import { EmployeesPage } from "@/pages/directory/employees-page";
 import { DepartmentsPage } from "@/pages/directory/departments-page";
 import { DepartmentDetailPage } from "@/pages/directory/department-detail-page";
 import { PhonebookPage } from "@/pages/directory/phonebook-page";
+import { MenuPage } from "@/pages/menu/menu-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
           { path: "/directory/departments", element: <DepartmentsPage /> },
           { path: "/directory/departments/:id", element: <DepartmentDetailPage /> },
           { path: "/directory/phonebook", element: <PhonebookPage /> },
+          { path: "/menu", element: <MenuPage /> },
           {
             element: <RequireRole roles={["admin"]} />,
             children: [{ path: "/admin", element: <AdminDashboardPage /> }],
