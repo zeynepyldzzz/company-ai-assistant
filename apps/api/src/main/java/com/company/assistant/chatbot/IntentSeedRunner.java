@@ -1,4 +1,4 @@
-package com.company.assistant.chatbot; // kendi kökünüze göre
+package com.company.assistant.chatbot;
 
 import java.util.List;
 import java.util.Map;
