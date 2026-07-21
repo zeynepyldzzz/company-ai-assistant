@@ -27,8 +27,12 @@ public class IntentSeedRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<Map<String, Object>> pending = jdbcTemplate.queryForList(
-                "SELECT id, phrase FROM intent_examples WHERE embedding IS NULL");
+        List<Map<String, Object>> pending = jdbcTemplate.queryForList("""
+                SELECT e.id, e.phrase FROM intent_examples e
+                JOIN intents i ON i.id = e.intent_id
+                WHERE embedding IS NULL 
+                 AND i.is_virtual = false
+                """);
 
         if (pending.isEmpty()) {
             log.info("Intent embedding seed: bekleyen kayit yok, atlandi.");
