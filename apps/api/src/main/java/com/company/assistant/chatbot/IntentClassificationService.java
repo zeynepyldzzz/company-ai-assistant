@@ -47,6 +47,7 @@ public class IntentClassificationService {
                 FROM intent_examples e
                 JOIN intents i ON i.id = e.intent_id
                 WHERE e.embedding IS NOT NULL
+                 AND i.is_virtual = false
                 ORDER BY e.embedding <=> CAST(? AS vector)
                 LIMIT 1
                 """, vectorLiteral, vectorLiteral);
