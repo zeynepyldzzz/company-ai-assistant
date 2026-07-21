@@ -239,19 +239,22 @@ Bu 6 issue tamamlanmadan hiçbir modül gerçek API'ye/role bağlanamaz; paralel
 
 ### Hafta 2
 
-#### A-4: `GET/POST /chatbot/conversations` — Sohbet Geçmişi
+#### A-4: Chatbot Mesaj Loglama (Kalibrasyon/Analiz)
 
 **Etiketler:** `backend`, `chatbot`
-**Story Point:** 3
+**Story Point:** 1
 
-**Açıklama:** Sohbet oturumlarının (`CHAT_CONVERSATION`) ve mesajların (`CHAT_MESSAGE`) kalıcı kaydı, kullanıcı bazlı listeleme ve tekil sohbet detayı.
+**Açıklama:** Her chatbot mesajının kalıcı kaydı — kullanıcıya dönük sohbet geçmişi
+özelliği DEĞİL, intent kalibrasyonu ve Faz 2 (RAG) test verisi için loglama.
+Kullanıcının geçmiş sohbetlerini görme özelliği kapsam dışı bırakıldı (ekip kararı,
+<tarih>): anlık soru-cevap kullanımında geçmiş görüntüleme ihtiyacı yok.
+`GET /chatbot/conversations` ve `GET /chatbot/conversations/{id}` kaldırıldı.
 
 **Kabul Kriterleri:**
 
-- [ ] Her `POST /chatbot/messages` çağrısı ilgili conversation'a mesaj olarak kaydediliyor
-- [ ] `GET /chatbot/conversations` kullanıcının sohbet listesini döner
-- [ ] `GET /chatbot/conversations/{id}` tekil sohbetin tüm mesajlarını döner
-- [ ] FR-09 karşılanıyor
+- [ ] Her `POST /chatbot/messages` çağrısı soru metni, tespit edilen intent,
+      benzerlik skoru ve zaman damgasıyla kaydediliyor
+- [ ] Fallback'e (`intent_bulunamadi`) düşen sorular da kaydediliyor
 
 **Bağımlılık:** A-3
 
