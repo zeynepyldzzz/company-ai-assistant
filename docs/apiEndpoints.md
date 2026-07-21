@@ -37,8 +37,7 @@
 | Method | Endpoint | Açıklama | Rol | FR |
 |---|---|---|---|---|
 | POST | `/chatbot/messages` | Soru gönderir (yazılı/sesli), yanıt döner | Çalışan | FR-08–10, 14, 16 |
-| POST | `/chatbot/conversations/{id}/attachments` | Sohbete dosya yükler (Faz 2) | Çalışan | FR-15 |
-| GET | `/chatbot/conversations` | Sohbet geçmişi listesi | Çalışan | FR-09 |
+| POST | `/chatbot/conversations/{id}/attachments` | Sohbete dosya yükler (Faz 2) | Çalışan | FR-15 |Faz (2) satırına da "conversation kavramı kalktığı için Faz 2'de yeniden tasarlanacak"
 | GET | `/chatbot/conversations/{id}` | Tek sohbetin detayı | Çalışan | FR-09 |
 | GET | `/hr/procedures?topic=` | Prosedür/politika bazlı yönlendirme (onboarding, izin, fazla mesai, mazeret izni) | Çalışan | FR-11–13, 51–57 |
 | GET | `/hr/procedures/{id}` | Prosedür detayı + güncel versiyon/geçerlilik tarihi | Çalışan | FR-58 |
