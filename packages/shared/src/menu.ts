@@ -12,7 +12,7 @@ export type MealItem = z.infer<typeof MealItemSchema>;
 export const MenuSchema = z.object({
   id: z.number(),
   date: z.string(),
-  weekNumber: z.number().nullable(),
+  weekNumber: z.number().nullish(),
   items: z.array(MealItemSchema),
 });
 export type Menu = z.infer<typeof MenuSchema>;
