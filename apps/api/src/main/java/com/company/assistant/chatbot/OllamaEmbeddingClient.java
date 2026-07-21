@@ -1,10 +1,13 @@
 package com.company.assistant.chatbot;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 @Component
 public class OllamaEmbeddingClient implements EmbeddingClient {
@@ -23,7 +26,7 @@ public class OllamaEmbeddingClient implements EmbeddingClient {
     public float[] embed(String text) {
         EmbedResponse response = restClient.post()
                 .uri("/api/embed")
-                .body(new EmbedRequest(model, text))
+                .body(new EmbedRequest(model, text, -1))
                 .retrieve()
                 .body(EmbedResponse.class);
 
@@ -39,7 +42,8 @@ public class OllamaEmbeddingClient implements EmbeddingClient {
         return result;
     }
 
-    record EmbedRequest(String model, String input) {}
+    record EmbedRequest(String model, String input,
+    @JsonProperty("keep_alive") int keepAlive) {}
 
     record EmbedResponse(List<List<Float>> embeddings) {}
 }
