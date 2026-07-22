@@ -23,6 +23,10 @@ public class ShuttleStop {
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 
+    private Double latitude;
+
+    private Double longitude;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public ShuttleRoute getRoute() { return route; }
@@ -33,4 +37,8 @@ public class ShuttleStop {
     public void setTime(LocalTime time) { this.time = time; }
     public Integer getOrderIndex() { return orderIndex; }
     public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

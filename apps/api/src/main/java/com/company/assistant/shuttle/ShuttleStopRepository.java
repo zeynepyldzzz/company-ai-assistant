@@ -9,4 +9,6 @@ public interface ShuttleStopRepository extends JpaRepository<ShuttleStop, Intege
     List<ShuttleStop> findByRouteIdOrderByOrderIndexAsc(Integer routeId);
 
     void deleteByRouteId(Integer routeId);
+
+    List<ShuttleStop> findByLatitudeIsNotNullAndLongitudeIsNotNull();
 }

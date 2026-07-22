@@ -13,5 +13,9 @@ public record ShuttleStopRequest(
         LocalTime time,
 
         @NotNull(message = "Sıra numarası zorunludur")
-        Integer orderIndex
+        Integer orderIndex,
+
+        Double latitude,
+
+        Double longitude
 ) {}

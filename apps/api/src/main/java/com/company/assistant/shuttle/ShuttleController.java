@@ -38,9 +38,21 @@ public class ShuttleController {
         return shuttleService.getPlate(id);
     }
 
+    @GetMapping("/recommendation")
+    public ShuttleRecommendationResponse getRecommendation(
+            @RequestParam double lat, @RequestParam double lng) {
+        return shuttleService.getRecommendation(lat, lng);
+    }
+
     @ExceptionHandler(ShuttleRouteNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ShuttleRouteNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of("SHUTTLE_ROUTE_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NoShuttleRecommendationException.class)
+    public ResponseEntity<ErrorResponse> handleNoRecommendation(NoShuttleRecommendationException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("NO_SHUTTLE_RECOMMENDATION_AVAILABLE", ex.getMessage()));
     }
 }
