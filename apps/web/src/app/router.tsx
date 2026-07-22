@@ -14,6 +14,7 @@ import { ShuttleRoutesPage } from "@/pages/shuttle/shuttle-routes-page";
 import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-page";
 import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendation-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
+import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -35,7 +36,10 @@ export const router = createBrowserRouter([
           { path: "/shuttle/recommendation", element: <ShuttleRecommendationPage /> },
           {
             element: <RequireRole roles={["admin"]} />,
-            children: [{ path: "/admin", element: <AdminDashboardPage /> }],
+            children: [
+              { path: "/admin", element: <AdminDashboardPage /> },
+              { path: "/admin/schedules", element: <AdminSchedulesPage /> },
+            ],
           },
         ],
       },

@@ -22,6 +22,7 @@ const navItems: Array<{
     icon: MapPin,
     roles: ["employee", "admin"],
   },
+  { to: "/admin/schedules", label: "Çalışan Düzeni", icon: CalendarDays, roles: ["admin"] },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];
 

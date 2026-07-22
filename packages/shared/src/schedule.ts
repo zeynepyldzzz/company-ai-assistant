@@ -27,3 +27,17 @@ export const ScheduleSummarySchema = z.object({
   leave: z.number(),
 });
 export type ScheduleSummary = z.infer<typeof ScheduleSummarySchema>;
+// GET /admin/schedules (C-6) — salt-okunur admin tablosu
+
+export const EmployeeScheduleSchema = z.object({
+  employeeId: z.number(),
+  employeeName: z.string(),
+  days: z.array(ScheduleDaySchema),
+});
+export type EmployeeSchedule = z.infer<typeof EmployeeScheduleSchema>;
+
+export const AdminScheduleSchema = z.object({
+  weekStartDate: z.string(),
+  employees: z.array(EmployeeScheduleSchema),
+});
+export type AdminSchedule = z.infer<typeof AdminScheduleSchema>;
