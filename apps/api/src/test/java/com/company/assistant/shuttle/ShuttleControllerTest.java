@@ -106,6 +106,47 @@ class ShuttleControllerTest {
                 .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
     }
 
+    @Test
+    void getRecommendation_enYakinDurakVeGuzergahDoner() throws Exception {
+        ShuttleRoute route = new ShuttleRoute();
+        route.setId(1);
+        route.setName("Kadikoy Hatti");
+        route.setPlateNumber("34 ABC 123");
+        ShuttleStop nearestStop = stop(route, "Merkez", LocalTime.of(8, 0), 1);
+        nearestStop.setId(5);
+        nearestStop.setLatitude(40.99);
+        nearestStop.setLongitude(29.02);
+
+        when(shuttleService.getRecommendation(40.98, 29.03))
+                .thenReturn(new ShuttleRecommendationResponse(nearestStop, 1.5, 4));
+
+        mockMvc.perform(get("/shuttle-routes/recommendation")
+                        .param("lat", "40.98")
+                        .param("lng", "29.03")
+                        .with(user("calisan")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.routeId").value(1))
+                .andExpect(jsonPath("$.routeName").value("Kadikoy Hatti"))
+                .andExpect(jsonPath("$.stopId").value(5))
+                .andExpect(jsonPath("$.stopName").value("Merkez"))
+                .andExpect(jsonPath("$.distanceKm").value(1.5))
+                .andExpect(jsonPath("$.estimatedMinutes").value(4));
+    }
+
+    @Test
+    void getRecommendation_konumluDurakYoksa404Doner() throws Exception {
+        when(shuttleService.getRecommendation(40.98, 29.03))
+                .thenThrow(new NoShuttleRecommendationException(
+                        "Konum bilgisi bulunan bir durak yok, oneri yapilamiyor"));
+
+        mockMvc.perform(get("/shuttle-routes/recommendation")
+                        .param("lat", "40.98")
+                        .param("lng", "29.03")
+                        .with(user("calisan")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NO_SHUTTLE_RECOMMENDATION_AVAILABLE"));
+    }
+
     private ShuttleStop stop(ShuttleRoute route, String name, LocalTime time, int orderIndex) {
         ShuttleStop stop = new ShuttleStop();
         stop.setRoute(route);
