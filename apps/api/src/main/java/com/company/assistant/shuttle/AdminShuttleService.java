@@ -61,6 +61,8 @@ public class AdminShuttleService {
             stop.setName(r.name());
             stop.setTime(r.time());
             stop.setOrderIndex(r.orderIndex());
+            stop.setLatitude(r.latitude());
+            stop.setLongitude(r.longitude());
             return stop;
         }).toList();
     }
