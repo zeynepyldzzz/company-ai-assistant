@@ -13,6 +13,7 @@ import { MenuPage } from "@/pages/menu/menu-page";
 import { ShuttleRoutesPage } from "@/pages/shuttle/shuttle-routes-page";
 import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-page";
 import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendation-page";
+import { SchedulePage } from "@/pages/schedule/schedule-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
           { path: "/directory/departments/:id", element: <DepartmentDetailPage /> },
           { path: "/directory/phonebook", element: <PhonebookPage /> },
           { path: "/menu", element: <MenuPage /> },
+          { path: "/my-schedule", element: <SchedulePage /> },
           { path: "/shuttle/routes", element: <ShuttleRoutesPage /> },
           { path: "/shuttle/routes/:id", element: <ShuttleRouteDetailPage /> },
           { path: "/shuttle/recommendation", element: <ShuttleRecommendationPage /> },
