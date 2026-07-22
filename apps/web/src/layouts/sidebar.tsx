@@ -1,5 +1,5 @@
 import { NavLink } from "react-router";
-import { LayoutDashboard, ShieldCheck, Users, Building2, Phone } from "lucide-react";
+import { LayoutDashboard, ShieldCheck, Users, Building2, Phone, Bus, MapPin, CalendarDays } from "lucide-react";
 import type { Role } from "@company/shared";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
@@ -14,6 +14,14 @@ const navItems: Array<{
   { to: "/directory/employees", label: "Çalışan Rehberi", icon: Users, roles: ["employee", "admin"] },
   { to: "/directory/departments", label: "Departmanlar", icon: Building2, roles: ["employee", "admin"] },
   { to: "/directory/phonebook", label: "Telefon Rehberi", icon: Phone, roles: ["employee", "admin"] },
+  { to: "/my-schedule", label: "Haftalık Çalışma Düzenim", icon: CalendarDays, roles: ["employee", "admin"] },
+  { to: "/shuttle/routes", label: "Servis Güzergahları", icon: Bus, roles: ["employee", "admin"] },
+  {
+    to: "/shuttle/recommendation",
+    label: "Bana En Yakın Servis",
+    icon: MapPin,
+    roles: ["employee", "admin"],
+  },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];
 
