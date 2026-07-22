@@ -76,4 +76,7 @@ public class IntentClassificationService {
             return new IntentResult(NO_INTENT, 0.0, null, false);
         }
     }
+    public double getThreshold() {
+    return this.similarityThreshold;   
+}
 }
