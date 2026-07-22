@@ -3,6 +3,8 @@ package com.company.assistant.shuttle;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -89,12 +91,49 @@ class AdminShuttleControllerTest {
                 .andExpect(status().isCreated());
     }
 
-    @Test
-    void baskaAdminAltRolu_403Doner() throws Exception {
-        // Bu kullanici ROLE_ADMIN'e sahip (filter-chain seviyesini gecer) ama
-        // shuttle_admin/system_admin degil - method-level @PreAuthorize reddetmeli.
+    // B-BT2: shuttle_admin/system_admin disindaki tum admin alt rolleri, her 3
+    // admin ucunda da 403 almali. Bu kullanicilar ROLE_ADMIN'e sahip (filter-chain
+    // seviyesini gecer) ama shuttle_admin/system_admin degil - method-level
+    // @PreAuthorize reddetmeli.
+    @ParameterizedTest
+    @ValueSource(strings = {"HR_ADMIN", "FLEET_ADMIN", "CANTEEN_ADMIN"})
+    void digerAdminAltRolleri_createRotaya403Alir(String subRole) throws Exception {
         mockMvc.perform(post("/admin/shuttle-routes")
-                        .with(user("hr").roles("ADMIN", "HR_ADMIN"))
+                        .with(user("test").roles("ADMIN", subRole))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ROUTE_REQUEST_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HR_ADMIN", "FLEET_ADMIN", "CANTEEN_ADMIN"})
+    void digerAdminAltRolleri_updateRotaya403Alir(String subRole) throws Exception {
+        mockMvc.perform(put("/admin/shuttle-routes/1")
+                        .with(user("test").roles("ADMIN", subRole))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ROUTE_REQUEST_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HR_ADMIN", "FLEET_ADMIN", "CANTEEN_ADMIN"})
+    void digerAdminAltRolleri_plakaGuncellemeye403Alir(String subRole) throws Exception {
+        mockMvc.perform(put("/admin/shuttle-routes/1/plate")
+                        .with(user("test").roles("ADMIN", subRole))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"plateNumber\": \"34 XYZ 999\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    // Duz calisan (hicbir admin rolu yok) filter-chain seviyesinde reddedilir -
+    // method-level @PreAuthorize'a hic ulasmadan farkli bir mekanizmayla 403 doner.
+    @Test
+    void duzCalisan_adminUcunaFilterSeviyesinde403Alir() throws Exception {
+        mockMvc.perform(post("/admin/shuttle-routes")
+                        .with(user("calisan").roles("EMPLOYEE"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ROUTE_REQUEST_JSON))
                 .andExpect(status().isForbidden())
