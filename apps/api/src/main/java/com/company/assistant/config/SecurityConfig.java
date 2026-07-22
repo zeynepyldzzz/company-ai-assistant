@@ -49,6 +49,9 @@ public SecurityConfig(JwtAuthFilter jwtAuthFilter, RestAuthenticationEntryPoint 
                     "/v3/api-docs/**"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                // /hr/procedures (A-5, rol: employee) bilincli olarak ayri matcher almaz;
+                // anyRequest().authenticated() altina duser. hasRole('EMPLOYEE') kullanilmaz,
+                // aksi halde adminler bu uca erisemezdi.
                 .anyRequest().authenticated());
 
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

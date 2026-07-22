@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/admin/shuttle-routes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateRoute"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shuttle-routes/{id}/plate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updatePlate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/phonebook/{extension}/call": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["triggerCall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chatbot/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sendMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/refresh": {
         parameters: {
             query?: never;
@@ -68,6 +132,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/shuttle-routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createRoute"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/menus/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["importMenu"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/vehicles/ping": {
         parameters: {
             query?: never;
@@ -100,14 +196,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/shuttle-routes/ping": {
+    "/shuttle-routes": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_2"];
+        get: operations["listRoutes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shuttle-routes/{id}/stops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getStops"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shuttle-routes/{id}/plate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPlate"];
         put?: never;
         post?: never;
         delete?: never;
@@ -123,7 +251,23 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_3"];
+        get: operations["ping_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/phonebook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["searchPhonebook"];
         put?: never;
         post?: never;
         delete?: never;
@@ -244,14 +388,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/chatbot/ping": {
+    "/departments": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_4"];
+        get: operations["searchDepartments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/departments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDepartmentById"];
         put?: never;
         post?: never;
         delete?: never;
@@ -283,7 +443,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_5"];
+        get: operations["ping_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -299,7 +459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_6"];
+        get: operations["ping_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -324,10 +484,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/menus/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteMenu"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ShuttleRouteRequest: {
+            name: string;
+            plateNumber?: string;
+            stops: components["schemas"]["ShuttleStopRequest"][];
+        };
+        ShuttleStopRequest: {
+            name: string;
+            time: string;
+            /** Format: int32 */
+            orderIndex: number;
+        };
+        ShuttleRouteDetailResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            plateNumber?: string;
+            stops?: components["schemas"]["ShuttleStopResponse"][];
+        };
+        ShuttleStopResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            time?: string;
+            /** Format: int32 */
+            orderIndex?: number;
+        };
+        PlateUpdateRequest: {
+            plateNumber: string;
+        };
+        ShuttleRoutePlateResponse: {
+            /** Format: int32 */
+            id?: number;
+            plateNumber?: string;
+        };
+        CallTriggerResponse: {
+            extension?: string;
+            status?: string;
+            /** Format: date-time */
+            triggeredAt?: string;
+        };
+        ChatMessageRequest: {
+            message: string;
+        };
+        ChatMessageResponse: {
+            reply?: string;
+            intent?: string;
+            /** Format: date-time */
+            timestamp?: string;
+        };
         RefreshRequest: {
             refreshToken?: string;
         };
@@ -355,6 +580,56 @@ export interface components {
             email?: string;
             role?: string;
             subRole?: string;
+        };
+        MenuImportResponse: {
+            committed?: boolean;
+            /** Format: int32 */
+            daysFound?: number;
+            /** Format: int32 */
+            daysWithNoData?: number;
+            days?: components["schemas"]["ParsedMenuDayDto"][];
+            warnings?: string[];
+        };
+        ParsedMealItemDto: {
+            /** @enum {string} */
+            category?: "CORBA" | "ANA_YEMEK" | "PILAV_MAKARNA" | "TATLI_ICECEK" | "MEYVE" | "SALATA" | "ZEYTINYAGLI_SEBZE" | "YARDIMCI_SALATA" | "YOGURT_CACIK";
+            name?: string;
+        };
+        ParsedMenuDayDto: {
+            /** Format: date */
+            date?: string;
+            items?: components["schemas"]["ParsedMealItemDto"][];
+        };
+        PagedResponseShuttleRouteResponse: {
+            data?: components["schemas"]["ShuttleRouteResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
+        ShuttleRouteResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            plateNumber?: string;
+        };
+        PagedResponsePhonebookEntryResponse: {
+            data?: components["schemas"]["PhonebookEntryResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
+        PhonebookEntryResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            extension?: string;
+            departmentName?: string;
         };
         MealItemResponse: {
             /** Format: int32 */
@@ -393,6 +668,26 @@ export interface components {
             /** Format: int64 */
             total?: number;
         };
+        DepartmentResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            responsibilities?: string;
+            /** Format: int32 */
+            managerId?: number;
+            managerName?: string;
+            managerEmail?: string;
+            managerPhone?: string;
+        };
+        PagedResponseDepartmentResponse: {
+            data?: components["schemas"]["DepartmentResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -402,6 +697,104 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    updateRoute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShuttleRouteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShuttleRouteDetailResponse"];
+                };
+            };
+        };
+    };
+    updatePlate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlateUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShuttleRoutePlateResponse"];
+                };
+            };
+        };
+    };
+    triggerCall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                extension: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CallTriggerResponse"];
+                };
+            };
+        };
+    };
+    sendMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageResponse"];
+                };
+            };
+        };
+    };
     refresh: {
         parameters: {
             query?: never;
@@ -496,6 +889,59 @@ export interface operations {
             };
         };
     };
+    createRoute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShuttleRouteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShuttleRouteDetailResponse"];
+                };
+            };
+        };
+    };
+    importMenu: {
+        parameters: {
+            query?: {
+                commit?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MenuImportResponse"];
+                };
+            };
+        };
+    };
     ping: {
         parameters: {
             query?: never;
@@ -536,6 +982,73 @@ export interface operations {
             };
         };
     };
+    listRoutes: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponseShuttleRouteResponse"];
+                };
+            };
+        };
+    };
+    getStops: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShuttleStopResponse"][];
+                };
+            };
+        };
+    };
+    getPlate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShuttleRoutePlateResponse"];
+                };
+            };
+        };
+    };
     ping_2: {
         parameters: {
             query?: never;
@@ -556,9 +1069,13 @@ export interface operations {
             };
         };
     };
-    ping_3: {
+    searchPhonebook: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string;
+                page?: number;
+                pageSize?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -571,7 +1088,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": components["schemas"]["PagedResponsePhonebookEntryResponse"];
                 };
             };
         };
@@ -728,9 +1245,13 @@ export interface operations {
             };
         };
     };
-    ping_4: {
+    searchDepartments: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string;
+                page?: number;
+                pageSize?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -743,7 +1264,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": components["schemas"]["PagedResponseDepartmentResponse"];
+                };
+            };
+        };
+    };
+    getDepartmentById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DepartmentResponse"];
                 };
             };
         };
@@ -768,7 +1311,7 @@ export interface operations {
             };
         };
     };
-    ping_5: {
+    ping_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -788,7 +1331,7 @@ export interface operations {
             };
         };
     };
-    ping_6: {
+    ping_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -829,6 +1372,26 @@ export interface operations {
                         [key: string]: string;
                     };
                 };
+            };
+        };
+    };
+    deleteMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

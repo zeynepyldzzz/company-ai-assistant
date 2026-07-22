@@ -1,12 +1,17 @@
 package com.company.assistant.chatbot;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
+import com.company.assistant.hr.HrProcedureResolution;
+import com.company.assistant.hr.HrProcedureVariableResolver;
 
 @Service
 public class ChatMessageService {
@@ -17,15 +22,18 @@ public class ChatMessageService {
     private final IntentClassificationService classificationService;
     private final TemplateResponseService templateResponseService;
     private final ChatVariableResolver variableResolver;
+    private final HrProcedureVariableResolver hrProcedureVariableResolver;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
                               TemplateResponseService templateResponseService,
                               ChatVariableResolver variableResolver,
+                              HrProcedureVariableResolver hrProcedureVariableResolver,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
         this.variableResolver = variableResolver;
+        this.hrProcedureVariableResolver = hrProcedureVariableResolver;
         this.logRepository = logRepository;
     }
 
@@ -34,8 +42,15 @@ public class ChatMessageService {
 
         IntentClassificationService.IntentResult result =
                 classificationService.classify(message);
-        String reply = templateResponseService.buildResponse(
-                result.intent(), variableResolver.resolve(authentication));
+
+        // A-5 (FR-54): prosedur intent'leri icin İK degiskenleri kullanici degiskenleriyle
+        // merge edilir. Guncel versiyon yoksa fallback template'ine dusulur (dokuman §2).
+        HrProcedureResolution hr = hrProcedureVariableResolver.resolve(result.intent());
+        Map<String, String> variables = new HashMap<>(variableResolver.resolve(authentication));
+        variables.putAll(hr.variables());
+        String reply = hr.fallbackRequired()
+                ? templateResponseService.buildFallbackResponse(variables)
+                : templateResponseService.buildResponse(result.intent(), variables);
 
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
         if (elapsedMs > NFR02_LIMIT_MS) {
