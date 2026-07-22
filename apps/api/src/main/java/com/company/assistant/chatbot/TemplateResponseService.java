@@ -35,4 +35,18 @@ public class TemplateResponseService {
                 });
         return renderer.render(template, variables);
     }
+
+    /**
+     * İK prosedurunun guncel versiyonu bulunamadiginda (dokuman §2) dogrudan fallback
+     * ('intent_bulunamadi') template'ini render eder. Boylece cozulmemis {{...}}
+     * placeholder'lari kullaniciya sizmaz. FALLBACK_INTENT sabiti bu sinifta kapsullu kalir.
+     */
+    public String buildFallbackResponse(Map<String, String> variables) {
+        String template = templateRepository.findEnabledTemplateByIntentName(FALLBACK_INTENT)
+                .orElseGet(() -> {
+                    log.error("Fallback template de bulunamadi! Son care yanit donuluyor.");
+                    return LAST_RESORT;
+                });
+        return renderer.render(template, variables);
+    }
 }
