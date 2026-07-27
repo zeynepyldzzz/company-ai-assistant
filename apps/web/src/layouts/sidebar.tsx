@@ -1,5 +1,5 @@
 import { NavLink } from "react-router";
-import { LayoutDashboard, ShieldCheck, Users, Building2, Phone, Bus, MapPin, CalendarDays, BookText } from "lucide-react";
+import { LayoutDashboard, ShieldCheck, Users, Building2, Phone, Bus, Car, MapPin, CalendarDays, BookText } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
@@ -24,6 +24,7 @@ const navItems: Array<{
     icon: MapPin,
     roles: ["employee", "admin"],
   },
+  { to: "/vehicles", label: "Araç Rezervasyonu", icon: Car, roles: ["employee", "admin"] },
   { to: "/admin/schedules", label: "Çalışan Düzeni", icon: CalendarDays, roles: ["admin"] },
   {
     to: "/admin/knowledge-base",
