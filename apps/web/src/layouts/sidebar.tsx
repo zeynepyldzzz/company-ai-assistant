@@ -77,6 +77,21 @@ const navItems: Array<{
     roles: ["admin"],
     subRoles: ["hr_admin", "system_admin"],
   },
+  {
+    // #84 (Hafta 4): calisan/departman CRUD yalnizca hr_admin / system_admin (FR-68-71).
+    to: "/admin/employees",
+    label: "Çalışan Yönetimi",
+    icon: Users,
+    roles: ["admin"],
+    subRoles: ["hr_admin", "system_admin"],
+  },
+  {
+    to: "/admin/departments",
+    label: "Departman Yönetimi",
+    icon: Building2,
+    roles: ["admin"],
+    subRoles: ["hr_admin", "system_admin"],
+  },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];
 

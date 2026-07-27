@@ -21,6 +21,8 @@ import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
 import { KnowledgeBasePage } from "@/pages/admin/knowledge-base/knowledge-base-page";
 import { AdminSurveysPage } from "@/pages/admin/surveys/admin-surveys-page";
 import { AdminAnnouncementsPage } from "@/pages/admin/announcements/admin-announcements-page";
+import { AdminEmployeesPage } from "@/pages/admin/employees/admin-employees-page";
+import { AdminDepartmentsPage } from "@/pages/admin/departments/admin-departments-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -59,7 +61,12 @@ export const router = createBrowserRouter([
           {
             // A-7: bilgi tabani yalnizca hr_admin / system_admin (A-6 backend guard'ini yansitir)
             element: <RequireRole roles={["admin"]} subRoles={["hr_admin", "system_admin"]} />,
-            children: [{ path: "/admin/knowledge-base", element: <KnowledgeBasePage /> }],
+            children: [
+              { path: "/admin/knowledge-base", element: <KnowledgeBasePage /> },
+              // #84 (Hafta 4): calisan/departman CRUD yalnizca hr_admin / system_admin (FR-68-71).
+              { path: "/admin/employees", element: <AdminEmployeesPage /> },
+              { path: "/admin/departments", element: <AdminDepartmentsPage /> },
+            ],
           },
         ],
       },

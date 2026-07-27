@@ -5,6 +5,8 @@ import {
   EmployeePagedResponseSchema,
   EmployeeSchema,
   PhonebookEntryPagedResponseSchema,
+  type AdminDepartmentRequest,
+  type AdminEmployeeRequest,
   type CallTriggerResponse,
   type Department,
   type DepartmentPagedResponse,
@@ -63,4 +65,58 @@ export async function triggerCall(extension: string, token: string): Promise<Cal
     token,
   });
   return CallTriggerResponseSchema.parse(data);
+}
+
+// #84 (Hafta 4): admin çalışan CRUD (FR-68-71, hr_admin/system_admin).
+export async function createEmployee(body: AdminEmployeeRequest, token: string): Promise<Employee> {
+  const data = await apiFetch<unknown>("/admin/employees", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
+  return EmployeeSchema.parse(data);
+}
+
+export async function updateEmployee(
+  id: number,
+  body: AdminEmployeeRequest,
+  token: string
+): Promise<Employee> {
+  const data = await apiFetch<unknown>(`/admin/employees/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(body),
+  });
+  return EmployeeSchema.parse(data);
+}
+
+export async function deleteEmployee(id: number, token: string): Promise<void> {
+  await apiFetch<void>(`/admin/employees/${id}`, { method: "DELETE", token });
+}
+
+// #84 (Hafta 4): admin departman CRUD.
+export async function createDepartment(body: AdminDepartmentRequest, token: string): Promise<Department> {
+  const data = await apiFetch<unknown>("/admin/departments", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
+  return DepartmentSchema.parse(data);
+}
+
+export async function updateDepartment(
+  id: number,
+  body: AdminDepartmentRequest,
+  token: string
+): Promise<Department> {
+  const data = await apiFetch<unknown>(`/admin/departments/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(body),
+  });
+  return DepartmentSchema.parse(data);
+}
+
+export async function deleteDepartment(id: number, token: string): Promise<void> {
+  await apiFetch<void>(`/admin/departments/${id}`, { method: "DELETE", token });
 }
