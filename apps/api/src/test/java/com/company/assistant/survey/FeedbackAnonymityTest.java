@@ -1,5 +1,7 @@
 package com.company.assistant.survey;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,19 @@ class FeedbackAnonymityTest {
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    // C-T3 (#54): FR-43 kritik gizlilik kurali icin request govdesinde de
+    // employeeId alaninin bulunmadigini (yalnizca DB semasinda degil) acikca
+    // dogrular. FeedbackRequest'e ileride yanlislikla employeeId eklenirse
+    // bu test kirilir.
+    @Test
+    void feedbackRequest_employeeIdAlaniIcermez() {
+        List<String> alanlar = Arrays.stream(FeedbackRequest.class.getDeclaredFields())
+                .map(Field::getName)
+                .toList();
+
+        assertThat(alanlar).doesNotContain("employeeId");
+    }
 
     @Test
     void feedbackTablosunda_employeeIdKolonuYok() {
