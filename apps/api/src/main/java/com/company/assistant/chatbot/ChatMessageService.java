@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
+import com.company.assistant.menu.MenuVariableResolver;
 
 @Service
 public class ChatMessageService {
@@ -23,17 +24,20 @@ public class ChatMessageService {
     private final TemplateResponseService templateResponseService;
     private final ChatVariableResolver variableResolver;
     private final HrProcedureVariableResolver hrProcedureVariableResolver;
+    private final MenuVariableResolver menuVariableResolver;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
                               TemplateResponseService templateResponseService,
                               ChatVariableResolver variableResolver,
                               HrProcedureVariableResolver hrProcedureVariableResolver,
+                              MenuVariableResolver menuVariableResolver,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
         this.variableResolver = variableResolver;
         this.hrProcedureVariableResolver = hrProcedureVariableResolver;
+        this.menuVariableResolver = menuVariableResolver;
         this.logRepository = logRepository;
     }
 
@@ -48,6 +52,9 @@ public class ChatMessageService {
         HrProcedureResolution hr = hrProcedureVariableResolver.resolve(result.intent());
         Map<String, String> variables = new HashMap<>(variableResolver.resolve(authentication));
         variables.putAll(hr.variables());
+        // A-11 (FR-08/09): menu intent'i icin ham mesajdan gun/hafta cikarilip canli menu
+        // degiskenleri merge edilir. Menu-disi intent'lerde resolver bos map doner.
+        variables.putAll(menuVariableResolver.resolve(result.intent(), message));
         String reply = hr.fallbackRequired()
                 ? templateResponseService.buildFallbackResponse(variables)
                 : templateResponseService.buildResponse(result.intent(), variables);
