@@ -28,4 +28,16 @@ public class ChatMessageLogRepository {
                 entry.threshold(),
                 entry.responseTimeMs());
     }
+
+    // C-11 (#85): usage raporu icin toplam/eslesen soru sayisi.
+    public long countTotal() {
+        Long count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM chat_message_log", Long.class);
+        return count == null ? 0 : count;
+    }
+
+    public long countMatched() {
+        Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM chat_message_log WHERE matched = true", Long.class);
+        return count == null ? 0 : count;
+    }
 }

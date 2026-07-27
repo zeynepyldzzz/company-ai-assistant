@@ -13,6 +13,9 @@ import {
   MessageCircle,
   ClipboardList,
   Megaphone,
+  UtensilsCrossed,
+  KeyRound,
+  BarChart3,
 } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
@@ -47,6 +50,13 @@ const navItems: Array<{
     roles: ["employee", "admin"],
   },
   {
+    // C-1 (#17): menu/meal endpoint'leri sidebar'a eklenmemisti.
+    to: "/menu",
+    label: "Menü",
+    icon: UtensilsCrossed,
+    roles: ["employee", "admin"],
+  },
+  {
     to: "/my-schedule",
     label: "Haftalık Çalışma Düzenim",
     icon: CalendarDays,
@@ -76,6 +86,36 @@ const navItems: Array<{
     icon: BookText,
     roles: ["admin"],
     subRoles: ["hr_admin", "system_admin"],
+  },
+  {
+    // #84 (Hafta 4): calisan/departman CRUD yalnizca hr_admin / system_admin (FR-68-71).
+    to: "/admin/employees",
+    label: "Çalışan Yönetimi",
+    icon: Users,
+    roles: ["admin"],
+    subRoles: ["hr_admin", "system_admin"],
+  },
+  {
+    to: "/admin/departments",
+    label: "Departman Yönetimi",
+    icon: Building2,
+    roles: ["admin"],
+    subRoles: ["hr_admin", "system_admin"],
+  },
+  {
+    // C-11 (#85): rol/izin yonetimi + rapor yalnizca system_admin (FR-80-82).
+    to: "/admin/roles",
+    label: "Rol / İzin Yönetimi",
+    icon: KeyRound,
+    roles: ["admin"],
+    subRoles: ["system_admin"],
+  },
+  {
+    to: "/admin/reports",
+    label: "Raporlar",
+    icon: BarChart3,
+    roles: ["admin"],
+    subRoles: ["system_admin"],
   },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];
