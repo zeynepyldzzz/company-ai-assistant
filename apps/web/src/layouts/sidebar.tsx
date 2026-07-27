@@ -10,6 +10,7 @@ import {
   CalendarDays,
   Car,
   BookText,
+  MessageCircle,
 } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const navItems: Array<{
   subRoles?: readonly AdminSubRole[];
 }> = [
   { to: "/", label: "Ana Sayfa", icon: LayoutDashboard, roles: ["employee", "admin"] },
+  { to: "/chat", label: "Asistan", icon: MessageCircle, roles: ["employee", "admin"] },
   {
     to: "/directory/employees",
     label: "Çalışan Rehberi",
