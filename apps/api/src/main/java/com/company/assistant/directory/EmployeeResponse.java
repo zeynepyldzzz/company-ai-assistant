@@ -9,6 +9,8 @@ public class EmployeeResponse {
     private String officeStatus;
     private Integer departmentId;
     private String departmentName;
+    private Integer roleId;
+    private String roleName;
 
     public EmployeeResponse(Employee employee) {
         this.id = employee.getId();
@@ -20,6 +22,11 @@ public class EmployeeResponse {
             this.departmentId = employee.getDepartment().getId();
             this.departmentName = employee.getDepartment().getName();
         }
+        // C-11 (#85): rol yonetim ekraninda mevcut rolun gorunmesi icin.
+        if (employee.getRole() != null) {
+            this.roleId = employee.getRole().getId();
+            this.roleName = employee.getRole().getName();
+        }
     }
 
     public Integer getId() { return id; }
@@ -29,4 +36,6 @@ public class EmployeeResponse {
     public String getOfficeStatus() { return officeStatus; }
     public Integer getDepartmentId() { return departmentId; }
     public String getDepartmentName() { return departmentName; }
+    public Integer getRoleId() { return roleId; }
+    public String getRoleName() { return roleName; }
 }

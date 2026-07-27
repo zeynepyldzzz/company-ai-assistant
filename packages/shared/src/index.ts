@@ -4,6 +4,7 @@ export * from "./chat";
 export * from "./directory";
 export * from "./knowledge-base";
 export * from "./menu";
+export * from "./report";
 export * from "./schedule";
 export * from "./shuttle";
 export * from "./survey";

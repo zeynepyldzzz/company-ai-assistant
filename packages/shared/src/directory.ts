@@ -23,6 +23,9 @@ export const EmployeeSchema = z.object({
   officeStatus: z.string().nullable(),
   departmentId: z.number().nullable(),
   departmentName: z.string().nullable(),
+  // C-11 (#85): rol yonetim ekraninda mevcut rolun gorunmesi icin.
+  roleId: z.number().nullable().optional(),
+  roleName: z.string().nullable().optional(),
 });
 export type Employee = z.infer<typeof EmployeeSchema>;
 export const EmployeePagedResponseSchema = pagedResponseSchema(EmployeeSchema);

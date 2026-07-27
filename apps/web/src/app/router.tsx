@@ -23,6 +23,8 @@ import { AdminSurveysPage } from "@/pages/admin/surveys/admin-surveys-page";
 import { AdminAnnouncementsPage } from "@/pages/admin/announcements/admin-announcements-page";
 import { AdminEmployeesPage } from "@/pages/admin/employees/admin-employees-page";
 import { AdminDepartmentsPage } from "@/pages/admin/departments/admin-departments-page";
+import { AdminRolesPage } from "@/pages/admin/roles/admin-roles-page";
+import { AdminReportsPage } from "@/pages/admin/reports/admin-reports-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -66,6 +68,14 @@ export const router = createBrowserRouter([
               // #84 (Hafta 4): calisan/departman CRUD yalnizca hr_admin / system_admin (FR-68-71).
               { path: "/admin/employees", element: <AdminEmployeesPage /> },
               { path: "/admin/departments", element: <AdminDepartmentsPage /> },
+            ],
+          },
+          {
+            // C-11 (#85): rol/izin yonetimi + rapor yalnizca system_admin (FR-80-82).
+            element: <RequireRole roles={["admin"]} subRoles={["system_admin"]} />,
+            children: [
+              { path: "/admin/roles", element: <AdminRolesPage /> },
+              { path: "/admin/reports", element: <AdminReportsPage /> },
             ],
           },
         ],
