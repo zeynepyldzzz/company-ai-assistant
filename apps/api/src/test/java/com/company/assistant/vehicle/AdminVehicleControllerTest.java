@@ -98,6 +98,38 @@ class AdminVehicleControllerTest {
     }
 
     @Test
+    void calisanRolu_403Doner() throws Exception {
+        // ROLE_ADMIN'e bile sahip degil - filter-chain seviyesinde (SecurityConfig:
+        // /admin/** hasRole(ADMIN)) reddedilmeli, @PreAuthorize'a hic ulasmamali.
+        mockMvc.perform(post("/admin/vehicles")
+                        .with(user("calisan").roles("EMPLOYEE"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VEHICLE_REQUEST_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void baskaAdminAltRolu_aracGuncellemedeDe403Doner() throws Exception {
+        mockMvc.perform(put("/admin/vehicles/1")
+                        .with(user("hr").roles("ADMIN", "HR_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VEHICLE_REQUEST_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void baskaAdminAltRolu_bakimDurumuGuncellemedeDe403Doner() throws Exception {
+        mockMvc.perform(put("/admin/vehicles/1/maintenance-status")
+                        .with(user("hr").roles("ADMIN", "HR_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"maintenanceStatus\": \"maintenance\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void plakaBossa_400ValidationHatasiDoner() throws Exception {
         mockMvc.perform(post("/admin/vehicles")
                         .with(user("filo").roles("ADMIN", "FLEET_ADMIN"))
