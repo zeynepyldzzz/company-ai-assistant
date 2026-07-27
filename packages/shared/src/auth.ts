@@ -65,6 +65,7 @@ export const AdminRoleSchema = z.object({
   name: z.string(),
 });
 export type AdminRole = z.infer<typeof AdminRoleSchema>;
+export const AdminRoleListSchema = z.array(AdminRoleSchema);
 
 // PUT /admin/users/{id}/roles govdesi (C-11 #85)
 export const UpdateRoleRequestSchema = z.object({

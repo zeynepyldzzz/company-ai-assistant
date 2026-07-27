@@ -1,17 +1,16 @@
 import {
-  AdminRoleSchema,
+  AdminRoleListSchema,
   EmployeeRoleResponseSchema,
   type AdminRole,
   type EmployeeRoleResponse,
   type UpdateRoleRequest,
 } from "@company/shared";
 import { apiFetch } from "./client";
-import { z } from "zod";
 
 // C-11 (#85): GET /admin/roles, PUT /admin/users/{id}/roles - yalnizca system_admin.
 export async function listRoles(token: string): Promise<AdminRole[]> {
   const data = await apiFetch<unknown>("/admin/roles", { token });
-  return z.array(AdminRoleSchema).parse(data);
+  return AdminRoleListSchema.parse(data);
 }
 
 export async function updateUserRole(
