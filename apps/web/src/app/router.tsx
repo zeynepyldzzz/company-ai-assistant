@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { RequireAuth } from "@/auth/auth-guard";
-import { RequireRole, RequireSubRole } from "@/auth/role-guard";
+import { RequireRole } from "@/auth/role-guard";
 import { AppLayout } from "@/layouts/app-layout";
 import { LoginPage } from "@/pages/login-page";
 import { DashboardPage } from "@/pages/dashboard-page";
@@ -16,6 +16,7 @@ import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendatio
 import { SchedulePage } from "@/pages/schedule/schedule-page";
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
 import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
+import { KnowledgeBasePage } from "@/pages/admin/knowledge-base/knowledge-base-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -40,11 +41,17 @@ export const router = createBrowserRouter([
             children: [
               { path: "/admin", element: <AdminDashboardPage /> },
               { path: "/admin/schedules", element: <AdminSchedulesPage /> },
-              {
-                element: <RequireSubRole subRoles={["fleet_admin"]} />,
-                children: [{ path: "/admin/vehicles", element: <AdminVehiclesPage /> }],
-              },
             ],
+          },
+          {
+            // B-9: arac yonetimi yalnizca fleet_admin / system_admin (B-8 backend guard'ini yansitir)
+            element: <RequireRole roles={["admin"]} subRoles={["fleet_admin", "system_admin"]} />,
+            children: [{ path: "/admin/vehicles", element: <AdminVehiclesPage /> }],
+          },
+          {
+            // A-7: bilgi tabani yalnizca hr_admin / system_admin (A-6 backend guard'ini yansitir)
+            element: <RequireRole roles={["admin"]} subRoles={["hr_admin", "system_admin"]} />,
+            children: [{ path: "/admin/knowledge-base", element: <KnowledgeBasePage /> }],
           },
         ],
       },

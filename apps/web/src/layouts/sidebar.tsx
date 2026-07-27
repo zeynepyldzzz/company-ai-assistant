@@ -9,8 +9,9 @@ import {
   MapPin,
   CalendarDays,
   Car,
+  BookText,
 } from "lucide-react";
-import type { AdminSubRole, Role } from "@company/shared";
+import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
 
@@ -19,6 +20,7 @@ const navItems: Array<{
   label: string;
   icon: typeof LayoutDashboard;
   roles: readonly Role[];
+  // verilmisse alt rol de eslenmeli (or. bilgi tabani: hr_admin / system_admin)
   subRoles?: readonly AdminSubRole[];
 }> = [
   { to: "/", label: "Ana Sayfa", icon: LayoutDashboard, roles: ["employee", "admin"] },
@@ -61,6 +63,13 @@ const navItems: Array<{
     roles: ["admin"],
     subRoles: ["fleet_admin", "system_admin"],
   },
+  {
+    to: "/admin/knowledge-base",
+    label: "Bilgi Tabanı",
+    icon: BookText,
+    roles: ["admin"],
+    subRoles: ["hr_admin", "system_admin"],
+  },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];
 
@@ -74,7 +83,7 @@ export function Sidebar() {
           (item) =>
             user &&
             item.roles.includes(user.role) &&
-            (!item.subRoles || (user.subRole && item.subRoles.includes(user.subRole)))
+            (!item.subRoles || (user.subRole !== null && item.subRoles.includes(user.subRole)))
         )
         .map(({ to, label, icon: Icon }) => (
           <NavLink

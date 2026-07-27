@@ -1,28 +1,24 @@
 import { Navigate, Outlet } from "react-router";
-import type { AdminSubRole, Role } from "@company/shared";
+import type { Role, AdminSubRole } from "@company/shared";
 import { useAuth } from "./auth-context";
 
-export function RequireRole({ roles }: { roles: Role[] }) {
+export function RequireRole({
+  roles,
+  subRoles,
+}: {
+  roles: Role[];
+  subRoles?: AdminSubRole[];
+}) {
   const { user } = useAuth();
 
   if (!user || !roles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 
-  return <Outlet />;
-}
-
-// fleet_admin gibi admin alt-rollerine ozel uclar icin (B-9): system_admin her zaman gecer,
-// cunku V3 seed'inde tum modul izinlerine sahiptir (bkz. AdminVehicleController).
-export function RequireSubRole({ subRoles }: { subRoles: AdminSubRole[] }) {
-  const { user } = useAuth();
-
-  if (
-    !user ||
-    !user.subRole ||
-    !(subRoles.includes(user.subRole) || user.subRole === "system_admin")
-  ) {
-    return <Navigate to="/admin" replace />;
+  // subRoles verilmisse alt rol de eslenmeli (backend guard'ini yansitir:
+  // or. A-6 knowledge-base uclari yalnizca hr_admin / system_admin).
+  if (subRoles && (!user.subRole || !subRoles.includes(user.subRole))) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
