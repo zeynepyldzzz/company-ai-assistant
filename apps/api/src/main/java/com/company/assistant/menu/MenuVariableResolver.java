@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -56,6 +58,11 @@ public class MenuVariableResolver {
             Map.entry("cuma", DayOfWeek.FRIDAY),
             Map.entry("pazar", DayOfWeek.SUNDAY));
 
+    // "N gun sonra" — rakam formu. Yazi formu ayri haritada.
+    private static final Pattern DAYS_LATER = Pattern.compile("(\\d+)\\s*gun\\s+sonra");
+    private static final Map<String, Integer> WORD_NUMBERS = Map.of(
+            "bir", 1, "iki", 2, "uc", 3, "dort", 4, "bes", 5, "alti", 6, "yedi", 7);
+
     private final MenuService menuService;
 
     public MenuVariableResolver(MenuService menuService) {
@@ -99,6 +106,24 @@ public class MenuVariableResolver {
         return variables;
     }
 
+    // "2 gun sonra" / "iki gun sonra" -> 2. Bulamazsa null.
+    private Integer extractDaysLater(String text) {
+        Matcher m = DAYS_LATER.matcher(text);
+        if (m.find()) {
+            try {
+                return Integer.parseInt(m.group(1));
+            } catch (NumberFormatException ignored) {
+                // asiri buyuk sayi vb.; yazi formuna dusulur
+            }
+        }
+        for (Map.Entry<String, Integer> entry : WORD_NUMBERS.entrySet()) {
+            if (text.contains(entry.getKey() + " gun sonra")) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
     private boolean hasSingleDayCue(String text) {
         if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")) {
             return true;
@@ -116,6 +141,12 @@ public class MenuVariableResolver {
         }
         if (text.contains("obur gun")) {
             return today.plusDays(2);
+        }
+
+        // "N gun sonra" (rakam veya yazi) — obur gun (+2) ile ayni ailenin genellemesi.
+        Integer daysLater = extractDaysLater(text);
+        if (daysLater != null) {
+            return today.plusDays(daysLater);
         }
 
         boolean nextWeek = text.contains("gelecek") || text.contains("onumuzdeki")

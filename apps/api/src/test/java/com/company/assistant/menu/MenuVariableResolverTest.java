@@ -89,6 +89,26 @@ class MenuVariableResolverTest {
         assertThat(captured).isAfterOrEqualTo(currentMonday().plusDays(7));
     }
 
+    // #104: "N gun sonra" rakam formu -> today + N.
+    @Test
+    void nGunSonraRakamFormuTarihiCeker() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "2 gün sonraki menü");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().plusDays(2));
+    }
+
+    // #104: "N gun sonra" yazi formu -> today + N.
+    @Test
+    void nGunSonraYaziFormuTarihiCeker() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "üç gün sonra ne var");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().plusDays(3));
+    }
+
     // #104 regresyon (#1): "haftaya <gun>" de bir hafta ileri tasimali (onceden bu haftayi veriyordu).
     @Test
     void haftayaGunuBirHaftaIleriTasir() {
