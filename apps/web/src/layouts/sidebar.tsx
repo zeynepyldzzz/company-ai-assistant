@@ -13,6 +13,7 @@ import {
   MessageCircle,
   ClipboardList,
   Megaphone,
+  UtensilsCrossed,
 } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,13 @@ const navItems: Array<{
     to: "/directory/phonebook",
     label: "Telefon Rehberi",
     icon: Phone,
+    roles: ["employee", "admin"],
+  },
+  {
+    // C-1 (#17): menu/meal endpoint'leri sidebar'a eklenmemisti.
+    to: "/menu",
+    label: "Menü",
+    icon: UtensilsCrossed,
     roles: ["employee", "admin"],
   },
   {
