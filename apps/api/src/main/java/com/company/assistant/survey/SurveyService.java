@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * C-7 (#51): GET /surveys/active, POST /surveys/{id}/responses, POST /feedback.
+ * C-8 (#52): admin taslak/yayimlama akisi icin published kontrolu eklendi.
  */
 @Service
 public class SurveyService {
@@ -24,10 +25,10 @@ public class SurveyService {
         this.feedbackRepository = feedbackRepository;
     }
 
-    /** GET /surveys/active — FR-42. Semada durum kolonu yok, tum anketler aktif sayilir. */
+    /** GET /surveys/active — FR-42. C-8 (#52): sadece published=true anketler doner. */
     @Transactional(readOnly = true)
     public List<SurveyDto> getActiveSurveys() {
-        return surveyRepository.findAllByOrderByCreatedAtDesc().stream()
+        return surveyRepository.findAllByPublishedTrueOrderByCreatedAtDesc().stream()
                 .map(SurveyDto::from)
                 .toList();
     }
@@ -41,6 +42,11 @@ public class SurveyService {
     public void submitResponse(Integer surveyId, Integer employeeId, SurveyResponseRequest request) {
         Survey survey = surveyRepository.findById(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException("Anket bulunamadı: " + surveyId));
+
+        // C-8 (#52): taslak (yayimlanmamis) bir ankete yanit verilemez.
+        if (!survey.isPublished()) {
+            throw new SurveyNotPublishedException("Anket henüz yayımlanmamış: " + surveyId);
+        }
 
         SurveyResponse response = new SurveyResponse();
         response.setSurvey(survey);
