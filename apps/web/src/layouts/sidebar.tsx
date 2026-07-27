@@ -11,6 +11,8 @@ import {
   Car,
   BookText,
   MessageCircle,
+  ClipboardList,
+  Megaphone,
 } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
@@ -59,6 +61,8 @@ const navItems: Array<{
   },
   { to: "/vehicles", label: "Araç Rezervasyonu", icon: Car, roles: ["employee", "admin"] },
   { to: "/admin/schedules", label: "Çalışan Düzeni", icon: CalendarDays, roles: ["admin"] },
+  { to: "/admin/surveys", label: "Anketler", icon: ClipboardList, roles: ["admin"] },
+  { to: "/admin/announcements", label: "Duyurular", icon: Megaphone, roles: ["admin"] },
   {
     to: "/admin/vehicles",
     label: "Araç Yönetimi",

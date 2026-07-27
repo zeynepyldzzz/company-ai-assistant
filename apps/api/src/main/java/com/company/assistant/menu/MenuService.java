@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class MenuService {
@@ -23,6 +24,16 @@ public class MenuService {
         MealMenu menu = mealMenuRepository.findByDate(today)
                 .orElseThrow(() -> new MenuNotFoundException("Bugun icin tanimli menu bulunamadi: " + today));
         return new MenuResponse(menu);
+    }
+
+    /**
+     * Belirli bir tarihin menusu. getTodayMenu()'den farki: menu yoksa exception
+     * firlatmaz, bos Optional doner — cagiran ( or. chatbot menu resolver) "o gun icin
+     * menu girilmemis" gibi nazik bir yanit uretebilsin, exception akis kontrolu olmasin.
+     * A-11: bu metot ayni zamanda ileride (Faz 2) LLM'in cagiracagi "arac"tir.
+     */
+    public Optional<MenuResponse> getMenuByDate(LocalDate date) {
+        return mealMenuRepository.findByDate(date).map(MenuResponse::new);
     }
 
     public List<MenuResponse> getWeeklyMenu() {

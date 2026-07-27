@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Sheet,
   SheetContent,
@@ -96,50 +97,50 @@ export function VersionHistorySheet({ doc }: { doc: DocumentSummary }) {
           {isError && <p className="text-destructive text-sm">Versiyonlar yüklenemedi.</p>}
 
           {data && (
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-3 py-2 text-center font-medium">Ver.</th>
-                    <th className="px-3 py-2 text-left font-medium">Yürürlük</th>
-                    <th className="px-3 py-2 text-center font-medium">Adım</th>
-                    <th className="px-3 py-2 text-left font-medium">Durum</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="text-center">Ver.</TableHead>
+                    <TableHead>Yürürlük</TableHead>
+                    <TableHead className="text-center">Adım</TableHead>
+                    <TableHead>Durum</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {data.data.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-muted-foreground px-3 py-3 text-center">
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-muted-foreground text-center">
                         Versiyon yok.
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     data.data.map((version) => (
                       <Fragment key={version.id}>
-                        <tr
-                          className="hover:bg-muted/40 cursor-pointer"
+                        <TableRow
+                          className="cursor-pointer"
                           onClick={() =>
                             setExpandedId((prev) => (prev === version.id ? null : version.id))
                           }
                         >
-                          <td className="px-3 py-2 text-center font-medium">v{version.versionNo}</td>
-                          <td className="text-muted-foreground px-3 py-2">
+                          <TableCell className="text-center font-medium">v{version.versionNo}</TableCell>
+                          <TableCell className="text-muted-foreground">
                             {formatDate(version.effectiveDate)}
-                          </td>
-                          <td className="text-muted-foreground px-3 py-2 text-center">
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-center">
                             {version.steps?.length ?? 0}
-                          </td>
-                          <td className="px-3 py-2">
+                          </TableCell>
+                          <TableCell>
                             {version.isCurrent ? (
                               <span className="text-primary font-medium">Güncel</span>
                             ) : (
                               <span className="text-muted-foreground">Eski</span>
                             )}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                         {expandedId === version.id && (
-                          <tr className="bg-muted/20">
-                            <td colSpan={4} className="space-y-3 px-3 py-3">
+                          <TableRow className="bg-muted/20 hover:bg-muted/20">
+                            <TableCell colSpan={4} className="space-y-3 whitespace-normal">
                               <div>
                                 <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
                                   İçerik
@@ -171,14 +172,14 @@ export function VersionHistorySheet({ doc }: { doc: DocumentSummary }) {
                                   <p className="text-muted-foreground text-sm">Adım yok.</p>
                                 )}
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         )}
                       </Fragment>
                     ))
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
 

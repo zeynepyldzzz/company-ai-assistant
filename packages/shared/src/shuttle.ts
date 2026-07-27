@@ -27,6 +27,7 @@ export type ShuttleStopList = z.infer<typeof ShuttleStopListSchema>;
 // GET /shuttle-routes/{id}/plate
 export const ShuttleRoutePlateSchema = z.object({
   id: z.number(),
+  name: z.string(),
   plateNumber: z.string().nullable(),
 });
 export type ShuttleRoutePlate = z.infer<typeof ShuttleRoutePlateSchema>;

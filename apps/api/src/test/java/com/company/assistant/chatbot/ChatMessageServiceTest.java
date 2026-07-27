@@ -19,6 +19,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
+import com.company.assistant.menu.MenuVariableResolver;
 
 @ExtendWith(MockitoExtension.class)
 class ChatMessageServiceTest {
@@ -31,6 +32,8 @@ class ChatMessageServiceTest {
     private ChatVariableResolver variableResolver;
     @Mock
     private HrProcedureVariableResolver hrProcedureVariableResolver;
+    @Mock
+    private MenuVariableResolver menuVariableResolver;
     @Mock
     private ChatMessageLogRepository logRepository;
 

@@ -43,6 +43,7 @@ public SecurityConfig(JwtAuthFilter jwtAuthFilter, RestAuthenticationEntryPoint 
                     "/auth/login",
                     "/auth/2fa/verify",
                     "/auth/refresh",
+                    "/auth/logout",
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/api-docs/**",

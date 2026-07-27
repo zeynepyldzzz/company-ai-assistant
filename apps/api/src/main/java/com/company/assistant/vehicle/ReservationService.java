@@ -41,6 +41,10 @@ public class ReservationService {
         Vehicle vehicle = vehicleRepository.findById(request.vehicleId())
                 .orElseThrow(() -> new VehicleNotFoundException("Araç bulunamadı, id: " + request.vehicleId()));
 
+        if (vehicle.getMaintenanceStatus() != MaintenanceStatus.AVAILABLE) {
+            throw new ReservationConflictException("Bu araç şu anda bakımda, rezervasyon yapılamaz");
+        }
+
         List<Reservation> overlapping = reservationRepository
                 .findByVehicleIdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
                         request.vehicleId(), ReservationStatus.CANCELLED, request.endTime(), request.startTime());

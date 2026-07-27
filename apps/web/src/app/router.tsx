@@ -19,6 +19,8 @@ import { VehicleReservationPage } from "@/pages/vehicle/vehicle-reservation-page
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
 import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
 import { KnowledgeBasePage } from "@/pages/admin/knowledge-base/knowledge-base-page";
+import { AdminSurveysPage } from "@/pages/admin/surveys/admin-surveys-page";
+import { AdminAnnouncementsPage } from "@/pages/admin/announcements/admin-announcements-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -45,6 +47,8 @@ export const router = createBrowserRouter([
             children: [
               { path: "/admin", element: <AdminDashboardPage /> },
               { path: "/admin/schedules", element: <AdminSchedulesPage /> },
+              { path: "/admin/surveys", element: <AdminSurveysPage /> },
+              { path: "/admin/announcements", element: <AdminAnnouncementsPage /> },
             ],
           },
           {

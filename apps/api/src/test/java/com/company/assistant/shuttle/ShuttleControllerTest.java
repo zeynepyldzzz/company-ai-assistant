@@ -92,10 +92,11 @@ class ShuttleControllerTest {
 
     @Test
     void getPlate_dondurur() throws Exception {
-        when(shuttleService.getPlate(1)).thenReturn(new ShuttleRoutePlateResponse(1, "34 ABC 123"));
+        when(shuttleService.getPlate(1)).thenReturn(new ShuttleRoutePlateResponse(1, "Merkez - Kadıköy", "34 ABC 123"));
 
         mockMvc.perform(get("/shuttle-routes/1/plate").with(user("calisan")))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Merkez - Kadıköy"))
                 .andExpect(jsonPath("$.plateNumber").value("34 ABC 123"));
     }
 
