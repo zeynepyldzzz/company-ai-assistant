@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -27,6 +28,11 @@ public class ReservationService {
     // FR-39: rezervasyon olusturma; B-T3 kritik kural: cakisan zaman araligi reddedilir.
     @Transactional
     public ReservationResponse createReservation(Integer employeeId, ReservationRequest request) {
+        if (request.startTime().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Başlangıç zamanı geçmişte olamaz");
+        }
+
         if (!request.endTime().isAfter(request.startTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Bitiş zamanı başlangıç zamanından sonra olmalıdır");

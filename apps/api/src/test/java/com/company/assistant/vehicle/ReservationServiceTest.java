@@ -55,8 +55,8 @@ class ReservationServiceTest {
     @Test
     void cakisanZamanAraligindaRezervasyonReddedilir() {
         Integer vehicleId = 1;
-        LocalDateTime start = LocalDateTime.of(2026, 7, 22, 10, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 7, 22, 12, 0);
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(2);
         ReservationRequest request = new ReservationRequest(vehicleId, start, end);
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle(vehicleId)));
@@ -78,8 +78,8 @@ class ReservationServiceTest {
     void cakismayanRezervasyonOnaylanir() {
         Integer vehicleId = 1;
         Integer employeeId = 42;
-        LocalDateTime start = LocalDateTime.of(2026, 7, 22, 10, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 7, 22, 12, 0);
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(2);
         ReservationRequest request = new ReservationRequest(vehicleId, start, end);
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle(vehicleId)));
@@ -97,8 +97,20 @@ class ReservationServiceTest {
 
     @Test
     void bitisZamaniBaslangictanOnceyseHataFirlatir() {
-        LocalDateTime start = LocalDateTime.of(2026, 7, 22, 12, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 7, 22, 10, 0);
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.minusHours(2);
+        ReservationRequest request = new ReservationRequest(1, start, end);
+
+        assertThatThrownBy(() -> service.createReservation(42, request))
+                .isInstanceOf(ResponseStatusException.class);
+
+        verify(vehicleRepository, never()).findById(any());
+    }
+
+    @Test
+    void gecmisBirBaslangicZamaniIcinRezervasyonReddedilir() {
+        LocalDateTime start = LocalDateTime.now().minusDays(1);
+        LocalDateTime end = start.plusHours(2);
         ReservationRequest request = new ReservationRequest(1, start, end);
 
         assertThatThrownBy(() -> service.createReservation(42, request))
@@ -109,8 +121,8 @@ class ReservationServiceTest {
 
     @Test
     void olmayanAracIcinRezervasyonYapilamaz() {
-        LocalDateTime start = LocalDateTime.of(2026, 7, 22, 10, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 7, 22, 12, 0);
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(2);
         ReservationRequest request = new ReservationRequest(999, start, end);
 
         when(vehicleRepository.findById(999)).thenReturn(Optional.empty());

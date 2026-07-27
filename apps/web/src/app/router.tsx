@@ -14,6 +14,7 @@ import { ShuttleRoutesPage } from "@/pages/shuttle/shuttle-routes-page";
 import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-page";
 import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendation-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
+import { VehicleReservationPage } from "@/pages/vehicle/vehicle-reservation-page";
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
 import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
 import { KnowledgeBasePage } from "@/pages/admin/knowledge-base/knowledge-base-page";
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
           { path: "/shuttle/routes", element: <ShuttleRoutesPage /> },
           { path: "/shuttle/routes/:id", element: <ShuttleRouteDetailPage /> },
           { path: "/shuttle/recommendation", element: <ShuttleRecommendationPage /> },
+          { path: "/vehicles", element: <VehicleReservationPage /> },
           {
             element: <RequireRole roles={["admin"]} />,
             children: [
