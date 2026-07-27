@@ -15,6 +15,7 @@ import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-pag
 import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendation-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
+import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
 import { KnowledgeBasePage } from "@/pages/admin/knowledge-base/knowledge-base-page";
 
 export const router = createBrowserRouter([
@@ -43,11 +44,14 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            // B-9: arac yonetimi yalnizca fleet_admin / system_admin (B-8 backend guard'ini yansitir)
+            element: <RequireRole roles={["admin"]} subRoles={["fleet_admin", "system_admin"]} />,
+            children: [{ path: "/admin/vehicles", element: <AdminVehiclesPage /> }],
+          },
+          {
             // A-7: bilgi tabani yalnizca hr_admin / system_admin (A-6 backend guard'ini yansitir)
             element: <RequireRole roles={["admin"]} subRoles={["hr_admin", "system_admin"]} />,
-            children: [
-              { path: "/admin/knowledge-base", element: <KnowledgeBasePage /> },
-            ],
+            children: [{ path: "/admin/knowledge-base", element: <KnowledgeBasePage /> }],
           },
         ],
       },

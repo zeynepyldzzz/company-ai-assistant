@@ -1,5 +1,16 @@
 import { NavLink } from "react-router";
-import { LayoutDashboard, ShieldCheck, Users, Building2, Phone, Bus, MapPin, CalendarDays, BookText } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShieldCheck,
+  Users,
+  Building2,
+  Phone,
+  Bus,
+  MapPin,
+  CalendarDays,
+  Car,
+  BookText,
+} from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
@@ -13,10 +24,30 @@ const navItems: Array<{
   subRoles?: readonly AdminSubRole[];
 }> = [
   { to: "/", label: "Ana Sayfa", icon: LayoutDashboard, roles: ["employee", "admin"] },
-  { to: "/directory/employees", label: "Çalışan Rehberi", icon: Users, roles: ["employee", "admin"] },
-  { to: "/directory/departments", label: "Departmanlar", icon: Building2, roles: ["employee", "admin"] },
-  { to: "/directory/phonebook", label: "Telefon Rehberi", icon: Phone, roles: ["employee", "admin"] },
-  { to: "/my-schedule", label: "Haftalık Çalışma Düzenim", icon: CalendarDays, roles: ["employee", "admin"] },
+  {
+    to: "/directory/employees",
+    label: "Çalışan Rehberi",
+    icon: Users,
+    roles: ["employee", "admin"],
+  },
+  {
+    to: "/directory/departments",
+    label: "Departmanlar",
+    icon: Building2,
+    roles: ["employee", "admin"],
+  },
+  {
+    to: "/directory/phonebook",
+    label: "Telefon Rehberi",
+    icon: Phone,
+    roles: ["employee", "admin"],
+  },
+  {
+    to: "/my-schedule",
+    label: "Haftalık Çalışma Düzenim",
+    icon: CalendarDays,
+    roles: ["employee", "admin"],
+  },
   { to: "/shuttle/routes", label: "Servis Güzergahları", icon: Bus, roles: ["employee", "admin"] },
   {
     to: "/shuttle/recommendation",
@@ -25,6 +56,13 @@ const navItems: Array<{
     roles: ["employee", "admin"],
   },
   { to: "/admin/schedules", label: "Çalışan Düzeni", icon: CalendarDays, roles: ["admin"] },
+  {
+    to: "/admin/vehicles",
+    label: "Araç Yönetimi",
+    icon: Car,
+    roles: ["admin"],
+    subRoles: ["fleet_admin", "system_admin"],
+  },
   {
     to: "/admin/knowledge-base",
     label: "Bilgi Tabanı",
