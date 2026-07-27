@@ -48,7 +48,7 @@ export function VehicleReservationPage() {
 
   const vehiclesQuery = useQuery({
     queryKey: ["vehicles", "available"],
-    queryFn: () => listVehicles(true, token!),
+    queryFn: () => listVehicles(token!, true),
     enabled: Boolean(token),
   });
 
