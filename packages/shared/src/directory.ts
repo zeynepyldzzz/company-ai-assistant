@@ -42,6 +42,25 @@ export type Department = z.infer<typeof DepartmentSchema>;
 export const DepartmentPagedResponseSchema = pagedResponseSchema(DepartmentSchema);
 export type DepartmentPagedResponse = z.infer<typeof DepartmentPagedResponseSchema>;
 
+// POST/PUT /admin/employees govdesi (#84 Hafta 4).
+export const AdminEmployeeRequestSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().nullable().optional(),
+  officeStatus: z.string().nullable().optional(),
+  departmentId: z.number().nullable().optional(),
+  roleId: z.number().nullable().optional(),
+});
+export type AdminEmployeeRequest = z.infer<typeof AdminEmployeeRequestSchema>;
+
+// POST/PUT /admin/departments govdesi (#84 Hafta 4).
+export const AdminDepartmentRequestSchema = z.object({
+  name: z.string().min(1),
+  responsibilities: z.string().nullable().optional(),
+  managerId: z.number().nullable().optional(),
+});
+export type AdminDepartmentRequest = z.infer<typeof AdminDepartmentRequestSchema>;
+
 // GET /phonebook
 export const PhonebookEntrySchema = z.object({
   id: z.number(),
