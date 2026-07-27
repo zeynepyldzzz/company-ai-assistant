@@ -44,10 +44,9 @@ class MenuVariableResolverTest {
     void bugunKelimesiBugununTarihiniCeker() {
         when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
 
-        Map<String, String> vars = resolver.resolve("yemek_menusu", "bugün ne var");
+        resolver.resolve("yemek_menusu", "bugün ne var");
 
         assertThat(capturedDate()).isEqualTo(LocalDate.now());
-        assertThat(vars.get("gunun_menusu")).contains("girilmemiş");
     }
 
     @Test
@@ -90,19 +89,56 @@ class MenuVariableResolverTest {
         assertThat(captured).isAfterOrEqualTo(currentMonday().plusDays(7));
     }
 
+    // #104 regresyon (#1): "haftaya <gun>" de bir hafta ileri tasimali (onceden bu haftayi veriyordu).
     @Test
-    void haftaIstegiTumHaftayiDoner() {
+    void haftayaGunuBirHaftaIleriTasir() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "haftaya çarşamba ne var");
+
+        LocalDate captured = capturedDate();
+        assertThat(captured.getDayOfWeek()).isEqualTo(DayOfWeek.WEDNESDAY);
+        assertThat(captured).isAfterOrEqualTo(currentMonday().plusDays(7));
+    }
+
+    // #104 regresyon (#2): menu yoksa "... menusu:" basligi basilmamali; net "bulunmuyor" cumlesi.
+    @Test
+    void menuYoksaYanilticiBaslikBasilmaz() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        Map<String, String> vars = resolver.resolve("yemek_menusu", "cumartesi ne var");
+
+        assertThat(vars.get("menu_gunu")).contains("için menü bulunmuyor").doesNotContain("menüsü:");
+        assertThat(vars.get("gunun_menusu")).isEmpty();
+    }
+
+    @Test
+    void bosHaftaIsteginde_bulunmuyorMesaji() {
         when(menuService.getWeeklyMenu()).thenReturn(List.of());
 
         Map<String, String> vars = resolver.resolve("yemek_menusu", "bu haftanın listesi");
 
-        assertThat(vars.get("menu_gunu")).isEqualTo("Bu haftanın menüsü:");
-        verify(menuService).getWeeklyMenu();
+        assertThat(vars.get("menu_gunu")).isEqualTo("Bu hafta için menü bulunmuyor.");
         verify(menuService, never()).getMenuByDate(any());
     }
 
     @Test
-    void menuKalemleriMaddeliListelenir() {
+    void doluHaftaIstegiTumHaftayiListeler() {
+        MenuResponse day = mock(MenuResponse.class);
+        when(day.getDate()).thenReturn(LocalDate.of(2026, 7, 29));
+        MealItemResponse item = mock(MealItemResponse.class);
+        when(item.getName()).thenReturn("Çorba");
+        when(day.getItems()).thenReturn(List.of(item));
+        when(menuService.getWeeklyMenu()).thenReturn(List.of(day));
+
+        Map<String, String> vars = resolver.resolve("yemek_menusu", "bu haftanın listesi");
+
+        assertThat(vars.get("menu_gunu")).isEqualTo("Bu haftanın menüsü:");
+        verify(menuService, never()).getMenuByDate(any());
+    }
+
+    @Test
+    void menuVarsaKalemleriMaddeliListelenir() {
         MealItemResponse item = mock(MealItemResponse.class);
         when(item.getName()).thenReturn("Mercimek çorbası");
         when(item.getCalories()).thenReturn(250);
@@ -112,6 +148,7 @@ class MenuVariableResolverTest {
 
         Map<String, String> vars = resolver.resolve("yemek_menusu", "bugün ne var");
 
+        assertThat(vars.get("menu_gunu")).contains("menüsü:");
         assertThat(vars.get("gunun_menusu")).isEqualTo("• Mercimek çorbası (250 kcal)");
     }
 

@@ -73,17 +73,29 @@ public class MenuVariableResolver {
         // Hafta modu: "hafta" var ve tekil gun ipucu yok (or. "bu haftanin listesi").
         // "gelecek hafta cuma" gibi tekil gun iceren istekler asagidaki tek-gun dalina gider.
         if (text.contains("hafta") && !hasSingleDayCue(text)) {
-            variables.put("menu_gunu", "Bu haftanın menüsü:");
-            variables.put("gunun_menusu", buildWeekBody());
+            List<MenuResponse> week = menuService.getWeeklyMenu();
+            if (week.isEmpty()) {
+                // Menu yokken "Bu haftanin menusu:" basligi yaniltici olur; net cumle.
+                variables.put("menu_gunu", "Bu hafta için menü bulunmuyor.");
+                variables.put("gunun_menusu", "");
+            } else {
+                variables.put("menu_gunu", "Bu haftanın menüsü:");
+                variables.put("gunun_menusu", buildWeekBody(week));
+            }
             return variables;
         }
 
         LocalDate target = resolveTarget(text, LocalDate.now());
-        String header = TR_DAY_NAMES.get(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ") menüsü:";
-        variables.put("menu_gunu", header);
-        variables.put("gunun_menusu", menuService.getMenuByDate(target)
-                .map(this::formatItems)
-                .orElse(NO_MENU));
+        String dayLabel = TR_DAY_NAMES.get(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ")";
+        Optional<MenuResponse> menu = menuService.getMenuByDate(target);
+        if (menu.isPresent() && menu.get().getItems() != null && !menu.get().getItems().isEmpty()) {
+            variables.put("menu_gunu", dayLabel + " menüsü:");
+            variables.put("gunun_menusu", formatItems(menu.get()));
+        } else {
+            // Menu yoksa "... menusu:" basligi basmak yaniltici (issue #104); tek net cumle.
+            variables.put("menu_gunu", dayLabel + " için menü bulunmuyor.");
+            variables.put("gunun_menusu", "");
+        }
         return variables;
     }
 
@@ -106,7 +118,8 @@ public class MenuVariableResolver {
             return today.plusDays(2);
         }
 
-        boolean nextWeek = text.contains("gelecek") || text.contains("onumuzdeki");
+        boolean nextWeek = text.contains("gelecek") || text.contains("onumuzdeki")
+                || text.contains("haftaya");
         for (Map.Entry<String, DayOfWeek> entry : WEEKDAY_KEYWORDS) {
             if (text.contains(entry.getKey())) {
                 LocalDate day = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -120,11 +133,8 @@ public class MenuVariableResolver {
     }
 
     // Bu haftanin tum gunlerini tarihe gore siralayip her gunu baslikli bloklar halinde basar.
-    private String buildWeekBody() {
-        List<MenuResponse> week = menuService.getWeeklyMenu();
-        if (week.isEmpty()) {
-            return "Bu hafta için menü girilmemiş görünüyor.";
-        }
+    // Cagiran bos hafta durumunu zaten ele aliyor; burada liste dolu gelir.
+    private String buildWeekBody(List<MenuResponse> week) {
         return week.stream()
                 .sorted(Comparator.comparing(MenuResponse::getDate))
                 .map(m -> TR_DAY_NAMES.get(m.getDate().getDayOfWeek())
