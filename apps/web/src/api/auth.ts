@@ -35,3 +35,10 @@ export async function getMe(token: string): Promise<User> {
   const data = await apiFetch<unknown>("/me", { token });
   return UserSchema.parse(data);
 }
+
+export async function logout(refreshToken: string): Promise<void> {
+  await apiFetch<void>("/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}

@@ -8,9 +8,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/auth/auth-context";
+import { readAuth } from "@/auth/token-store";
+import { logout } from "@/api/auth";
 
 export function Header() {
   const { user, clearAuth } = useAuth();
+
+  async function handleLogout() {
+    const refreshToken = readAuth()?.refreshToken;
+    clearAuth();
+    // Local oturum hemen kapanir; sunucudaki refresh token'i iptal etmek
+    // best-effort'tur, basarisiz olsa da kullaniciyi bloke etmez.
+    if (refreshToken) {
+      logout(refreshToken).catch(() => {});
+    }
+  }
 
   const initials = user
     ? user.name
@@ -34,7 +46,7 @@ export function Header() {
           <span className="text-sm">{user?.name ?? "Kullanıcı"}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => clearAuth()}>
+          <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="size-4" />
             Çıkış yap
           </DropdownMenuItem>
