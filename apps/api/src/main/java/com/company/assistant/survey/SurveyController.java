@@ -63,4 +63,9 @@ public class SurveyController {
     public ResponseEntity<String> handleNotFound(SurveyNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+
+    @ExceptionHandler(SurveyNotPublishedException.class)
+    public ResponseEntity<String> handleNotPublished(SurveyNotPublishedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
 }

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/auth/auth-context";
 import { getAdminSchedules } from "@/api/schedule";
 import type { ScheduleStatus, WorkDay } from "@company/shared";
@@ -41,44 +42,44 @@ export function AdminSchedulesPage() {
       {isError && <p className="text-destructive text-sm">Çalışma düzenleri yüklenemedi.</p>}
 
       {data && (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">Çalışan</th>
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Çalışan</TableHead>
                 {WORK_DAYS.map((day) => (
-                  <th key={day} className="px-4 py-2 text-center font-medium">
+                  <TableHead key={day} className="text-center">
                     {DAY_LABELS[day]}
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {data.employees.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-muted-foreground px-4 py-3 text-center">
+                <TableRow>
+                  <TableCell colSpan={6} className="text-muted-foreground text-center">
                     Bu hafta için kayıt bulunamadı.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 data.employees.map((emp) => {
                   const statusByDay = Object.fromEntries(
                     emp.days.map((d) => [d.day, d.status])
                   ) as Record<WorkDay, ScheduleStatus | undefined>;
                   return (
-                    <tr key={emp.employeeId}>
-                      <td className="px-4 py-2 font-medium">{emp.employeeName}</td>
+                    <TableRow key={emp.employeeId}>
+                      <TableCell className="font-medium">{emp.employeeName}</TableCell>
                       {WORK_DAYS.map((day) => (
-                        <td key={day} className="text-muted-foreground px-4 py-2 text-center">
+                        <TableCell key={day} className="text-muted-foreground text-center">
                           {statusByDay[day] ? STATUS_LABELS[statusByDay[day]!] : "—"}
-                        </td>
+                        </TableCell>
                       ))}
-                    </tr>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

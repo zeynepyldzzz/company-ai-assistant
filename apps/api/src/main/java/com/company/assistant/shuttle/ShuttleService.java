@@ -46,7 +46,7 @@ public class ShuttleService {
     public ShuttleRoutePlateResponse getPlate(Integer routeId) {
         ShuttleRoute route = shuttleRouteRepository.findById(routeId)
                 .orElseThrow(() -> new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId));
-        return new ShuttleRoutePlateResponse(route.getId(), route.getPlateNumber());
+        return new ShuttleRoutePlateResponse(route.getId(), route.getName(), route.getPlateNumber());
     }
 
     public ShuttleRecommendationResponse getRecommendation(double lat, double lng) {

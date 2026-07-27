@@ -4,4 +4,5 @@ export * from "./knowledge-base";
 export * from "./menu";
 export * from "./schedule";
 export * from "./shuttle";
+export * from "./survey";
 export * from "./vehicle";

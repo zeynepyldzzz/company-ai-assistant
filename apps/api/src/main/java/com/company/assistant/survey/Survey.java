@@ -11,10 +11,11 @@ import jakarta.persistence.Table;
 
 /**
  * V1__init.sql: survey(id, title, created_by, created_at)
- * NOT: semada "aktif/pasif" ayrimi yapan bir kolon yok. C-7 (#51) kapsaminda
- * MVP olarak TUM anketler "aktif" kabul edilir (en yeni once). Ekipte
- * ileride bir status/expiry kolonu gerekirse yeni bir Flyway migration
- * (V19...) ile eklenmesi gerekir.
+ * V20__add_survey_published.sql: survey.published (BOOLEAN, default false).
+ * C-8 (#52): admin POST /admin/surveys ile taslak (published=false) anket
+ * olusturur, PUT /admin/surveys/{id}/publish ile yayimlar. C-7'de (#51)
+ * "semada kolon yok, tum anketler aktif" varsayimi bu kolonla duzeltildi:
+ * GET /surveys/active artik SADECE published=true anketleri doner.
  */
 @Entity
 @Table(name = "survey")
@@ -33,6 +34,9 @@ public class Survey {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "published", nullable = false)
+    private boolean published = false;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -44,4 +48,7 @@ public class Survey {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isPublished() { return published; }
+    public void setPublished(boolean published) { this.published = published; }
 }
