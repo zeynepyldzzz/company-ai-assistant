@@ -112,6 +112,21 @@ class AdminSurveyControllerTest {
                 .andExpect(jsonPath("$.published").value(true));
     }
 
+    // C-T3 (#54): yayimlama ucu da /admin/** ile ayni sekilde korunmali.
+    @Test
+    void duzCalisan_anketiYayimlayamaz() throws Exception {
+        mockMvc.perform(put("/admin/surveys/10/publish")
+                        .with(user("1").roles("EMPLOYEE")).with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void authOlmadan_yayimlama401Doner() throws Exception {
+        mockMvc.perform(put("/admin/surveys/10/publish")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void admin_olmayanAnketiYayimlarsa404Doner() throws Exception {
         when(adminSurveyService.publish(999)).thenThrow(new SurveyNotFoundException("Anket bulunamadı: 999"));
@@ -134,5 +149,19 @@ class AdminSurveyControllerTest {
                 .andExpect(jsonPath("$.totalResponses").value(2))
                 .andExpect(jsonPath("$.totalFeedback").value(1))
                 .andExpect(jsonPath("$.answerCounts.q1.evet").value(2));
+    }
+
+    // C-T3 (#54): sonuc goruntuleme ucu da yetkisiz rollerce cagrilamamali.
+    @Test
+    void duzCalisan_sonuclariGoremez() throws Exception {
+        mockMvc.perform(get("/admin/surveys/10/results")
+                        .with(user("1").roles("EMPLOYEE")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void authOlmadan_sonuclar401Doner() throws Exception {
+        mockMvc.perform(get("/admin/surveys/10/results"))
+                .andExpect(status().isUnauthorized());
     }
 }
