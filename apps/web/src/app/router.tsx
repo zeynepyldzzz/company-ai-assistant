@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { RequireAuth } from "@/auth/auth-guard";
-import { RequireRole } from "@/auth/role-guard";
+import { RequireRole, RequireSubRole } from "@/auth/role-guard";
 import { AppLayout } from "@/layouts/app-layout";
 import { LoginPage } from "@/pages/login-page";
 import { DashboardPage } from "@/pages/dashboard-page";
@@ -15,6 +15,7 @@ import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-pag
 import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendation-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
+import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
             children: [
               { path: "/admin", element: <AdminDashboardPage /> },
               { path: "/admin/schedules", element: <AdminSchedulesPage /> },
+              {
+                element: <RequireSubRole subRoles={["fleet_admin"]} />,
+                children: [{ path: "/admin/vehicles", element: <AdminVehiclesPage /> }],
+              },
             ],
           },
         ],
