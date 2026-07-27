@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
 import { createVehicle, listVehicles, updateMaintenanceStatus, updateVehicle } from "@/api/vehicle";
@@ -127,43 +128,43 @@ export function AdminVehiclesPage() {
       {isError && <p className="text-destructive text-sm">Araçlar yüklenemedi.</p>}
 
       {vehicles && (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">Plaka</th>
-                <th className="px-4 py-2 text-left font-medium">Model</th>
-                <th className="px-4 py-2 text-left font-medium">Durum</th>
-                <th className="px-4 py-2 text-right font-medium">İşlemler</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Plaka</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead>Durum</TableHead>
+                <TableHead className="text-right">İşlemler</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {vehicles.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="text-muted-foreground px-4 py-3 text-center">
+                <TableRow>
+                  <TableCell colSpan={4} className="text-muted-foreground text-center">
                     Kayıtlı araç bulunamadı.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 vehicles.map((vehicle) =>
                   editingId === vehicle.id ? (
-                    <tr key={vehicle.id}>
-                      <td className="px-4 py-2">
+                    <TableRow key={vehicle.id}>
+                      <TableCell>
                         <Input
                           value={editPlate}
                           onChange={(event) => setEditPlate(event.target.value)}
                         />
-                      </td>
-                      <td className="px-4 py-2">
+                      </TableCell>
+                      <TableCell>
                         <Input
                           value={editModel}
                           onChange={(event) => setEditModel(event.target.value)}
                         />
-                      </td>
-                      <td className="text-muted-foreground px-4 py-2">
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
                         {STATUS_LABELS[vehicle.maintenanceStatus]}
-                      </td>
-                      <td className="px-4 py-2 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             type="button"
@@ -182,14 +183,14 @@ export function AdminVehiclesPage() {
                             İptal
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
-                    <tr key={vehicle.id}>
-                      <td className="px-4 py-2 font-medium">{vehicle.plate}</td>
-                      <td className="text-muted-foreground px-4 py-2">{vehicle.model ?? "—"}</td>
-                      <td className="px-4 py-2">{STATUS_LABELS[vehicle.maintenanceStatus]}</td>
-                      <td className="px-4 py-2 text-right">
+                    <TableRow key={vehicle.id}>
+                      <TableCell className="font-medium">{vehicle.plate}</TableCell>
+                      <TableCell className="text-muted-foreground">{vehicle.model ?? "—"}</TableCell>
+                      <TableCell>{STATUS_LABELS[vehicle.maintenanceStatus]}</TableCell>
+                      <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             type="button"
@@ -211,13 +212,13 @@ export function AdminVehiclesPage() {
                               : "Kullanıma Aç"}
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 )
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

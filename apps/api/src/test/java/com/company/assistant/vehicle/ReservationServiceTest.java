@@ -120,6 +120,25 @@ class ReservationServiceTest {
     }
 
     @Test
+    void bakimdakiAracIcinRezervasyonReddedilir() {
+        Integer vehicleId = 1;
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(2);
+        ReservationRequest request = new ReservationRequest(vehicleId, start, end);
+
+        Vehicle maintenanceVehicle = vehicle(vehicleId);
+        maintenanceVehicle.setMaintenanceStatus(MaintenanceStatus.MAINTENANCE);
+        when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(maintenanceVehicle));
+
+        assertThatThrownBy(() -> service.createReservation(42, request))
+                .isInstanceOf(ReservationConflictException.class);
+
+        verify(reservationRepository, never())
+                .findByVehicleIdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(any(), any(), any(), any());
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
     void olmayanAracIcinRezervasyonYapilamaz() {
         LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime end = start.plusHours(2);

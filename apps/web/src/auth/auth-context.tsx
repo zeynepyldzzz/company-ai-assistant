@@ -1,12 +1,12 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { User } from "@company/shared";
-
-const STORAGE_KEY = "auth";
-
-interface StoredAuth {
-  token: string;
-  user: User;
-}
+import {
+  clearAuth as clearStoredAuth,
+  readAuth,
+  subscribeAuth,
+  writeAuth,
+  type StoredAuth,
+} from "./token-store";
 
 interface AuthContextValue {
   token: string | null;
@@ -17,31 +17,20 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readStoredAuth(): StoredAuth | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as StoredAuth;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [auth, setAuthState] = useState<StoredAuth | null>(() => readStoredAuth());
+  const [auth, setAuthState] = useState<StoredAuth | null>(() => readAuth());
+
+  // apiFetch, access token suresi doldugunda arka planda yeniliyor veya
+  // yenileme basarisiz olursa oturumu temizliyor (client.ts); bu component
+  // disindaki degisiklikleri buradan yakalar.
+  useEffect(() => subscribeAuth(setAuthState), []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      token: auth?.token ?? null,
+      token: auth?.accessToken ?? null,
       user: auth?.user ?? null,
-      setAuth: (next: StoredAuth) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        setAuthState(next);
-      },
-      clearAuth: () => {
-        localStorage.removeItem(STORAGE_KEY);
-        setAuthState(null);
-      },
+      setAuth: (next: StoredAuth) => writeAuth(next),
+      clearAuth: () => clearStoredAuth(),
     }),
     [auth]
   );
