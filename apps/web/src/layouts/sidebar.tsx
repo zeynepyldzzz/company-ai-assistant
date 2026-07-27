@@ -14,6 +14,8 @@ import {
   ClipboardList,
   Megaphone,
   UtensilsCrossed,
+  KeyRound,
+  BarChart3,
 } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
@@ -99,6 +101,21 @@ const navItems: Array<{
     icon: Building2,
     roles: ["admin"],
     subRoles: ["hr_admin", "system_admin"],
+  },
+  {
+    // C-11 (#85): rol/izin yonetimi + rapor yalnizca system_admin (FR-80-82).
+    to: "/admin/roles",
+    label: "Rol / İzin Yönetimi",
+    icon: KeyRound,
+    roles: ["admin"],
+    subRoles: ["system_admin"],
+  },
+  {
+    to: "/admin/reports",
+    label: "Raporlar",
+    icon: BarChart3,
+    roles: ["admin"],
+    subRoles: ["system_admin"],
   },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];

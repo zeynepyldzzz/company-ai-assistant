@@ -58,3 +58,25 @@ export const TwoFactorVerifyRequestSchema = z.object({
   code: z.string().min(1),
 });
 export type TwoFactorVerifyRequest = z.infer<typeof TwoFactorVerifyRequestSchema>;
+
+// GET /admin/roles (C-11 #85)
+export const AdminRoleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+export type AdminRole = z.infer<typeof AdminRoleSchema>;
+
+// PUT /admin/users/{id}/roles govdesi (C-11 #85)
+export const UpdateRoleRequestSchema = z.object({
+  roleId: z.number(),
+});
+export type UpdateRoleRequest = z.infer<typeof UpdateRoleRequestSchema>;
+
+// PUT /admin/users/{id}/roles yaniti
+export const EmployeeRoleResponseSchema = z.object({
+  employeeId: z.number(),
+  employeeName: z.string(),
+  roleId: z.number(),
+  roleName: z.string(),
+});
+export type EmployeeRoleResponse = z.infer<typeof EmployeeRoleResponseSchema>;
