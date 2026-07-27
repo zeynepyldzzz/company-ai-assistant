@@ -31,6 +31,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,6 +69,12 @@ class PolicyDocumentControllerTest {
                 new SimpleGrantedAuthority("ROLE_FLEET_ADMIN")};
     }
 
+    private static SimpleGrantedAuthority[] systemAdmin() {
+        return new SimpleGrantedAuthority[]{
+                new SimpleGrantedAuthority("ROLE_ADMIN"),
+                new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")};
+    }
+
     @Test
     void authOlmadan_401() throws Exception {
         mockMvc.perform(get("/admin/knowledge-base/documents"))
@@ -89,6 +96,41 @@ class PolicyDocumentControllerTest {
         mockMvc.perform(get("/admin/knowledge-base/documents")
                         .with(user("fleet").authorities(fleetAdmin())))
                 .andExpect(status().isForbidden());
+    }
+
+    // A-T2 / AC1: guard controller seviyesinde; yetkisiz admin YALNIZ liste degil TUM
+    // KB uclarinda 403 almali. Govdeler gecerli (400 degil 403 aldigimizdan emin ol).
+    @Test
+    void adminAmaHrDegil_tumUclarda_403() throws Exception {
+        var fleet = user("fleet").authorities(fleetAdmin());
+
+        mockMvc.perform(post("/admin/knowledge-base/documents").with(fleet)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"procedureId\":1,\"title\":\"x\",\"effectiveDate\":\"2026-02-01\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/admin/knowledge-base/documents/1").with(fleet)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"effectiveDate\":\"2026-02-01\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/admin/knowledge-base/documents/1").with(fleet))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/admin/knowledge-base/documents/1/versions").with(fleet))
+                .andExpect(status().isForbidden());
+    }
+
+    // system_admin da yetkili (guard "hr_admin OR system_admin"); pozitif yol.
+    @Test
+    void systemAdmin_listeDoner_200() throws Exception {
+        when(service.list(anyInt(), anyInt()))
+                .thenReturn(new PagedResponse<>(List.of(ornekOzet()), 0, 20, 1));
+
+        mockMvc.perform(get("/admin/knowledge-base/documents")
+                        .with(user("sys").authorities(systemAdmin())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1));
     }
 
     @Test
