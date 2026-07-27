@@ -51,7 +51,7 @@ public class AdminShuttleService {
                 .orElseThrow(() -> new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId));
         route.setPlateNumber(request.plateNumber());
         shuttleRouteRepository.save(route);
-        return new ShuttleRoutePlateResponse(route.getId(), route.getPlateNumber());
+        return new ShuttleRoutePlateResponse(route.getId(), route.getName(), route.getPlateNumber());
     }
 
     private List<ShuttleStop> toStops(List<ShuttleStopRequest> requests, ShuttleRoute route) {

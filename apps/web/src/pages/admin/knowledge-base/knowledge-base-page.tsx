@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import type { DocumentSummary } from "@company/shared";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationControls } from "@/components/pagination-controls";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
@@ -65,38 +66,38 @@ export function KnowledgeBasePage() {
 
       {data && (
         <>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium">Başlık</th>
-                  <th className="px-4 py-2 text-left font-medium">Kategori</th>
-                  <th className="px-4 py-2 text-center font-medium">Güncel Versiyon</th>
-                  <th className="px-4 py-2 text-left font-medium">Yürürlük Tarihi</th>
-                  <th className="px-4 py-2 text-left font-medium">Oluşturulma</th>
-                  <th className="px-4 py-2 text-right font-medium">İşlemler</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead>Başlık</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead className="text-center">Güncel Versiyon</TableHead>
+                  <TableHead>Yürürlük Tarihi</TableHead>
+                  <TableHead>Oluşturulma</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data.data.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-muted-foreground px-4 py-3 text-center">
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-muted-foreground text-center">
                       Henüz doküman yok.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   data.data.map((doc) => (
-                    <tr key={doc.id}>
-                      <td className="px-4 py-2 font-medium">{doc.title}</td>
-                      <td className="text-muted-foreground px-4 py-2">{doc.procedureCategory}</td>
-                      <td className="px-4 py-2 text-center">
+                    <TableRow key={doc.id}>
+                      <TableCell className="font-medium">{doc.title}</TableCell>
+                      <TableCell className="text-muted-foreground">{doc.procedureCategory}</TableCell>
+                      <TableCell className="text-center">
                         {doc.currentVersionNo ? `v${doc.currentVersionNo}` : "—"}
-                      </td>
-                      <td className="text-muted-foreground px-4 py-2">
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
                         {formatDate(doc.currentEffectiveDate)}
-                      </td>
-                      <td className="text-muted-foreground px-4 py-2">{formatDate(doc.createdAt)}</td>
-                      <td className="px-4 py-2">
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(doc.createdAt)}</TableCell>
+                      <TableCell>
                         <div className="flex justify-end gap-2">
                           <VersionHistorySheet doc={doc} />
                           <Button
@@ -109,12 +110,12 @@ export function KnowledgeBasePage() {
                             Sil
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           <PaginationControls
             page={data.page}

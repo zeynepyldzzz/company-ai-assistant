@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useAuth } from "@/auth/auth-context";
 import { getShuttlePlate, getShuttleStops } from "@/api/shuttle";
 
 export function ShuttleRouteDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
   const { token } = useAuth();
   const routeId = Number(id);
-  const routeName = (location.state as { name?: string } | null)?.name;
 
   const plateQuery = useQuery({
     queryKey: ["shuttle-plate", routeId],
@@ -36,7 +34,7 @@ export function ShuttleRouteDetailPage() {
 
       {plateQuery.data && (
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold">{routeName ?? "Güzergah Detayı"}</h1>
+          <h1 className="text-xl font-semibold">{plateQuery.data.name}</h1>
           <p className="text-muted-foreground text-sm">
             Güncel plaka:{" "}
             <span className="text-foreground font-medium">

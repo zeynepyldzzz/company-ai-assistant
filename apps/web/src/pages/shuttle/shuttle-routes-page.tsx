@@ -40,9 +40,7 @@ export function ShuttleRoutesPage() {
                 <li key={route.id}>
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(`/shuttle/routes/${route.id}`, { state: { name: route.name } })
-                    }
+                    onClick={() => navigate(`/shuttle/routes/${route.id}`)}
                     className="hover:bg-muted flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors"
                   >
                     <span className="text-sm font-medium">{route.name}</span>

@@ -189,7 +189,7 @@ class AdminShuttleControllerTest {
     @Test
     void shuttleAdmin_plakaGuncelleyebilir() throws Exception {
         when(adminShuttleService.updatePlate(eq(1), any()))
-                .thenReturn(new ShuttleRoutePlateResponse(1, "34 XYZ 999"));
+                .thenReturn(new ShuttleRoutePlateResponse(1, "Merkez - Kadıköy", "34 XYZ 999"));
 
         mockMvc.perform(put("/admin/shuttle-routes/1/plate")
                         .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))

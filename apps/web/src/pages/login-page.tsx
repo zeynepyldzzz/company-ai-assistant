@@ -24,7 +24,7 @@ export function LoginPage() {
         setChallengeToken(data.challengeToken);
         return;
       }
-      setAuth({ token: data.accessToken, user: data.user });
+      setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
       navigate("/", { replace: true });
     },
     onError: (error: unknown) => {
@@ -36,7 +36,7 @@ export function LoginPage() {
   const verifyMutation = useMutation({
     mutationFn: () => verifyTwoFactor(challengeToken!, code),
     onSuccess: (data) => {
-      setAuth({ token: data.accessToken, user: data.user });
+      setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
       navigate("/", { replace: true });
     },
     onError: (error: unknown) => {

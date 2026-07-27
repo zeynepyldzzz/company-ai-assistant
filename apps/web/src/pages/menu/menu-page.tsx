@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/auth/auth-context";
 import { getTodayMenu, getWeeklyMenu } from "@/api/menu";
 import type { Menu, MealItem } from "@company/shared";
@@ -29,20 +30,22 @@ function MealItemRow({ item }: { item: MealItem }) {
 
 function MenuCard({ menu }: { menu: Menu }) {
   return (
-    <div className="rounded-lg border">
-      <div className="border-b px-4 py-2">
-        <h2 className="text-sm font-semibold">{formatDate(menu.date)}</h2>
-      </div>
-      {menu.items.length === 0 ? (
-        <p className="text-muted-foreground px-4 py-3 text-sm">Bu gün için menü girilmemiş.</p>
-      ) : (
-        <ul className="divide-y">
-          {menu.items.map((item) => (
-            <MealItemRow key={item.id} item={item} />
-          ))}
-        </ul>
-      )}
-    </div>
+    <Card className="gap-0 p-0">
+      <CardHeader className="border-b px-4 py-2">
+        <CardTitle>{formatDate(menu.date)}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {menu.items.length === 0 ? (
+          <p className="text-muted-foreground px-4 py-3 text-sm">Bu gün için menü girilmemiş.</p>
+        ) : (
+          <ul className="divide-y">
+            {menu.items.map((item) => (
+              <MealItemRow key={item.id} item={item} />
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
