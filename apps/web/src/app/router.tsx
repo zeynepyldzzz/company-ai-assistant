@@ -4,6 +4,7 @@ import { RequireRole } from "@/auth/role-guard";
 import { AppLayout } from "@/layouts/app-layout";
 import { LoginPage } from "@/pages/login-page";
 import { DashboardPage } from "@/pages/dashboard-page";
+import { ChatPage } from "@/pages/chat/chat-page";
 import { AdminDashboardPage } from "@/pages/admin/admin-dashboard-page";
 import { EmployeesPage } from "@/pages/directory/employees-page";
 import { DepartmentsPage } from "@/pages/directory/departments-page";
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: "/", element: <DashboardPage /> },
+          { path: "/chat", element: <ChatPage /> },
           { path: "/directory/employees", element: <EmployeesPage /> },
           { path: "/directory/departments", element: <DepartmentsPage /> },
           { path: "/directory/departments/:id", element: <DepartmentDetailPage /> },

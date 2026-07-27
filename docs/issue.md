@@ -338,12 +338,13 @@ Kullanıcının geçmiş sohbetlerini görme özelliği kapsam dışı bırakıl
 **Etiketler:** `frontend`, `chatbot`
 **Story Point:** 5
 
-**Açıklama:** Mesaj listesi, mesaj gönderme kutusu, sohbet geçmişi sidebar'ı. NFR-02'ye uygun yükleniyor/typing göstergesi.
+**Açıklama:** Mesaj listesi ve mesaj gönderme kutusu. NFR-02'ye uygun yükleniyor/typing göstergesi.
+Sohbet tek oturumluktur; conversation/geçmiş kavramı kaldırıldığından geçmiş sidebar'ı kapsam dışıdır
+(mesajlar yalnızca oturum içi tutulur, sayfa yenilenince kaybolur).
 
 **Kabul Kriterleri:**
 
 - [ ] Kullanıcı mesaj yazıp gönderebiliyor, yanıt ekranda görünüyor
-- [ ] Sohbet geçmişi sidebar'ından eski konuşmalar açılabiliyor
 - [ ] Yanıt bekleme durumunda loading göstergesi var
 - [ ] FR-08, 09 karşılanıyor
 
