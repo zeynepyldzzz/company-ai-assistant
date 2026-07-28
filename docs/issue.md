@@ -955,34 +955,7 @@ Sohbet tek oturumluktur; conversation/geçmiş kavramı kaldırıldığından ge
 
 ---
 
-## 8. MVP Sonrası Ek İstekler (Backlog)
-
-Bu bölümdeki issue'lar orijinal sprint planının (Bölüm 0-7) parçası değildir; MVP tamamlandıktan sonra ortaya çıkan ek taleplerdir.
-
-### B-12: Telefon Rehberinde Zoom ile Arama
-
-**Etiketler:** `frontend`, `backend`, `directory`, `post-mvp`
-**Önerilen Atanan:** Geliştirici B (B-3/B-4'ün sahibi)
-**Story Point:** 5 (spike + implementasyon)
-
-**Açıklama:** Telefon rehberindeki "Ara" butonu şu an `POST /phonebook/{extension}/call` ile yalnızca bir tetikleme kaydı oluşturuyor (`PhonebookService.triggerCall`, gerçek arama yok — bkz. B-3). Bu davranış, butona tıklandığında Zoom masaüstü/web istemcisini açıp ilgili çalışanın Zoom profiline/sohbet ekranına yönlendirecek şekilde **değiştirilecek** (eski extension bazlı tetikleme akışının yerine geçer, ek buton değil). Kimlik eşlemesi `Employee.email` üzerinden yapılır (Zoom hesapları kurumsal e-posta ile eşleşir varsayımı) — ayrı bir `zoomUserId` alanına gerek yok. Kapsam, Zoom'u açıp kişiye yönlendirmekle sınırlı; aramayı otomatik başlatmak (tam Zoom Phone entegrasyonu) bu issue'nun kapsamı dışında, kullanıcı Zoom açıldıktan sonra aramayı kendisi başlatır.
-
-**⚠️ Ön Koşul / Risk:** Zoom'un "bir e-postaya 1:1 sohbet/arama ekranı aç" için kullanılabilecek resmi bir public deep-link URI şeması bu repoda doğrulanmamış (kod tabanında hiçbir `tel:`/`zoommtg:`/deep-link kullanım örneği yok). İmplementasyona başlamadan önce küçük bir spike ile Zoom'un güncel deep-link/URI scheme davranışı gerçek istemcide test edilip doğrulanmalı (C-2'deki Excel şablon riskiyle aynı desen — örnek/doğrulama olmadan implementasyona başlanmamalı).
-
-**Kabul Kriterleri:**
-
-- [ ] Zoom deep-link URI şeması spike ile netleştirildi ve gerçek Zoom istemcisinde (masaüstü ve/veya web) doğrulandı
-- [ ] `GET /phonebook` yanıtına çalışanın `email` alanı eklendi (frontend'in deep link üretebilmesi için — şu an `PhonebookEntryResponse`'da yok)
-- [ ] Telefon rehberinde "Ara" butonuna tıklandığında Zoom açılır ve ilgili çalışanın Zoom profiline/sohbetine yönlendirir
-- [ ] Zoom yüklü değilse veya deep link açılamazsa kullanıcıya anlamlı bir hata/bilgi mesajı gösteriliyor (fallback)
-- [ ] Eski extension bazlı `POST /phonebook/{extension}/call` tetikleme/log davranışının kaldırılıp kaldırılmayacağına (denetim amaçlı korunabilir) PR'da karar verilip uygulandı
-- [ ] B-3/B-4'ün mevcut testleri (BT1) yeni davranışa göre güncellendi
-
-**Bağımlılık:** B-3, B-4 (tamamlandı)
-
----
-
-## 9. İlişkili Dokümanlar
+## 8. İlişkili Dokümanlar
 
 - `sprintPlan.md` — Bu dokümanın kaynağı olan haftalık/modül bazlı özet plan
 - `businessProcessMapping.md` — BP-01–BP-10 süreç tanımları
