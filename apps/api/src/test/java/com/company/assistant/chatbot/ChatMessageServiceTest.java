@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.directory.DirectoryVariableResolver;
 import com.company.assistant.schedule.ScheduleVariableResolver;
 import com.company.assistant.shuttle.ShuttleVariableResolver;
 
@@ -42,6 +43,8 @@ class ChatMessageServiceTest {
     private ShuttleVariableResolver shuttleVariableResolver;
     @Mock
     private ScheduleVariableResolver scheduleVariableResolver;
+    @Mock
+    private DirectoryVariableResolver directoryVariableResolver;
     @Mock
     private ChatMessageLogRepository logRepository;
 
