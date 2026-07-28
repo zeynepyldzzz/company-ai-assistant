@@ -20,6 +20,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.shuttle.ShuttleVariableResolver;
 
 @ExtendWith(MockitoExtension.class)
 class ChatMessageServiceTest {
@@ -34,6 +35,8 @@ class ChatMessageServiceTest {
     private HrProcedureVariableResolver hrProcedureVariableResolver;
     @Mock
     private MenuVariableResolver menuVariableResolver;
+    @Mock
+    private ShuttleVariableResolver shuttleVariableResolver;
     @Mock
     private ChatMessageLogRepository logRepository;
 
@@ -157,5 +160,31 @@ class ChatMessageServiceTest {
         assertThat(response.reply()).isEqualTo("Üzgünüm, şu anda bu soruya yanıt veremiyorum.");
         verify(templateResponseService).buildFallbackResponse(any());
         verify(templateResponseService, never()).buildResponse(anyString(), any());
+    }
+
+    // A-12 / FR-10: servis intent'inde canli servis degiskenleri ham mesajla uretilip
+    // kullanici degiskenleriyle merge edilir.
+    @Test
+    @SuppressWarnings("unchecked")
+    void servisIntentiIcinCanliDegiskenlerMergeEdilir() {
+        var result = new IntentClassificationService.IntentResult(
+                "servis_saatleri", 0.90, "servis kaçta kalkıyor", true);
+        when(classificationService.classify(anyString())).thenReturn(result);
+        when(classificationService.getThreshold()).thenReturn(0.68);
+        when(variableResolver.resolve(any())).thenReturn(Map.of("kullanici_adi", "Mustafa"));
+        when(hrProcedureVariableResolver.resolve(anyString()))
+                .thenReturn(HrProcedureResolution.notApplicable());
+        when(shuttleVariableResolver.resolve("servis_saatleri", "kadıköy servisi kaçta kalkıyor"))
+                .thenReturn(Map.of("servis_saatleri", "Anadolu Yakasi - Kadikoy Hatti kalkış saatleri:\n• 07:00 Kadikoy Iskele"));
+        when(templateResponseService.buildResponse(anyString(), any())).thenReturn("...");
+
+        chatMessageService.handleMessage("kadıköy servisi kaçta kalkıyor", null);
+
+        ArgumentCaptor<Map<String, String>> varsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(templateResponseService).buildResponse(eq("servis_saatleri"), varsCaptor.capture());
+        assertThat(varsCaptor.getValue())
+                .containsEntry("kullanici_adi", "Mustafa")
+                .containsEntry("servis_saatleri",
+                        "Anadolu Yakasi - Kadikoy Hatti kalkış saatleri:\n• 07:00 Kadikoy Iskele");
     }
 }
