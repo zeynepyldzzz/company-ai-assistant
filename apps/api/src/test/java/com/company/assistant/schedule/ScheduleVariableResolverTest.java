@@ -3,6 +3,7 @@ package com.company.assistant.schedule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.DayOfWeek;
@@ -17,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 
+import com.company.assistant.directory.OfficeStatusVariableResolver;
+
 /**
  * A-13: calisma duzeni resolver'i. Testler hafta gunu anahtar kelimeleriyle yazildi;
  * hedef tarih "bu haftanin Pazartesi'si + n" olarak hesaplandigi icin sonuc, testin
@@ -28,13 +31,15 @@ class ScheduleVariableResolverTest {
     @Mock
     private ScheduleService scheduleService;
     @Mock
+    private OfficeStatusVariableResolver officeStatusVariableResolver;
+    @Mock
     private Authentication authentication;
 
     private ScheduleVariableResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new ScheduleVariableResolver(scheduleService);
+        resolver = new ScheduleVariableResolver(scheduleService, officeStatusVariableResolver);
         lenient().when(authentication.getName()).thenReturn("7");
     }
 
@@ -135,6 +140,20 @@ class ScheduleVariableResolverTest {
         assertThat(vars.get("calisma_duzenim"))
                 .contains("Perşembe")
                 .contains("ofistesin");
+    }
+
+    // A-14 (#115): ucuncu sahis sorusu rehber kaynagina delege edilir; haftalik plan hic
+    // okunmaz (kullanicinin kendi plani olmasa bile yanit gelmeli).
+    @Test
+    void ucuncuSahisSorusuRehberKaynaginaDelegeEdilir() {
+        when(officeStatusVariableResolver.isThirdPersonQuestion("kimler ofiste")).thenReturn(true);
+        when(officeStatusVariableResolver.resolve("kimler ofiste", 7))
+                .thenReturn("Bilgi Teknolojileri departmanında ofiste görünenler:\n• Ayse Kaya");
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "kimler ofiste", authentication);
+
+        assertThat(vars.get("calisma_duzenim")).contains("Ayse Kaya");
+        verifyNoInteractions(scheduleService);
     }
 
     private LocalDate weekStart() {
