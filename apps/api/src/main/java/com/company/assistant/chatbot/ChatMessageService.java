@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.schedule.ScheduleVariableResolver;
 import com.company.assistant.shuttle.ShuttleVariableResolver;
 
 @Service
@@ -27,6 +28,7 @@ public class ChatMessageService {
     private final HrProcedureVariableResolver hrProcedureVariableResolver;
     private final MenuVariableResolver menuVariableResolver;
     private final ShuttleVariableResolver shuttleVariableResolver;
+    private final ScheduleVariableResolver scheduleVariableResolver;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
@@ -35,6 +37,7 @@ public class ChatMessageService {
                               HrProcedureVariableResolver hrProcedureVariableResolver,
                               MenuVariableResolver menuVariableResolver,
                               ShuttleVariableResolver shuttleVariableResolver,
+                              ScheduleVariableResolver scheduleVariableResolver,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
@@ -42,6 +45,7 @@ public class ChatMessageService {
         this.hrProcedureVariableResolver = hrProcedureVariableResolver;
         this.menuVariableResolver = menuVariableResolver;
         this.shuttleVariableResolver = shuttleVariableResolver;
+        this.scheduleVariableResolver = scheduleVariableResolver;
         this.logRepository = logRepository;
     }
 
@@ -62,6 +66,9 @@ public class ChatMessageService {
         // A-12 (FR-10/11): servis intent'lerinde canli guzergah/saat degiskenleri merge edilir.
         // Servis disi intent'lerde resolver bos map doner.
         variables.putAll(shuttleVariableResolver.resolve(result.intent(), message));
+        // A-13 (FR-59..64): calisma duzeni intent'inde kullanicinin KENDI plani uretilir;
+        // kimlik mesajdan degil authentication'dan gelir (FR-63).
+        variables.putAll(scheduleVariableResolver.resolve(result.intent(), message, authentication));
         String reply = hr.fallbackRequired()
                 ? templateResponseService.buildFallbackResponse(variables)
                 : templateResponseService.buildResponse(result.intent(), variables);

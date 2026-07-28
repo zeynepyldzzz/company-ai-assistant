@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.company.assistant.common.TurkishText;
+
 /**
  * A-11: 'yemek_menusu' intent'i icin canli menu degiskenlerini uretir.
  * HrProcedureVariableResolver deseni; ek olarak kullanicinin ham mesajindan gunu/haftayi
@@ -38,26 +40,6 @@ public class MenuVariableResolver {
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd.MM.yyyy", new Locale("tr"));
 
-    private static final Map<DayOfWeek, String> TR_DAY_NAMES = Map.of(
-            DayOfWeek.MONDAY, "Pazartesi",
-            DayOfWeek.TUESDAY, "Salı",
-            DayOfWeek.WEDNESDAY, "Çarşamba",
-            DayOfWeek.THURSDAY, "Perşembe",
-            DayOfWeek.FRIDAY, "Cuma",
-            DayOfWeek.SATURDAY, "Cumartesi",
-            DayOfWeek.SUNDAY, "Pazar");
-
-    // Bilesik gunler (pazartesi/cumartesi) once gelmeli: "pazar" "pazartesi"nin,
-    // "cuma" "cumartesi"nin alt-dizesi. Bu sirayla kontrol edilir.
-    private static final List<Map.Entry<String, DayOfWeek>> WEEKDAY_KEYWORDS = List.of(
-            Map.entry("pazartesi", DayOfWeek.MONDAY),
-            Map.entry("sali", DayOfWeek.TUESDAY),
-            Map.entry("carsamba", DayOfWeek.WEDNESDAY),
-            Map.entry("persembe", DayOfWeek.THURSDAY),
-            Map.entry("cumartesi", DayOfWeek.SATURDAY),
-            Map.entry("cuma", DayOfWeek.FRIDAY),
-            Map.entry("pazar", DayOfWeek.SUNDAY));
-
     // "N gun sonra" — rakam formu. Yazi formu ayri haritada.
     private static final Pattern DAYS_LATER = Pattern.compile("(\\d+)\\s*gun\\s+sonra");
     private static final Map<String, Integer> WORD_NUMBERS = Map.of(
@@ -74,7 +56,7 @@ public class MenuVariableResolver {
             return Map.of();
         }
 
-        String text = foldToAscii(message);
+        String text = TurkishText.foldToAscii(message);
         Map<String, String> variables = new HashMap<>();
 
         // Hafta modu: "hafta" var ve tekil gun ipucu yok (or. "bu haftanin listesi").
@@ -93,7 +75,7 @@ public class MenuVariableResolver {
         }
 
         LocalDate target = resolveTarget(text, LocalDate.now());
-        String dayLabel = TR_DAY_NAMES.get(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ")";
+        String dayLabel = TurkishText.dayName(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ")";
         Optional<MenuResponse> menu = menuService.getMenuByDate(target);
         if (menu.isPresent() && menu.get().getItems() != null && !menu.get().getItems().isEmpty()) {
             variables.put("menu_gunu", dayLabel + " menüsü:");
@@ -128,7 +110,7 @@ public class MenuVariableResolver {
         if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")) {
             return true;
         }
-        return WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
+        return TurkishText.WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
     }
 
     // Ham (ASCII'ye katlanmis) mesajdan hedef tarihi cikarir.
@@ -151,7 +133,7 @@ public class MenuVariableResolver {
 
         boolean nextWeek = text.contains("gelecek") || text.contains("onumuzdeki")
                 || text.contains("haftaya");
-        for (Map.Entry<String, DayOfWeek> entry : WEEKDAY_KEYWORDS) {
+        for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {
             if (text.contains(entry.getKey())) {
                 LocalDate day = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                         .plusDays(entry.getValue().getValue() - 1L);
@@ -168,7 +150,7 @@ public class MenuVariableResolver {
     private String buildWeekBody(List<MenuResponse> week) {
         return week.stream()
                 .sorted(Comparator.comparing(MenuResponse::getDate))
-                .map(m -> TR_DAY_NAMES.get(m.getDate().getDayOfWeek())
+                .map(m -> TurkishText.dayName(m.getDate().getDayOfWeek())
                         + " (" + m.getDate().format(DATE_FMT) + ")\n" + formatItems(m))
                 .collect(Collectors.joining("\n\n"));
     }
@@ -184,16 +166,4 @@ public class MenuVariableResolver {
                 .collect(Collectors.joining("\n"));
     }
 
-    private String foldToAscii(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.toLowerCase(new Locale("tr"))
-                .replace('ç', 'c')
-                .replace('ş', 's')
-                .replace('ı', 'i')
-                .replace('ğ', 'g')
-                .replace('ü', 'u')
-                .replace('ö', 'o');
-    }
 }
