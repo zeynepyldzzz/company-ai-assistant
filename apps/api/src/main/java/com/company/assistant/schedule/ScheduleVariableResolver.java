@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.company.assistant.common.TurkishText;
+import com.company.assistant.directory.OfficeStatusVariableResolver;
 
 /**
  * A-13 (FR-59..64): 'calisma_duzeni' intent'i icin kullanicinin KENDI haftalik ofis/uzaktan
@@ -51,9 +52,12 @@ public class ScheduleVariableResolver {
             "Çalışma düzeni yalnızca Pazartesi-Cuma günleri için tanımlanıyor; sorduğun gün hafta sonuna denk geliyor.";
 
     private final ScheduleService scheduleService;
+    private final OfficeStatusVariableResolver officeStatusVariableResolver;
 
-    public ScheduleVariableResolver(ScheduleService scheduleService) {
+    public ScheduleVariableResolver(ScheduleService scheduleService,
+                                    OfficeStatusVariableResolver officeStatusVariableResolver) {
         this.scheduleService = scheduleService;
+        this.officeStatusVariableResolver = officeStatusVariableResolver;
     }
 
     public Map<String, String> resolve(String intentName, String message, Authentication authentication) {
@@ -68,6 +72,14 @@ public class ScheduleVariableResolver {
         }
 
         String text = TurkishText.foldToAscii(message);
+
+        // A-14 (#115): "kimler ofiste" tipi ucuncu sahis sorulari rehber verisinden yanitlanir
+        // (employee.office_status, /employees ile employee roluna zaten acik). Kullanicinin
+        // kendi haftalik plani asagidaki dalda kalir; weekly_schedule toplu gorunumu acilmaz.
+        if (officeStatusVariableResolver.isThirdPersonQuestion(text)) {
+            return Map.of(VARIABLE, officeStatusVariableResolver.resolve(text, employeeId));
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.with(DayOfWeek.MONDAY);
 
