@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.directory.DirectoryVariableResolver;
 import com.company.assistant.schedule.ScheduleVariableResolver;
 import com.company.assistant.shuttle.ShuttleVariableResolver;
 
@@ -29,6 +30,7 @@ public class ChatMessageService {
     private final MenuVariableResolver menuVariableResolver;
     private final ShuttleVariableResolver shuttleVariableResolver;
     private final ScheduleVariableResolver scheduleVariableResolver;
+    private final DirectoryVariableResolver directoryVariableResolver;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
@@ -38,6 +40,7 @@ public class ChatMessageService {
                               MenuVariableResolver menuVariableResolver,
                               ShuttleVariableResolver shuttleVariableResolver,
                               ScheduleVariableResolver scheduleVariableResolver,
+                              DirectoryVariableResolver directoryVariableResolver,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
@@ -46,6 +49,7 @@ public class ChatMessageService {
         this.menuVariableResolver = menuVariableResolver;
         this.shuttleVariableResolver = shuttleVariableResolver;
         this.scheduleVariableResolver = scheduleVariableResolver;
+        this.directoryVariableResolver = directoryVariableResolver;
         this.logRepository = logRepository;
     }
 
@@ -69,6 +73,9 @@ public class ChatMessageService {
         // A-13 (FR-59..64): calisma duzeni intent'inde kullanicinin KENDI plani uretilir;
         // kimlik mesajdan degil authentication'dan gelir (FR-63).
         variables.putAll(scheduleVariableResolver.resolve(result.intent(), message, authentication));
+        // A-15 (#117): rehber_kisi intent'inde mesajdan kisi adi cikarilip rehber bilgileri
+        // uretilir. Rehber ekraninin gosterdigi alanlarla sinirli.
+        variables.putAll(directoryVariableResolver.resolve(result.intent(), message));
         String reply = hr.fallbackRequired()
                 ? templateResponseService.buildFallbackResponse(variables)
                 : templateResponseService.buildResponse(result.intent(), variables);
