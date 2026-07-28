@@ -3,12 +3,13 @@ package com.company.assistant.shuttle;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
+
+import com.company.assistant.common.TurkishText;
 
 /**
  * A-12 (FR-10/11): 'servis_saatleri' ve 'servis_guzergah' intent'leri icin canli servis
@@ -55,7 +56,7 @@ public class ShuttleVariableResolver {
             return Map.of();
         }
 
-        String text = foldToAscii(message);
+        String text = TurkishText.foldToAscii(message);
         List<ShuttleRouteResponse> routes = shuttleService.getAllRoutes();
         if (routes.isEmpty()) {
             return Map.of(hours ? "servis_saatleri" : "servis_guzergahi", NO_ROUTE_DATA);
@@ -91,7 +92,7 @@ public class ShuttleVariableResolver {
         if (name == null) {
             return List.of();
         }
-        return List.of(foldToAscii(name).split("[^a-z0-9]+")).stream()
+        return List.of(TurkishText.foldToAscii(name).split("[^a-z0-9]+")).stream()
                 .filter(w -> w.length() >= 4)
                 .filter(w -> !GENERIC_WORDS.contains(w))
                 .toList();
@@ -120,19 +121,6 @@ public class ShuttleVariableResolver {
     // Saat girilmemis durakta "null" basmak yerine acik metin.
     private String formatTime(ShuttleStopResponse stop) {
         return stop.getTime() != null ? stop.getTime().format(TIME_FMT) : "saat belirtilmemiş";
-    }
-
-    private String foldToAscii(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.toLowerCase(new Locale("tr"))
-                .replace('ç', 'c')
-                .replace('ş', 's')
-                .replace('ı', 'i')
-                .replace('ğ', 'g')
-                .replace('ü', 'u')
-                .replace('ö', 'o');
     }
 
     private record RouteWithStops(ShuttleRouteResponse route, List<ShuttleStopResponse> stops) {

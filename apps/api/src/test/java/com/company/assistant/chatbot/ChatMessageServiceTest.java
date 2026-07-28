@@ -11,15 +11,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.security.core.Authentication;
 
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.schedule.ScheduleVariableResolver;
 import com.company.assistant.shuttle.ShuttleVariableResolver;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +40,8 @@ class ChatMessageServiceTest {
     private MenuVariableResolver menuVariableResolver;
     @Mock
     private ShuttleVariableResolver shuttleVariableResolver;
+    @Mock
+    private ScheduleVariableResolver scheduleVariableResolver;
     @Mock
     private ChatMessageLogRepository logRepository;
 
@@ -186,5 +191,26 @@ class ChatMessageServiceTest {
                 .containsEntry("kullanici_adi", "Mustafa")
                 .containsEntry("servis_saatleri",
                         "Anadolu Yakasi - Kadikoy Hatti kalkış saatleri:\n• 07:00 Kadikoy Iskele");
+    }
+
+    // A-13 / FR-63: calisma duzeni resolver'ina kimlik authentication ile gecirilir;
+    // mesajda gecen isim degil, JWT'deki kimlik esas alinir.
+    @Test
+    void calismaDuzeniIntentiKimligiAuthenticationIleAlir() {
+        var authentication = mock(Authentication.class);
+        var result = new IntentClassificationService.IntentResult(
+                "calisma_duzeni", 0.92, "yarın ofise gelmem gerekiyor mu", true);
+        when(classificationService.classify(anyString())).thenReturn(result);
+        when(classificationService.getThreshold()).thenReturn(0.68);
+        when(variableResolver.resolve(any())).thenReturn(Map.of());
+        when(hrProcedureVariableResolver.resolve(anyString()))
+                .thenReturn(HrProcedureResolution.notApplicable());
+        when(scheduleVariableResolver.resolve("calisma_duzeni", "yarın ofiste miyim", authentication))
+                .thenReturn(Map.of("calisma_duzenim", "Perşembe (30.07.2026) günü ofistesin."));
+        when(templateResponseService.buildResponse(anyString(), any())).thenReturn("...");
+
+        chatMessageService.handleMessage("yarın ofiste miyim", authentication);
+
+        verify(scheduleVariableResolver).resolve("calisma_duzeni", "yarın ofiste miyim", authentication);
     }
 }
