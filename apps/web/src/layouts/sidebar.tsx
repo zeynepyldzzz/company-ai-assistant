@@ -16,6 +16,7 @@ import {
   UtensilsCrossed,
   KeyRound,
   BarChart3,
+  ChefHat,
 } from "lucide-react";
 import type { Role, AdminSubRole } from "@company/shared";
 import { cn } from "@/lib/utils";
@@ -116,6 +117,14 @@ const navItems: Array<{
     icon: BarChart3,
     roles: ["admin"],
     subRoles: ["system_admin"],
+  },
+  {
+    // C-2 (#18): menu yonetimi (excel yukleme/silme), backend'de subRole
+    // kisitlamasi yok - tum adminler gorebilir.
+    to: "/admin/menu",
+    label: "Menü Yönetimi",
+    icon: ChefHat,
+    roles: ["admin"],
   },
   { to: "/admin", label: "Yönetim", icon: ShieldCheck, roles: ["admin"] },
 ];
