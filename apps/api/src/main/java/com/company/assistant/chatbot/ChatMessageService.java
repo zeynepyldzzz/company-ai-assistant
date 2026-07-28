@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.shuttle.ShuttleVariableResolver;
 
 @Service
 public class ChatMessageService {
@@ -25,6 +26,7 @@ public class ChatMessageService {
     private final ChatVariableResolver variableResolver;
     private final HrProcedureVariableResolver hrProcedureVariableResolver;
     private final MenuVariableResolver menuVariableResolver;
+    private final ShuttleVariableResolver shuttleVariableResolver;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
@@ -32,12 +34,14 @@ public class ChatMessageService {
                               ChatVariableResolver variableResolver,
                               HrProcedureVariableResolver hrProcedureVariableResolver,
                               MenuVariableResolver menuVariableResolver,
+                              ShuttleVariableResolver shuttleVariableResolver,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
         this.variableResolver = variableResolver;
         this.hrProcedureVariableResolver = hrProcedureVariableResolver;
         this.menuVariableResolver = menuVariableResolver;
+        this.shuttleVariableResolver = shuttleVariableResolver;
         this.logRepository = logRepository;
     }
 
@@ -55,6 +59,9 @@ public class ChatMessageService {
         // A-11 (FR-08/09): menu intent'i icin ham mesajdan gun/hafta cikarilip canli menu
         // degiskenleri merge edilir. Menu-disi intent'lerde resolver bos map doner.
         variables.putAll(menuVariableResolver.resolve(result.intent(), message));
+        // A-12 (FR-10/11): servis intent'lerinde canli guzergah/saat degiskenleri merge edilir.
+        // Servis disi intent'lerde resolver bos map doner.
+        variables.putAll(shuttleVariableResolver.resolve(result.intent(), message));
         String reply = hr.fallbackRequired()
                 ? templateResponseService.buildFallbackResponse(variables)
                 : templateResponseService.buildResponse(result.intent(), variables);

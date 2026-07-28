@@ -35,6 +35,14 @@ public class ShuttleService {
         );
     }
 
+    /**
+     * A-12: chatbot icin sayfalamasiz guzergah listesi. listRoutes() HTTP kaygisi olan
+     * PagedResponse dondurur; chatbot (ve Faz 2'de LLM tool'u) ham listeyi ister.
+     */
+    public List<ShuttleRouteResponse> getAllRoutes() {
+        return shuttleRouteRepository.findAll().stream().map(ShuttleRouteResponse::new).toList();
+    }
+
     public List<ShuttleStopResponse> getStops(Integer routeId) {
         if (!shuttleRouteRepository.existsById(routeId)) {
             throw new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId);
