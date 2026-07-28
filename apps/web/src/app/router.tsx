@@ -25,6 +25,7 @@ import { AdminEmployeesPage } from "@/pages/admin/employees/admin-employees-page
 import { AdminDepartmentsPage } from "@/pages/admin/departments/admin-departments-page";
 import { AdminRolesPage } from "@/pages/admin/roles/admin-roles-page";
 import { AdminReportsPage } from "@/pages/admin/reports/admin-reports-page";
+import { AdminMenuPage } from "@/pages/admin/menu/admin-menu-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -77,6 +78,12 @@ export const router = createBrowserRouter([
               { path: "/admin/roles", element: <AdminRolesPage /> },
               { path: "/admin/reports", element: <AdminReportsPage /> },
             ],
+          },
+          {
+            // C-2 (#18): menu yonetimi backend'de sadece hasRole('ADMIN') istiyor,
+            // subRole kisitlamasi yok - herhangi bir admin excel yukleyebilir/silebilir.
+            element: <RequireRole roles={["admin"]} />,
+            children: [{ path: "/admin/menu", element: <AdminMenuPage /> }],
           },
         ],
       },

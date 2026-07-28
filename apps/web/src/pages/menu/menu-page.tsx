@@ -15,15 +15,39 @@ function formatDate(isoDate: string): string {
   });
 }
 
+function formatDayShort(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("tr-TR", { weekday: "short" });
+}
+
+function formatDayNumber(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+}
+
+function isToday(isoDate: string): boolean {
+  const today = new Date();
+  const date = new Date(isoDate);
+  return (
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate()
+  );
+}
+
+// Yemekhane Excel'inde kalori/alerjen bilgisi hic gelmiyor (bkz. MenuExcelParser),
+// bu yuzden "Kalori bilgisi yok" gibi hep ayni gorunen bos satiri gostermiyoruz;
+// veri varsa (ileride eklenirse) yine gosteririz.
 function MealItemRow({ item }: { item: MealItem }) {
+  const hasExtraInfo = item.calories !== null || Boolean(item.allergens);
   return (
     <li className="flex flex-col gap-0.5 px-4 py-3">
       <span className="text-sm font-medium">{item.name}</span>
-      <span className="text-muted-foreground text-xs">
-        {item.calories !== null ? `${item.calories} kcal` : "Kalori bilgisi yok"}
-        {" · "}
-        {item.allergens ? `Alerjen: ${item.allergens}` : "Alerjen bilgisi yok"}
-      </span>
+      {hasExtraInfo && (
+        <span className="text-muted-foreground text-xs">
+          {item.calories !== null && `${item.calories} kcal`}
+          {item.calories !== null && item.allergens && " · "}
+          {item.allergens && `Alerjen: ${item.allergens}`}
+        </span>
+      )}
     </li>
   );
 }
@@ -46,6 +70,42 @@ function MenuCard({ menu }: { menu: Menu }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Haftalik gorunum icin takvim benzeri grid: her gun bir sutun.
+function WeeklyCalendar({ menus }: { menus: Menu[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {menus.map((menu) => (
+        <Card
+          key={menu.id}
+          className={`gap-0 p-0 ${isToday(menu.date) ? "border-primary ring-primary/20 ring-1" : ""}`}
+        >
+          <CardHeader
+            className={`border-b px-3 py-2 ${isToday(menu.date) ? "bg-primary/5" : "bg-muted/30"}`}
+          >
+            <CardTitle className="flex items-baseline justify-between text-sm">
+              <span className="capitalize">{formatDayShort(menu.date)}</span>
+              <span className="text-muted-foreground font-normal">{formatDayNumber(menu.date)}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {menu.items.length === 0 ? (
+              <p className="text-muted-foreground px-3 py-3 text-xs">Menü girilmemiş.</p>
+            ) : (
+              <ul className="divide-y">
+                {menu.items.map((item) => (
+                  <li key={item.id} className="px-3 py-2">
+                    <span className="text-xs leading-snug font-medium">{item.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 
@@ -98,13 +158,13 @@ export function MenuPage() {
       {tab === "today" && todayQuery.data && <MenuCard menu={todayQuery.data} />}
 
       {tab === "weekly" && weeklyQuery.data && (
-        <div className="space-y-3">
+        <>
           {weeklyQuery.data.length === 0 ? (
             <p className="text-muted-foreground text-sm">Bu hafta için menü bulunamadı.</p>
           ) : (
-            weeklyQuery.data.map((menu) => <MenuCard key={menu.id} menu={menu} />)
+            <WeeklyCalendar menus={weeklyQuery.data} />
           )}
-        </div>
+        </>
       )}
     </div>
   );
