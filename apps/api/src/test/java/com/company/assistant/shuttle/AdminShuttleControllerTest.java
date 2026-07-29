@@ -68,7 +68,7 @@ class AdminShuttleControllerTest {
         ShuttleStopResponse stop1 = new ShuttleStopResponse(stop("Merkez", 1));
         ShuttleStopResponse stop2 = new ShuttleStopResponse(stop("Sanayi", 2));
         when(adminShuttleService.createRoute(any())).thenReturn(
-                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti", "34 ABC 123", List.of(stop1, stop2)));
+                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti", "34 ABC 123", null, null, List.of(stop1, stop2)));
 
         mockMvc.perform(post("/admin/shuttle-routes")
                         .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))
@@ -82,7 +82,7 @@ class AdminShuttleControllerTest {
     @Test
     void systemAdmin_deErisebilir() throws Exception {
         when(adminShuttleService.createRoute(any())).thenReturn(
-                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti", "34 ABC 123", List.of()));
+                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti", "34 ABC 123", null, null, List.of()));
 
         mockMvc.perform(post("/admin/shuttle-routes")
                         .with(user("sistem").roles("ADMIN", "SYSTEM_ADMIN"))
@@ -163,7 +163,7 @@ class AdminShuttleControllerTest {
     @Test
     void shuttleAdmin_rotaGuncelleyebilir() throws Exception {
         when(adminShuttleService.updateRoute(eq(1), any())).thenReturn(
-                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti - Guncel", "34 ABC 123", List.of()));
+                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti - Guncel", "34 ABC 123", null, null, List.of()));
 
         mockMvc.perform(put("/admin/shuttle-routes/1")
                         .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))
