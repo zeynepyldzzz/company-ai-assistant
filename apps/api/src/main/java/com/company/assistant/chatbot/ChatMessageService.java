@@ -13,9 +13,12 @@ import org.springframework.stereotype.Service;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
+import com.company.assistant.announcement.AnnouncementVariableResolver;
+import com.company.assistant.directory.DepartmentVariableResolver;
 import com.company.assistant.directory.DirectoryVariableResolver;
 import com.company.assistant.schedule.ScheduleVariableResolver;
 import com.company.assistant.shuttle.ShuttleVariableResolver;
+import com.company.assistant.survey.SurveyVariableResolver;
 
 @Service
 public class ChatMessageService {
@@ -31,6 +34,9 @@ public class ChatMessageService {
     private final ShuttleVariableResolver shuttleVariableResolver;
     private final ScheduleVariableResolver scheduleVariableResolver;
     private final DirectoryVariableResolver directoryVariableResolver;
+    private final DepartmentVariableResolver departmentVariableResolver;
+    private final AnnouncementVariableResolver announcementVariableResolver;
+    private final SurveyVariableResolver surveyVariableResolver;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
@@ -41,6 +47,9 @@ public class ChatMessageService {
                               ShuttleVariableResolver shuttleVariableResolver,
                               ScheduleVariableResolver scheduleVariableResolver,
                               DirectoryVariableResolver directoryVariableResolver,
+                              DepartmentVariableResolver departmentVariableResolver,
+                              AnnouncementVariableResolver announcementVariableResolver,
+                              SurveyVariableResolver surveyVariableResolver,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
@@ -50,6 +59,9 @@ public class ChatMessageService {
         this.shuttleVariableResolver = shuttleVariableResolver;
         this.scheduleVariableResolver = scheduleVariableResolver;
         this.directoryVariableResolver = directoryVariableResolver;
+        this.departmentVariableResolver = departmentVariableResolver;
+        this.announcementVariableResolver = announcementVariableResolver;
+        this.surveyVariableResolver = surveyVariableResolver;
         this.logRepository = logRepository;
     }
 
@@ -76,6 +88,11 @@ public class ChatMessageService {
         // A-15 (#117): rehber_kisi intent'inde mesajdan kisi adi cikarilip rehber bilgileri
         // uretilir. Rehber ekraninin gosterdigi alanlarla sinirli.
         variables.putAll(directoryVariableResolver.resolve(result.intent(), message));
+        // A-18 (#127): departman iletisimi, duyurular ve aktif anketler. Duyuru/anket
+        // resolver'lari mesaji kullanmaz — intent tek basina ne istendigini belirtiyor.
+        variables.putAll(departmentVariableResolver.resolve(result.intent(), message));
+        variables.putAll(announcementVariableResolver.resolve(result.intent()));
+        variables.putAll(surveyVariableResolver.resolve(result.intent()));
         String reply = hr.fallbackRequired()
                 ? templateResponseService.buildFallbackResponse(variables)
                 : templateResponseService.buildResponse(result.intent(), variables);

@@ -174,6 +174,19 @@ class ScheduleVariableResolverTest {
         }
     }
 
+    // #127: gecmis hafta da kapsam disi. Eskiden yalnizca gelecek hafta kontrol ediliyordu,
+    // "gecen hafta calisma duzenim" BU haftanin planini donduruyordu.
+    @Test
+    void gecenHaftaSorulursaKapsamDisiMesajiDoner() {
+        seedFullWeek();
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "geçen hafta çalışma düzenim neydi", authentication);
+
+        assertThat(vars.get("calisma_duzenim"))
+                .contains("yalnızca içinde bulunduğumuz haftanın")
+                .doesNotContain("Pazartesi — Ofis");
+    }
+
     // #124: "hangi gunler" tekil gun ipucu icermedigi icin BUGUNE dusuyordu.
     @Test
     void hangiGunlerSorusuTumHaftayiListeler() {
