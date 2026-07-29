@@ -20,7 +20,10 @@ JOIN (VALUES
     ('calisma_duzeni', 'ofiste kimler var'),
     ('calisma_duzeni', 'bugün ofiste olanlar kimler'),
     ('calisma_duzeni', 'ofisteki ekip kimler')
-) AS p(intent_name, phrase) ON i.name = p.intent_name;
+) AS p(intent_name, phrase) ON i.name = p.intent_name
+WHERE NOT EXISTS (
+    SELECT 1 FROM intent_examples e WHERE e.intent_id = i.id AND e.phrase = p.phrase
+);
 
 DO $$
 BEGIN

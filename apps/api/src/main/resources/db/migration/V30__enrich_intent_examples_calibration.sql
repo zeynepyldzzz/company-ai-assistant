@@ -15,6 +15,11 @@
 --
 -- Embedding NULL birakilir; IntentSeedRunner acilista doldurur (A-17'den beri
 -- TurkishText.normalizeForEmbedding ile). Acilista Ollama erisilebilir olmali.
+--
+-- NOT (numaralandirma): bu dosya once V29 idi; #129 acikken baska bir dalda V29
+-- (add_shuttle_driver_fields) main'e merge edildi ve Flyway "birden fazla V29" hatasi
+-- verdi. V30/V31'e tasindi. INSERT'ler NOT EXISTS ile idempotent — lokal DB'de eski
+-- numarayla uygulanmis kayitlar varsa tekrar calistiginda ornekleri ikizlemez.
 
 INSERT INTO intent_examples (intent_id, phrase)
 SELECT i.id, p.phrase
@@ -57,7 +62,10 @@ JOIN (VALUES
     ('calisma_duzeni', 'kimler evden çalışıyor'),
     ('calisma_duzeni', 'çalışma planım nedir'),
     ('calisma_duzeni', 'bu hafta hangi günler ofisteyim')
-) AS p(intent_name, phrase) ON i.name = p.intent_name;
+) AS p(intent_name, phrase) ON i.name = p.intent_name
+WHERE NOT EXISTS (
+    SELECT 1 FROM intent_examples e WHERE e.intent_id = i.id AND e.phrase = p.phrase
+);
 
 -- Beklenen satir sayisi tutmuyorsa intent adlarindan biri hatali demektir; sessizce
 -- eksik seed etmek yerine durulur (seed kurali).
