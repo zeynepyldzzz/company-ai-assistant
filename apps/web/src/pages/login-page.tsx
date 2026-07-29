@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login, verifyTwoFactor } from "@/api/auth";
-import { ApiError } from "@/api/client";
+import { API_BASE, ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
 
 export function LoginPage() {
@@ -16,12 +16,16 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  // C-12 (#120): yeni olusturulan admin turu hesaplar authenticator app'ine
+  // henuz kayitli degil - once QR kodu gostermeliyiz (bkz. AuthDtos.enrollmentRequired).
+  const [enrollmentRequired, setEnrollmentRequired] = useState(false);
 
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
       if ("twoFactorRequired" in data) {
         setChallengeToken(data.challengeToken);
+        setEnrollmentRequired(data.enrollmentRequired);
         return;
       }
       setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
@@ -58,9 +62,21 @@ export function LoginPage() {
           <div className="space-y-1 text-center">
             <h1 className="text-lg font-semibold">İki faktörlü doğrulama</h1>
             <p className="text-muted-foreground text-sm">
-              Kimlik doğrulama uygulamanızdaki 6 haneli kodu girin
+              {enrollmentRequired
+                ? "Hesabınız için henüz kimlik doğrulama uygulaması kurulmamış. Aşağıdaki QR kodu Google Authenticator (veya benzeri bir uygulama) ile tarayıp size verilen 6 haneli kodu girin."
+                : "Kimlik doğrulama uygulamanızdaki 6 haneli kodu girin"}
             </p>
           </div>
+
+          {enrollmentRequired && (
+            <div className="flex justify-center">
+              <img
+                src={`${API_BASE}/auth/2fa/qr?challengeToken=${encodeURIComponent(challengeToken)}`}
+                alt="İki faktörlü doğrulama QR kodu"
+                className="h-40 w-40 rounded-md border"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="code">Doğrulama kodu</Label>
@@ -85,6 +101,7 @@ export function LoginPage() {
             onClick={() => {
               setChallengeToken(null);
               setCode("");
+              setEnrollmentRequired(false);
             }}
           >
             Geri dön
