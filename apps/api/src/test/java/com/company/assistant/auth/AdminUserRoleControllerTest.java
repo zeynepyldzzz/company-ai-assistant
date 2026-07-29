@@ -42,6 +42,9 @@ class AdminUserRoleControllerTest {
     private RoleRepository roleRepository;
 
     @MockitoBean
+    private TotpService totpService;
+
+    @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
 
     @BeforeEach

@@ -42,6 +42,10 @@ public SecurityConfig(JwtAuthFilter jwtAuthFilter, RestAuthenticationEntryPoint 
                     "/health",
                     "/auth/login",
                     "/auth/2fa/verify",
+                    // C-12 (#120): challenge token query param'da tasinir, normal
+                    // Authorization: Bearer JWT'si degildir - JwtAuthFilter'in
+                    // engellememesi icin permitAll listesinde olmasi gerekir.
+                    "/auth/2fa/qr",
                     "/auth/refresh",
                     "/auth/logout",
                     "/swagger-ui.html",

@@ -65,4 +65,10 @@ public class AdminEmployeeController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of("ROLE_NOT_FOUND", ex.getMessage()));
     }
+
+    @ExceptionHandler(EmployeePasswordRequiredException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordRequired(EmployeePasswordRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("PASSWORD_REQUIRED", ex.getMessage()));
+    }
 }

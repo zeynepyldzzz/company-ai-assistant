@@ -25,7 +25,12 @@ public class AuthDtos {
     public record RefreshResponse(String accessToken, String refreshToken) {
 
     }
-    public record TwoFactorRequiredResponse(boolean twoFactorRequired, String challengeToken) {
+    // C-12 (#120): enrollmentRequired=true ise frontend once QR kodu gostermeli
+    // (GET /auth/2fa/qr?challengeToken=...), kullanici authenticator app'ine
+    // kaydettikten sonra kodu girip /2fa/verify ile hem kaydini tamamlar hem
+    // giris yapar. false ise dogrudan kod giris ekrani yeterli.
+    public record TwoFactorRequiredResponse(
+            boolean twoFactorRequired, String challengeToken, boolean enrollmentRequired) {
     }
 
     public record TwoFactorVerifyRequest(String challengeToken, String code) {
