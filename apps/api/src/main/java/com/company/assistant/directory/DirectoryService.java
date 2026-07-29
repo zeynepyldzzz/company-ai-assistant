@@ -26,6 +26,15 @@ public class DirectoryService {
         );
     }
 
+    /**
+     * A-19 (#129): kural katmani icin varlik kontrolu. searchEmployees() EmployeeResponse
+     * kurdugu icin lazy department/role proxy'lerini acar ve HTTP istegi disinda calismaz;
+     * burada yalnizca "bu isimde aktif calisan var mi" sorusu var.
+     */
+    public boolean existsActiveEmployeeNamed(String nameToken) {
+        return employeeRepository.existsActiveByNameContaining(nameToken);
+    }
+
     public EmployeeResponse getEmployeeById(Integer id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException("Calisan bulunamadi, id: " + id));
