@@ -8,6 +8,24 @@ import { Label } from "@/components/ui/label";
 import { login, verifyTwoFactor } from "@/api/auth";
 import { API_BASE, ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+function LoginShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-primary flex min-h-screen items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="bg-card w-full max-w-[380px] space-y-5 rounded-2xl border p-7 shadow-xl">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <img src="/logo-wordmark.png" alt="Yaşar Bilgi" className="h-14 max-w-full object-contain" />
+          <p className="text-muted-foreground text-sm">Ofis Asistanı</p>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -51,16 +69,16 @@ export function LoginPage() {
 
   if (challengeToken) {
     return (
-      <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
+      <LoginShell>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             verifyMutation.mutate();
           }}
-          className="bg-background w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-sm"
+          className="space-y-4"
         >
           <div className="space-y-1 text-center">
-            <h1 className="text-lg font-semibold">İki faktörlü doğrulama</h1>
+            <h2 className="text-base font-semibold">İki faktörlü doğrulama</h2>
             <p className="text-muted-foreground text-sm">
               {enrollmentRequired
                 ? "Hesabınız için henüz kimlik doğrulama uygulaması kurulmamış. Aşağıdaki QR kodu Google Authenticator (veya benzeri bir uygulama) ile tarayıp size verilen 6 haneli kodu girin."
@@ -107,24 +125,19 @@ export function LoginPage() {
             Geri dön
           </Button>
         </form>
-      </div>
+      </LoginShell>
     );
   }
 
   return (
-    <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
+    <LoginShell>
       <form
         onSubmit={(event) => {
           event.preventDefault();
           loginMutation.mutate({ email, password });
         }}
-        className="bg-background w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-sm"
+        className="space-y-4"
       >
-        <div className="space-y-1 text-center">
-          <h1 className="text-lg font-semibold">Giriş yap</h1>
-          <p className="text-muted-foreground text-sm">Kurumsal hesabınızla oturum açın</p>
-        </div>
-
         <div className="space-y-2">
           <Label htmlFor="email">E-posta</Label>
           <Input
@@ -153,6 +166,6 @@ export function LoginPage() {
           {loginMutation.isPending ? "Giriş yapılıyor…" : "Giriş yap"}
         </Button>
       </form>
-    </div>
+    </LoginShell>
   );
 }

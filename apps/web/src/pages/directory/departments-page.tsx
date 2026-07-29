@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAuth } from "@/auth/auth-context";
@@ -25,14 +26,15 @@ export function DepartmentsPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Departmanlar</h1>
+    <div className="space-y-5">
+      <h1 className="text-[22px] font-extrabold">Departmanlar</h1>
 
       <div className="max-w-sm space-y-1.5">
         <Label htmlFor="department-search">Ara</Label>
         <Input
           id="department-search"
           placeholder="Departman adıyla ara…"
+          className="h-[38px]"
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
@@ -49,24 +51,27 @@ export function DepartmentsPage() {
           {data.data.length === 0 ? (
             <p className="text-muted-foreground text-sm">Sonuç bulunamadı.</p>
           ) : (
-            <ul className="divide-y rounded-lg border">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {data.data.map((department) => (
-                <li key={department.id}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/directory/departments/${department.id}`)}
-                    className="hover:bg-muted flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition-colors"
-                  >
-                    <span className="text-sm font-medium">{department.name}</span>
+                <Card
+                  key={department.id}
+                  className="hover:border-primary/40 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/directory/departments/${department.id}`)}
+                >
+                  <CardContent className="space-y-1.5">
+                    <p className="text-[15px] font-semibold">{department.name}</p>
                     {department.responsibilities && (
-                      <span className="text-muted-foreground line-clamp-1 text-sm">
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
                         {department.responsibilities}
-                      </span>
+                      </p>
                     )}
-                  </button>
-                </li>
+                    <p className="text-muted-foreground text-xs">
+                      Sorumlu: {department.managerName ?? "Atanmamış"}
+                    </p>
+                  </CardContent>
+                </Card>
               ))}
-            </ul>
+            </div>
           )}
           <PaginationControls page={data.page} pageSize={data.pageSize} total={data.total} onPageChange={setPage} />
         </>

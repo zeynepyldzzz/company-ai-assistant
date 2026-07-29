@@ -12,6 +12,10 @@ public record ShuttleRouteRequest(
 
         String plateNumber,
 
+        String driverName,
+
+        String driverPhone,
+
         @NotEmpty(message = "En az bir durak gereklidir")
         List<@Valid ShuttleStopRequest> stops
 ) {}
