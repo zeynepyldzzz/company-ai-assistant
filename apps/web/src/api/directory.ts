@@ -1,18 +1,14 @@
 import {
-  CallTriggerResponseSchema,
   DepartmentPagedResponseSchema,
   DepartmentSchema,
   EmployeePagedResponseSchema,
   EmployeeSchema,
-  PhonebookEntryPagedResponseSchema,
   type AdminDepartmentRequest,
   type AdminEmployeeRequest,
-  type CallTriggerResponse,
   type Department,
   type DepartmentPagedResponse,
   type Employee,
   type EmployeePagedResponse,
-  type PhonebookEntryPagedResponse,
 } from "@company/shared";
 import { apiFetch } from "./client";
 
@@ -49,22 +45,6 @@ export async function searchDepartments(
 export async function getDepartmentById(id: number, token: string): Promise<Department> {
   const data = await apiFetch<unknown>(`/departments/${id}`, { token });
   return DepartmentSchema.parse(data);
-}
-
-export async function searchPhonebook(
-  params: { search?: string; page?: number; pageSize?: number },
-  token: string
-): Promise<PhonebookEntryPagedResponse> {
-  const data = await apiFetch<unknown>(`/phonebook${buildQuery(params)}`, { token });
-  return PhonebookEntryPagedResponseSchema.parse(data);
-}
-
-export async function triggerCall(extension: string, token: string): Promise<CallTriggerResponse> {
-  const data = await apiFetch<unknown>(`/phonebook/${extension}/call`, {
-    method: "POST",
-    token,
-  });
-  return CallTriggerResponseSchema.parse(data);
 }
 
 // #84 (Hafta 4): admin çalışan CRUD (FR-68-71, hr_admin/system_admin).

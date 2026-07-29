@@ -9,7 +9,6 @@ import { AdminDashboardPage } from "@/pages/admin/admin-dashboard-page";
 import { EmployeesPage } from "@/pages/directory/employees-page";
 import { DepartmentsPage } from "@/pages/directory/departments-page";
 import { DepartmentDetailPage } from "@/pages/directory/department-detail-page";
-import { PhonebookPage } from "@/pages/directory/phonebook-page";
 import { MenuPage } from "@/pages/menu/menu-page";
 import { ShuttleRoutesPage } from "@/pages/shuttle/shuttle-routes-page";
 import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-page";
@@ -40,7 +39,6 @@ export const router = createBrowserRouter([
           { path: "/directory/employees", element: <EmployeesPage /> },
           { path: "/directory/departments", element: <DepartmentsPage /> },
           { path: "/directory/departments/:id", element: <DepartmentDetailPage /> },
-          { path: "/directory/phonebook", element: <PhonebookPage /> },
           { path: "/menu", element: <MenuPage /> },
           { path: "/my-schedule", element: <SchedulePage /> },
           { path: "/shuttle/routes", element: <ShuttleRoutesPage /> },
