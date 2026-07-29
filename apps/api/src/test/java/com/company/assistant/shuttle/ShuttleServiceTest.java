@@ -1,5 +1,8 @@
 package com.company.assistant.shuttle;
 
+import com.company.assistant.geocoding.AddressNotFoundException;
+import com.company.assistant.geocoding.GeocodingResult;
+import com.company.assistant.geocoding.GeocodingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,17 +15,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 // B-6: /shuttle-routes/recommendation - en yakin durak/guzergah ve tahmini sure hesabi (FR-26, 27)
+// B-16: adres -> konum coz, ardindan ayni oneri mantigini calistir (FR-28)
 class ShuttleServiceTest {
 
     private ShuttleRouteRepository shuttleRouteRepository;
     private ShuttleStopRepository shuttleStopRepository;
+    private GeocodingService geocodingService;
     private ShuttleService service;
 
     @BeforeEach
     void setUp() {
         shuttleRouteRepository = mock(ShuttleRouteRepository.class);
         shuttleStopRepository = mock(ShuttleStopRepository.class);
-        service = new ShuttleService(shuttleRouteRepository, shuttleStopRepository);
+        geocodingService = mock(GeocodingService.class);
+        service = new ShuttleService(shuttleRouteRepository, shuttleStopRepository, geocodingService);
     }
 
     private ShuttleStop stop(ShuttleRoute route, Integer id, String name, double lat, double lng) {
@@ -89,5 +95,31 @@ class ShuttleServiceTest {
 
         assertThatThrownBy(() -> service.getRecommendation(40.98, 29.03))
                 .isInstanceOf(NoShuttleRecommendationException.class);
+    }
+
+    @Test
+    void adresGeocodeEdilipAyniOneriMantigiCalisir() {
+        ShuttleRoute route = new ShuttleRoute();
+        route.setId(1);
+        route.setName("Kadikoy Hatti");
+        route.setPlateNumber("34 ABC 123");
+        ShuttleStop nearestStop = stop(route, 1, "Kadikoy Merkez", 40.9800, 29.0300);
+        when(shuttleStopRepository.findByLatitudeIsNotNullAndLongitudeIsNotNull())
+                .thenReturn(List.of(nearestStop));
+        when(geocodingService.geocode("Kadıköy")).thenReturn(new GeocodingResult(40.9810, 29.0310));
+
+        ShuttleRecommendationResponse response = service.getRecommendationByAddress("Kadıköy");
+
+        assertThat(response.getStopId()).isEqualTo(1);
+        assertThat(response.getRouteId()).isEqualTo(1);
+    }
+
+    @Test
+    void taninmayanAdresGeocodingHatasiniIletir() {
+        when(geocodingService.geocode("asdkjfhaskjdfh"))
+                .thenThrow(new AddressNotFoundException("Adres bulunamadi: asdkjfhaskjdfh"));
+
+        assertThatThrownBy(() -> service.getRecommendationByAddress("asdkjfhaskjdfh"))
+                .isInstanceOf(AddressNotFoundException.class);
     }
 }

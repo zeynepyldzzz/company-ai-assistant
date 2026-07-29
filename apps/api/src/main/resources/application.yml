@@ -30,3 +30,6 @@ app:
     embedding-model: bge-m3
   chatbot:
     similarity-threshold: 0.68
+  geocoding:
+    base-url: https://nominatim.openstreetmap.org
+    user-agent: ${GEOCODING_USER_AGENT:company-assistant-api/1.0}

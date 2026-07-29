@@ -1,6 +1,8 @@
 package com.company.assistant.shuttle;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.geocoding.GeocodingResult;
+import com.company.assistant.geocoding.GeocodingService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,14 @@ public class ShuttleService {
 
     private final ShuttleRouteRepository shuttleRouteRepository;
     private final ShuttleStopRepository shuttleStopRepository;
+    private final GeocodingService geocodingService;
 
     public ShuttleService(ShuttleRouteRepository shuttleRouteRepository,
-            ShuttleStopRepository shuttleStopRepository) {
+            ShuttleStopRepository shuttleStopRepository,
+            GeocodingService geocodingService) {
         this.shuttleRouteRepository = shuttleRouteRepository;
         this.shuttleStopRepository = shuttleStopRepository;
+        this.geocodingService = geocodingService;
     }
 
     public PagedResponse<ShuttleRouteResponse> listRoutes(int page, int pageSize) {
@@ -73,6 +78,11 @@ public class ShuttleService {
         ShuttleRoute route = shuttleRouteRepository.findById(routeId)
                 .orElseThrow(() -> new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId));
         return new ShuttleRoutePlateResponse(route.getId(), route.getName(), route.getPlateNumber());
+    }
+
+    public ShuttleRecommendationResponse getRecommendationByAddress(String address) {
+        GeocodingResult location = geocodingService.geocode(address);
+        return getRecommendation(location.lat(), location.lng());
     }
 
     public ShuttleRecommendationResponse getRecommendation(double lat, double lng) {

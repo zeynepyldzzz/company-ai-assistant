@@ -2,6 +2,7 @@ package com.company.assistant.shuttle;
 
 import com.company.assistant.common.ErrorResponse;
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.geocoding.AddressNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,15 @@ public class ShuttleController {
 
     @GetMapping("/recommendation")
     public ShuttleRecommendationResponse getRecommendation(
-            @RequestParam double lat, @RequestParam double lng) {
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) String address) {
+        if (address != null && !address.isBlank()) {
+            return shuttleService.getRecommendationByAddress(address);
+        }
+        if (lat == null || lng == null) {
+            throw new IllegalArgumentException("lat/lng veya address parametrelerinden biri girilmelidir");
+        }
         return shuttleService.getRecommendation(lat, lng);
     }
 
@@ -54,5 +63,11 @@ public class ShuttleController {
     public ResponseEntity<ErrorResponse> handleNoRecommendation(NoShuttleRecommendationException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of("NO_SHUTTLE_RECOMMENDATION_AVAILABLE", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAddressNotFound(AddressNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("ADDRESS_NOT_FOUND", ex.getMessage()));
     }
 }

@@ -148,6 +148,47 @@ class ShuttleControllerTest {
                 .andExpect(jsonPath("$.error.code").value("NO_SHUTTLE_RECOMMENDATION_AVAILABLE"));
     }
 
+    @Test
+    void getRecommendation_adresParametresiIleOneriDoner() throws Exception {
+        ShuttleRoute route = new ShuttleRoute();
+        route.setId(1);
+        route.setName("Kadikoy Hatti");
+        route.setPlateNumber("34 ABC 123");
+        ShuttleStop nearestStop = stop(route, "Merkez", LocalTime.of(8, 0), 1);
+        nearestStop.setId(5);
+        nearestStop.setLatitude(40.99);
+        nearestStop.setLongitude(29.02);
+
+        when(shuttleService.getRecommendationByAddress("Kadıköy"))
+                .thenReturn(new ShuttleRecommendationResponse(nearestStop, 1.5, 4));
+
+        mockMvc.perform(get("/shuttle-routes/recommendation")
+                        .param("address", "Kadıköy")
+                        .with(user("calisan")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stopId").value(5));
+    }
+
+    @Test
+    void getRecommendation_taninmayanAdres404Doner() throws Exception {
+        when(shuttleService.getRecommendationByAddress("asdkjfhaskjdfh"))
+                .thenThrow(new com.company.assistant.geocoding.AddressNotFoundException(
+                        "Adres bulunamadi: asdkjfhaskjdfh"));
+
+        mockMvc.perform(get("/shuttle-routes/recommendation")
+                        .param("address", "asdkjfhaskjdfh")
+                        .with(user("calisan")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("ADDRESS_NOT_FOUND"));
+    }
+
+    @Test
+    void getRecommendation_parametreYoksa400Doner() throws Exception {
+        mockMvc.perform(get("/shuttle-routes/recommendation").with(user("calisan")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"));
+    }
+
     private ShuttleStop stop(ShuttleRoute route, String name, LocalTime time, int orderIndex) {
         ShuttleStop stop = new ShuttleStop();
         stop.setRoute(route);
