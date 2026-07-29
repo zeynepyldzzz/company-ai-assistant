@@ -3,6 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/auth-context";
 import { getMySchedule, saveMySchedule } from "@/api/schedule";
 import type { ScheduleDay, ScheduleStatus, WorkDay } from "@company/shared";
+import { cn } from "@/lib/utils";
+
+const STATUS_TILE_STYLES: Record<ScheduleStatus, string> = {
+  office: "bg-success-soft text-success",
+  remote: "bg-warning-soft text-warning",
+  leave: "bg-danger-soft text-danger",
+};
 
 const WORK_DAYS: WorkDay[] = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
@@ -108,11 +115,12 @@ export function SchedulePage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setDayStatus(day, opt.value)}
-                      className={`px-3 py-1.5 text-xs transition-colors ${
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium transition-colors",
                         selection[day] === opt.value
-                          ? "bg-primary text-primary-foreground font-medium"
+                          ? STATUS_TILE_STYLES[opt.value]
                           : "text-muted-foreground hover:bg-muted/50"
-                      }`}
+                      )}
                     >
                       {opt.label}
                     </button>
@@ -124,9 +132,12 @@ export function SchedulePage() {
 
           <div className="grid grid-cols-3 gap-3">
             {STATUS_OPTIONS.map((opt) => (
-              <div key={opt.value} className="rounded-md border px-3 py-2 text-center">
-                <p className="text-muted-foreground text-xs">{opt.label}</p>
-                <p className="text-lg font-semibold">{summary[opt.value]}</p>
+              <div
+                key={opt.value}
+                className={cn("rounded-lg px-3 py-2.5 text-center", STATUS_TILE_STYLES[opt.value])}
+              >
+                <p className="text-xs font-medium opacity-80">{opt.label}</p>
+                <p className="text-lg font-bold">{summary[opt.value]}</p>
               </div>
             ))}
           </div>

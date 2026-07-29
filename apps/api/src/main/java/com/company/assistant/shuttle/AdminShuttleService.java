@@ -23,6 +23,8 @@ public class AdminShuttleService {
         ShuttleRoute route = new ShuttleRoute();
         route.setName(request.name());
         route.setPlateNumber(request.plateNumber());
+        route.setDriverName(request.driverName());
+        route.setDriverPhone(request.driverPhone());
         shuttleRouteRepository.save(route);
 
         List<ShuttleStop> stops = shuttleStopRepository.saveAll(toStops(request.stops(), route));
@@ -37,6 +39,12 @@ public class AdminShuttleService {
         route.setName(request.name());
         if (request.plateNumber() != null) {
             route.setPlateNumber(request.plateNumber());
+        }
+        if (request.driverName() != null) {
+            route.setDriverName(request.driverName());
+        }
+        if (request.driverPhone() != null) {
+            route.setDriverPhone(request.driverPhone());
         }
         shuttleRouteRepository.save(route);
 
@@ -72,6 +80,7 @@ public class AdminShuttleService {
                 .sorted(Comparator.comparingInt(ShuttleStop::getOrderIndex))
                 .map(ShuttleStopResponse::new)
                 .toList();
-        return new ShuttleRouteDetailResponse(route.getId(), route.getName(), route.getPlateNumber(), stopResponses);
+        return new ShuttleRouteDetailResponse(route.getId(), route.getName(), route.getPlateNumber(),
+                route.getDriverName(), route.getDriverPhone(), stopResponses);
     }
 }

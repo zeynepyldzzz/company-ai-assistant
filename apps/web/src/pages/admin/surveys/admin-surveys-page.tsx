@@ -76,8 +76,8 @@ export function AdminSurveysPage() {
                       <span
                         className={
                           survey.published
-                            ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
-                            : "bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium"
+                            ? "bg-success-soft text-success rounded-full px-2 py-0.5 text-xs font-semibold"
+                            : "bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-semibold"
                         }
                       >
                         {survey.published ? "Yayımlandı" : "Taslak"}

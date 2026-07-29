@@ -1,34 +1,50 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { OfficeStatusSchema } from "@company/shared";
+import { OfficeStatusSchema, type OfficeStatus } from "@company/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAuth } from "@/auth/auth-context";
-import { searchEmployees } from "@/api/directory";
+import { searchDepartments, searchEmployees } from "@/api/directory";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 12;
+
+const statusStyles: Record<OfficeStatus, string> = {
+  Ofiste: "bg-success-soft text-success",
+  Uzaktan: "bg-warning-soft text-warning",
+  Izinde: "bg-danger-soft text-danger",
+};
+
+function initialsOf(name: string): string {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 export function EmployeesPage() {
   const { token } = useAuth();
   const [search, setSearch] = useState("");
-  const [department, setDepartment] = useState("");
+  const [department, setDepartment] = useState<string | null>(null);
   const [office, setOffice] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
   const debouncedSearch = useDebouncedValue(search);
-  const debouncedDepartment = useDebouncedValue(department);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["employees", debouncedSearch, debouncedDepartment, office, page],
+    queryKey: ["employees", debouncedSearch, department, office, page],
     queryFn: () =>
       searchEmployees(
         {
           search: debouncedSearch || undefined,
-          department: debouncedDepartment || undefined,
+          department: department ?? undefined,
           office: office ?? undefined,
           page,
           pageSize: PAGE_SIZE,
@@ -38,33 +54,53 @@ export function EmployeesPage() {
     enabled: Boolean(token),
   });
 
+  const { data: departmentsPage } = useQuery({
+    queryKey: ["departments", "filter-options"],
+    queryFn: () => searchDepartments({ page: 0, pageSize: 100 }, token!),
+    enabled: Boolean(token),
+  });
+
   function updateFilter(setter: (value: string) => void, value: string) {
     setter(value);
     setPage(0);
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Çalışan Rehberi</h1>
+    <div className="space-y-5">
+      <h1 className="text-[22px] font-extrabold">Çalışanlar</h1>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="space-y-1.5">
+      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
+        <div className="mb-1.5 space-y-1.5">
           <Label htmlFor="employee-search">Ara</Label>
           <Input
             id="employee-search"
             placeholder="İsimle ara…"
+            className="h-[38px]"
             value={search}
             onChange={(event) => updateFilter(setSearch, event.target.value)}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="employee-department">Departman</Label>
-          <Input
-            id="employee-department"
-            placeholder="Departman adı…"
+          <Label>Departman</Label>
+          <Select
             value={department}
-            onChange={(event) => updateFilter(setDepartment, event.target.value)}
-          />
+            onValueChange={(value) => {
+              setDepartment(value);
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="h-[38px] w-full">
+              <SelectValue placeholder="Tüm Departmanlar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={null}>Tüm Departmanlar</SelectItem>
+              {(departmentsPage?.data ?? []).map((dept) => (
+                <SelectItem key={dept.id} value={dept.name}>
+                  {dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1.5">
           <Label>Ofis Durumu</Label>
@@ -75,7 +111,7 @@ export function EmployeesPage() {
               setPage(0);
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-[38px] w-full">
               <SelectValue placeholder="Tümü" />
             </SelectTrigger>
             <SelectContent>
@@ -101,14 +137,33 @@ export function EmployeesPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {data.data.map((employee) => (
                 <Card key={employee.id}>
-                  <CardHeader>
-                    <CardTitle>{employee.name}</CardTitle>
-                    <CardDescription>{employee.departmentName ?? "Departman atanmamış"}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Ofis durumu: {employee.officeStatus ?? "Belirtilmemiş"}</p>
-                    <p>Telefon: {employee.phone ?? "—"}</p>
-                    <p>E-posta: {employee.email}</p>
+                  <CardContent className="flex items-start gap-3">
+                    <div className="bg-primary-soft text-primary flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold">
+                      {initialsOf(employee.name)}
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-semibold">{employee.name}</p>
+                        {employee.officeStatus && (
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              statusStyles[employee.officeStatus as OfficeStatus] ??
+                                "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {employee.officeStatus}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {employee.departmentName ?? "Departman atanmamış"}
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs">{employee.email}</p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {employee.phone ?? "Telefon numarası yok"}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

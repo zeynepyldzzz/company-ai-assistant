@@ -9,11 +9,27 @@ import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
 import { createVehicle, listVehicles, updateMaintenanceStatus, updateVehicle } from "@/api/vehicle";
 import type { Vehicle } from "@company/shared";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABELS = {
   available: "Uygun",
   maintenance: "Bakımda",
 } as const;
+
+const STATUS_PILL_STYLES = {
+  available: "bg-success-soft text-success",
+  maintenance: "bg-warning-soft text-warning",
+} as const;
+
+function StatusPill({ status }: { status: Vehicle["maintenanceStatus"] }) {
+  return (
+    <span
+      className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_PILL_STYLES[status])}
+    >
+      {STATUS_LABELS[status]}
+    </span>
+  );
+}
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback;
@@ -161,8 +177,8 @@ export function AdminVehiclesPage() {
                           onChange={(event) => setEditModel(event.target.value)}
                         />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {STATUS_LABELS[vehicle.maintenanceStatus]}
+                      <TableCell>
+                        <StatusPill status={vehicle.maintenanceStatus} />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -189,7 +205,9 @@ export function AdminVehiclesPage() {
                     <TableRow key={vehicle.id}>
                       <TableCell className="font-medium">{vehicle.plate}</TableCell>
                       <TableCell className="text-muted-foreground">{vehicle.model ?? "—"}</TableCell>
-                      <TableCell>{STATUS_LABELS[vehicle.maintenanceStatus]}</TableCell>
+                      <TableCell>
+                        <StatusPill status={vehicle.maintenanceStatus} />
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
