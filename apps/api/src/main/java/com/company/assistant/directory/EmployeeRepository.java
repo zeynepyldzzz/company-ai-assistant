@@ -36,6 +36,19 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
         """)
     Page<Employee> searchPhonebook(@Param("search") String search, Pageable pageable);
 
+    /**
+     * A-19 (#129): yalnizca "bu isimde aktif calisan var mi" sorusu. searchEmployees()
+     * EmployeeResponse kurarken lazy department/role proxy'lerini acar ve HTTP istegi
+     * disinda (IT, zamanlanmis is, LLM arac cagrisi) LazyInitializationException verir.
+     * Kural katmani nesneye degil varligin kendisine baktigi icin bu sayim yeterli.
+     */
+    @Query("""
+        SELECT COUNT(e) > 0 FROM Employee e
+        WHERE e.active = true
+          AND LOWER(e.name) LIKE LOWER(CONCAT('%', CAST(:token AS string), '%'))
+        """)
+    boolean existsActiveByNameContaining(@Param("token") String token);
+
     Optional<Employee> findByPhone(String phone);
 
     boolean existsByDepartment_Id(Integer departmentId);
