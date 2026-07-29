@@ -4,12 +4,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.company.assistant.directory.DepartmentService;
+import com.company.assistant.directory.DirectoryService;
+import com.company.assistant.shuttle.ShuttleService;
+
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -27,9 +32,17 @@ class IntentClassificationServiceTest {
     void setUp() {
         jdbcTemplate = mock(JdbcTemplate.class);
         embeddingClient = mock(EmbeddingClient.class);
-        // Kural eslestirici saf mantik; mock'lamak testin degerini dusurur, gercegi kullaniyoruz.
-        service = new IntentClassificationService(
-                jdbcTemplate, embeddingClient, new RuleBasedIntentMatcher(), THRESHOLD);
+        // Kural eslestiricinin KENDISI gercek: plaka deseni saf mantik ve testin konusu.
+        // Varlik kurallari icin gereken servisler bos veri doner; onlarin kendi testleri var.
+        ShuttleService shuttleService = mock(ShuttleService.class);
+        DirectoryService directoryService = mock(DirectoryService.class);
+        DepartmentService departmentService = mock(DepartmentService.class);
+        lenient().when(shuttleService.getAllRoutes()).thenReturn(List.of());
+        lenient().when(departmentService.getDepartmentNames()).thenReturn(List.of());
+        lenient().when(directoryService.existsActiveEmployeeNamed(any())).thenReturn(false);
+        service = new IntentClassificationService(jdbcTemplate, embeddingClient,
+                new RuleBasedIntentMatcher(shuttleService, directoryService, departmentService),
+                THRESHOLD);
     }
 
     private void mockDbBestMatch(String intent, String phrase, double similarity) {

@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DepartmentService {
 
@@ -22,6 +24,15 @@ public class DepartmentService {
                 pageSize,
                 result.getTotalElements()
         );
+    }
+
+    /**
+     * A-19 (#129): yalnizca departman adlari. searchDepartments() yonetici bilgisini de
+     * kurdugu icin lazy proxy acar ve HTTP istegi disinda calismaz; kural katmani yalnizca
+     * ada baktigi icin bu projeksiyon hem dogru hem ucuz.
+     */
+    public List<String> getDepartmentNames() {
+        return departmentRepository.findAllNames();
     }
 
     public DepartmentResponse getDepartmentById(Integer id) {
