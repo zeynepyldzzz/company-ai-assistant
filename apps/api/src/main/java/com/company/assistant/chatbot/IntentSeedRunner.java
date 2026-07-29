@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import com.company.assistant.common.TurkishText;
+
 @Component
 @Profile("!test")
 public class IntentSeedRunner implements ApplicationRunner {
@@ -46,7 +48,10 @@ public class IntentSeedRunner implements ApplicationRunner {
             Long id = ((Number) row.get("id")).longValue();
             String phrase = (String) row.get("phrase");
             try {
-                float[] vector = embeddingClient.embed(phrase);
+                // A-17 (#124): IntentClassificationService ile AYNI normalizasyon. Seed ham
+                // metinden hesaplanirsa buyuk harfle baslayan ornekler (V8'de mevcut) sorguyla
+                // ayni uzayda olmaz.
+                float[] vector = embeddingClient.embed(TurkishText.normalizeForEmbedding(phrase));
                 jdbcTemplate.update(
                         "UPDATE intent_examples SET embedding = CAST(? AS vector) WHERE id = ?",
                         toVectorLiteral(vector), id);

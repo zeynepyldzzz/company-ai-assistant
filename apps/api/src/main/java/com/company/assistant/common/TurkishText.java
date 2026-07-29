@@ -40,6 +40,25 @@ public final class TurkishText {
     private TurkishText() {
     }
 
+    /**
+     * Embedding'e verilmeden once metni normallestirir: bas/son bosluk atilir ve Turkce
+     * locale ile kucuk harfe cevrilir.
+     *
+     * A-17 (#124): normalizasyon yokken "Selamlar" 0.513, "selamlar" 0.797 benzerlik aliyordu —
+     * ayni kelime, yalnizca ilk harf farki. Buyuk harfle baslayan sorular gereksiz yere esik
+     * altinda kaliyordu. AYNI metot hem sorguda hem seed'de kullanilmali, aksi halde iki taraf
+     * yine farkli normallesir.
+     *
+     * Turkce karakterler BILEREK katlanmaz: bge-m3 cok dilli bir model, "calisma"ya cevirmek
+     * modele bozuk kelime vermek olur. foldToAscii yalnizca kelime eslestirme icindir.
+     */
+    public static String normalizeForEmbedding(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.trim().toLowerCase(new Locale("tr"));
+    }
+
     /** Turkce gun adi: MONDAY -> "Pazartesi". */
     public static String dayName(DayOfWeek day) {
         return DAY_NAMES.get(day);

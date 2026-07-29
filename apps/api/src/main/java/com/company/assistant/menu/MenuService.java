@@ -37,8 +37,17 @@ public class MenuService {
     }
 
     public List<MenuResponse> getWeeklyMenu() {
-        int currentWeek = LocalDate.now().get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
-        List<MealMenu> menus = mealMenuRepository.findByWeekNumber(currentWeek);
+        return getWeeklyMenu(LocalDate.now());
+    }
+
+    /**
+     * Verilen tarihin ait oldugu haftanin menusu. A-17 (#124): "haftaya menude ne var"
+     * sorusu once sessizce BU haftanin menusunu donduruyordu; chatbot resolver'i artik
+     * gelecek haftanin bir gununu vererek dogru haftayi ister.
+     */
+    public List<MenuResponse> getWeeklyMenu(LocalDate anyDayOfWeek) {
+        int week = anyDayOfWeek.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+        List<MealMenu> menus = mealMenuRepository.findByWeekNumber(week);
         return menus.stream().map(MenuResponse::new).toList();
     }
 

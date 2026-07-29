@@ -41,6 +41,9 @@ export function EmployeeFormSheet({
   const [departmentId, setDepartmentId] = useState<string | null>(
     employee?.departmentId ? String(employee.departmentId) : null
   );
+  // C-12 (#120): olusturmada ilk sifre zorunlu; duzenlemede bos birakilirsa
+  // mevcut sifre degismez (bkz. AdminEmployeeService.applyRequest).
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -49,6 +52,7 @@ export function EmployeeFormSheet({
     setPhone(employee?.phone ?? "");
     setOfficeStatus(employee?.officeStatus ?? null);
     setDepartmentId(employee?.departmentId ? String(employee.departmentId) : null);
+    setPassword("");
   }, [open, employee]);
 
   const mutation = useMutation({
@@ -59,6 +63,7 @@ export function EmployeeFormSheet({
         phone: phone.trim() || null,
         officeStatus: officeStatus,
         departmentId: departmentId ? Number(departmentId) : null,
+        password: password.trim() || null,
       };
       return isEdit ? updateEmployee(employee!.id, body, token!) : createEmployee(body, token!);
     },
@@ -77,6 +82,10 @@ export function EmployeeFormSheet({
     event.preventDefault();
     if (!name.trim() || !email.trim()) {
       toast.error("İsim ve e-posta boş olamaz.");
+      return;
+    }
+    if (!isEdit && !password.trim()) {
+      toast.error("Yeni çalışan için bir ilk şifre belirlemelisiniz.");
       return;
     }
     mutation.mutate();
@@ -124,6 +133,26 @@ export function EmployeeFormSheet({
           <div className="space-y-1.5">
             <Label htmlFor="employee-phone">Telefon</Label>
             <Input id="employee-phone" value={phone ?? ""} onChange={(event) => setPhone(event.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="employee-password">
+              {isEdit ? "Yeni Şifre (opsiyonel)" : "İlk Şifre"}
+            </Label>
+            <Input
+              id="employee-password"
+              type="password"
+              autoComplete="new-password"
+              placeholder={isEdit ? "Değiştirmek istemiyorsan boş bırak" : ""}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            {!isEdit && (
+              <p className="text-muted-foreground text-xs">
+                Çalışan admin türü bir role sahipse, girişte iki faktörlü doğrulama (QR kod ile)
+                istenecektir.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">

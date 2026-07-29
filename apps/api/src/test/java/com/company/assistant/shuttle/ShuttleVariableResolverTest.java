@@ -1,7 +1,9 @@
 package com.company.assistant.shuttle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalTime;
@@ -83,6 +85,17 @@ class ShuttleVariableResolverTest {
                 .contains("Bostanci — 07:20");
     }
 
+    // #124: plaka ile arama. Bosluk ve buyuk-kucuk harf farklari eslesmenin onune gecmemeli.
+    @Test
+    void plakaIleHatBulunur() {
+        seedTwoRoutes();
+
+        assertThat(resolver.resolve("servis_guzergah", "34 SR 101 hangi hat").get("servis_guzergahi"))
+                .contains("Kadikoy Hatti").doesNotContain("Besiktas");
+        assertThat(resolver.resolve("servis_guzergah", "34sr202 nereden geciyor").get("servis_guzergahi"))
+                .contains("Besiktas Hatti").doesNotContain("Kadikoy");
+    }
+
     @Test
     void hicGuzergahYoksaNetMesajDoner() {
         when(shuttleService.getAllRoutes()).thenReturn(List.of());
@@ -95,7 +108,7 @@ class ShuttleVariableResolverTest {
     @Test
     void duragiOlmayanHatIcinNetMesajDoner() {
         when(shuttleService.getAllRoutes()).thenReturn(List.of(route(1, "Yeni Hat", "34 XX 001")));
-        when(shuttleService.getStops(1)).thenReturn(List.of());
+        when(shuttleService.getStopsByRoutes(anyCollection())).thenReturn(Map.of());
 
         Map<String, String> vars = resolver.resolve("servis_saatleri", "servis kaçta");
 
@@ -106,7 +119,8 @@ class ShuttleVariableResolverTest {
     @Test
     void saatiOlmayanDurakAcikMetinBasar() {
         when(shuttleService.getAllRoutes()).thenReturn(List.of(route(1, "Yeni Hat", "34 XX 001")));
-        when(shuttleService.getStops(1)).thenReturn(List.of(stop("Merkez", null, 1)));
+        when(shuttleService.getStopsByRoutes(anyCollection()))
+                .thenReturn(Map.of(1, List.of(stop("Merkez", null, 1))));
 
         Map<String, String> vars = resolver.resolve("servis_saatleri", "servis kaçta");
 
@@ -126,16 +140,43 @@ class ShuttleVariableResolverTest {
                 .doesNotContain("Kadikoy");
     }
 
+    // #127: duraklar guzergah sayisindan bagimsiz TEK toplu sorguyla cekilmeli.
+    @Test
+    void duraklarTekSorgudaCekilir() {
+        seedTwoRoutes();
+
+        resolver.resolve("servis_saatleri", "servis saatleri nedir");
+
+        verify(shuttleService).getStopsByRoutes(anyCollection());
+        verify(shuttleService, org.mockito.Mockito.never()).getStops(org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    // #127: veri modelinde sabah/aksam ayrimi yok; saat yanitinda bu acikca belirtilmeli,
+    // aksi halde "aksam servisi kacta" sorusuna sabah saatleri aksammis gibi donuyor.
+    @Test
+    void saatYanitindaSeferAyrimiOlmadigiBelirtilir() {
+        seedTwoRoutes();
+
+        String hours = resolver.resolve("servis_saatleri", "akşam servisi saat kaçta").get("servis_saatleri");
+        String route = resolver.resolve("servis_guzergah", "servis nereden geçiyor").get("servis_guzergahi");
+
+        assertThat(hours).contains("sabah/akşam seferi ayrımı tanımlı değil");
+        // Guzergah yanitinda saat listesi asil konu degil; not tekrarlanmaz.
+        assertThat(route).doesNotContain("sabah/akşam seferi ayrımı");
+    }
+
     private void seedTwoRoutes() {
         lenient().when(shuttleService.getAllRoutes()).thenReturn(List.of(
                 route(1, "Anadolu Yakasi - Kadikoy Hatti", "34 SR 101"),
                 route(2, "Avrupa Yakasi - Besiktas Hatti", "34 SR 202")));
-        lenient().when(shuttleService.getStops(1)).thenReturn(List.of(
-                stop("Kadikoy Iskele", LocalTime.of(7, 0), 1),
-                stop("Bostanci", LocalTime.of(7, 20), 2)));
-        lenient().when(shuttleService.getStops(2)).thenReturn(List.of(
-                stop("Besiktas Iskele", LocalTime.of(7, 15), 1),
-                stop("Mecidiyekoy", LocalTime.of(7, 35), 2)));
+        // #127: duraklar artik hat basina degil, tek toplu sorguyla cekiliyor.
+        lenient().when(shuttleService.getStopsByRoutes(anyCollection())).thenReturn(Map.of(
+                1, List.of(
+                        stop("Kadikoy Iskele", LocalTime.of(7, 0), 1),
+                        stop("Bostanci", LocalTime.of(7, 20), 2)),
+                2, List.of(
+                        stop("Besiktas Iskele", LocalTime.of(7, 15), 1),
+                        stop("Mecidiyekoy", LocalTime.of(7, 35), 2))));
     }
 
     private ShuttleRouteResponse route(Integer id, String name, String plate) {

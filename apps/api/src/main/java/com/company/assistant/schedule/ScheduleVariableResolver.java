@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.company.assistant.common.TurkishText;
+import com.company.assistant.directory.OfficeStatusVariableResolver;
 
 /**
  * A-13 (FR-59..64): 'calisma_duzeni' intent'i icin kullanicinin KENDI haftalik ofis/uzaktan
@@ -51,9 +52,12 @@ public class ScheduleVariableResolver {
             "Çalışma düzeni yalnızca Pazartesi-Cuma günleri için tanımlanıyor; sorduğun gün hafta sonuna denk geliyor.";
 
     private final ScheduleService scheduleService;
+    private final OfficeStatusVariableResolver officeStatusVariableResolver;
 
-    public ScheduleVariableResolver(ScheduleService scheduleService) {
+    public ScheduleVariableResolver(ScheduleService scheduleService,
+                                    OfficeStatusVariableResolver officeStatusVariableResolver) {
         this.scheduleService = scheduleService;
+        this.officeStatusVariableResolver = officeStatusVariableResolver;
     }
 
     public Map<String, String> resolve(String intentName, String message, Authentication authentication) {
@@ -68,6 +72,14 @@ public class ScheduleVariableResolver {
         }
 
         String text = TurkishText.foldToAscii(message);
+
+        // A-14 (#115): "kimler ofiste" tipi ucuncu sahis sorulari rehber verisinden yanitlanir
+        // (employee.office_status, /employees ile employee roluna zaten acik). Kullanicinin
+        // kendi haftalik plani asagidaki dalda kalir; weekly_schedule toplu gorunumu acilmaz.
+        if (officeStatusVariableResolver.isThirdPersonQuestion(text)) {
+            return Map.of(VARIABLE, officeStatusVariableResolver.resolve(text, employeeId));
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.with(DayOfWeek.MONDAY);
 
@@ -76,9 +88,11 @@ public class ScheduleVariableResolver {
             return Map.of(VARIABLE, NO_RECORD);
         }
 
-        // Hafta modu: "hafta" gecti ve tekil gun ipucu yok (or. "bu hafta calisma duzenim").
-        if (text.contains("hafta") && !hasSingleDayCue(text)) {
-            if (isNextWeek(text)) {
+        // Hafta modu: "hafta" gecti ya da "hangi gunler" soruldu ve tekil gun ipucu yok.
+        if ((text.contains("hafta") || asksWholeWeek(text)) && !hasSingleDayCue(text)) {
+            // #127: gecmis hafta da kapsam disi. Eskiden yalnizca gelecek hafta kontrol
+            // ediliyordu, "gecen hafta calisma duzenim" BU haftanin planini donduruyordu.
+            if (isNextWeek(text) || isLastWeek(text)) {
                 return Map.of(VARIABLE, ONLY_CURRENT_WEEK);
             }
             return Map.of(VARIABLE, buildWeekBody(schedule));
@@ -117,14 +131,24 @@ public class ScheduleVariableResolver {
     }
 
     private boolean hasSingleDayCue(String text) {
-        if (text.contains("bugun") || text.contains("yarin")) {
+        if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")) {
             return true;
         }
         return TurkishText.WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
     }
 
+    // "hangi gunler", "hangi gun" gibi cogul/soru kaliplari da tum haftayi ister; bunlar
+    // "hafta" kelimesini icermedigi icin eskiden tek-gun dalina dusup BUGUNU donduruyordu (#124).
+    private boolean asksWholeWeek(String text) {
+        return text.contains("hangi gun") || text.contains("hangi gunler");
+    }
+
     private boolean isNextWeek(String text) {
         return text.contains("gelecek") || text.contains("onumuzdeki") || text.contains("haftaya");
+    }
+
+    private boolean isLastWeek(String text) {
+        return text.contains("gecen hafta") || text.contains("onceki hafta");
     }
 
     // Ham (ASCII'ye katlanmis) mesajdan hedef tarihi cikarir. Menudeki resolveTarget ile ayni
@@ -132,6 +156,11 @@ public class ScheduleVariableResolver {
     private LocalDate resolveTarget(String text, LocalDate today) {
         if (text.contains("yarin")) {
             return today.plusDays(1);
+        }
+        // #124: eskiden taninmiyordu ve varsayilan olarak BUGUNE dusuyordu — kullanici
+        // yarindan sonrasini sorup bugunun cevabini aliyordu.
+        if (text.contains("obur gun")) {
+            return today.plusDays(2);
         }
         boolean nextWeek = isNextWeek(text);
         for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {

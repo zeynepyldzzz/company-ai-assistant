@@ -1,6 +1,6 @@
 import { clearAuth, readAuth, updateTokens } from "@/auth/token-store";
 
-const API_BASE = "/api/v1";
+export const API_BASE = "/api/v1";
 const NO_REFRESH_PATHS = ["/auth/login", "/auth/refresh", "/auth/2fa/verify"];
 
 export class ApiError extends Error {

@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class IntentClassificationServiceTest {
@@ -25,12 +27,69 @@ class IntentClassificationServiceTest {
     void setUp() {
         jdbcTemplate = mock(JdbcTemplate.class);
         embeddingClient = mock(EmbeddingClient.class);
-        service = new IntentClassificationService(jdbcTemplate, embeddingClient, THRESHOLD);
+        // Kural eslestirici saf mantik; mock'lamak testin degerini dusurur, gercegi kullaniyoruz.
+        service = new IntentClassificationService(
+                jdbcTemplate, embeddingClient, new RuleBasedIntentMatcher(), THRESHOLD);
     }
 
     private void mockDbBestMatch(String intent, String phrase, double similarity) {
         when(jdbcTemplate.queryForList(anyString(), any(Object[].class)))
                 .thenReturn(List.of(Map.of("name", intent, "phrase", phrase, "similarity", similarity)));
+    }
+
+    // A-17 (#124): plaka embedding ile siniflandirilamiyordu — "34 SR 101" 0.463 benzerlikle
+    // "merhaba" cumlesine en yakin cikiyordu. Kural eslesince embedding hic cagrilmamali.
+    @Test
+    void plakaKuralIleServisIntentineGider() {
+        var result = service.classify("34 SR 101");
+
+        assertThat(result.matched()).isTrue();
+        assertThat(result.intent()).isEqualTo("servis_guzergah");
+        verifyNoInteractions(embeddingClient, jdbcTemplate);
+    }
+
+    @Test
+    void bosluksuzPlakaDaKuralaTakilir() {
+        assertThat(service.classify("34sr101 nerede").intent()).isEqualTo("servis_guzergah");
+    }
+
+    // Kural yalnizca plaka bicimine uymali; siradan sorular embedding yoluna gitmeli.
+    @Test
+    void plakaOlmayanSoruEmbeddingYolunaGider() {
+        when(embeddingClient.embed(anyString())).thenReturn(new float[]{0.1f});
+        mockDbBestMatch("yemek_menusu", "bugün yemekte ne var", 0.90);
+
+        var result = service.classify("bugün yemekte ne var");
+
+        assertThat(result.intent()).isEqualTo("yemek_menusu");
+        verify(embeddingClient).embed("bugün yemekte ne var");
+    }
+
+    // A-17 (#124): normalizasyon yokken "Selamlar" 0.513, "selamlar" 0.797 aliyordu. Soru
+    // embedding'e kucuk harfe cevrilmis ve trim'lenmis olarak gitmeli; ayni metot
+    // IntentSeedRunner'da da kullanilir, aksi halde iki taraf ayni uzayda olmaz.
+    @Test
+    void soruEmbeddingeNormallestirilmisGider() {
+        when(embeddingClient.embed("selamlar")).thenReturn(new float[]{0.1f});
+        mockDbBestMatch("selamlama", "merhaba", 0.79);
+
+        var result = service.classify("  Selamlar  ");
+
+        assertThat(result.matched()).isTrue();
+        assertThat(result.intent()).isEqualTo("selamlama");
+        verify(embeddingClient).embed("selamlar");
+    }
+
+    // Turkce karakterler BILEREK katlanmaz: bge-m3 cok dilli, "calisma"ya cevirmek modele
+    // bozuk kelime vermek olur.
+    @Test
+    void turkceKarakterlerKatlanmaz() {
+        when(embeddingClient.embed(anyString())).thenReturn(new float[]{0.1f});
+        mockDbBestMatch("calisma_duzeni", "bu hafta kimler ofiste", 0.80);
+
+        service.classify("Çalışma Düzenim");
+
+        verify(embeddingClient).embed("çalışma düzenim");
     }
 
     @Test
