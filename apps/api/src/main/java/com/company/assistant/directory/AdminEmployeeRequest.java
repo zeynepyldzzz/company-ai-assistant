@@ -6,6 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * POST/PUT /admin/employees govdesi.
  * roleId ve departmentId opsiyonel (department atanmamis / rol default employee olabilir).
+ *
+ * C-12 (#120): password alani eklendi. Olusturma (POST) sirasinda zorunlu
+ * (AdminEmployeeService bunu kontrol eder, @NotBlank koymuyoruz cunku ayni
+ * record guncelleme (PUT) icin de kullaniliyor ve guncellemede sifre
+ * degistirmek istemiyorsa bos birakilabilir).
  */
 public record AdminEmployeeRequest(
         @NotBlank String name,
@@ -13,5 +18,6 @@ public record AdminEmployeeRequest(
         String phone,
         String officeStatus,
         Integer departmentId,
-        Integer roleId) {
+        Integer roleId,
+        String password) {
 }

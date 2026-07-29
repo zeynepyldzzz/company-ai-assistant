@@ -53,6 +53,9 @@ export const AdminEmployeeRequestSchema = z.object({
   officeStatus: z.string().nullable().optional(),
   departmentId: z.number().nullable().optional(),
   roleId: z.number().nullable().optional(),
+  // C-12 (#120): olusturmada zorunlu (backend PASSWORD_REQUIRED ile reddeder),
+  // guncellemede opsiyonel - bos/undefined ise mevcut sifre korunur.
+  password: z.string().nullable().optional(),
 });
 export type AdminEmployeeRequest = z.infer<typeof AdminEmployeeRequestSchema>;
 

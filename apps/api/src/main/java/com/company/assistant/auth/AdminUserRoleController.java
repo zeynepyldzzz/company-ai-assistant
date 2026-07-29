@@ -31,9 +31,13 @@ public class AdminUserRoleController {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
 
-    public AdminUserRoleController(EmployeeRepository employeeRepository, RoleRepository roleRepository) {
+    private final TotpService totpService;
+
+    public AdminUserRoleController(EmployeeRepository employeeRepository, RoleRepository roleRepository,
+                                    TotpService totpService) {
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
+        this.totpService = totpService;
     }
 
     @PutMapping("/{id}/roles")
@@ -44,6 +48,17 @@ public class AdminUserRoleController {
                 .orElseThrow(() -> new RoleNotFoundException("Rol bulunamadi: " + request.roleId()));
 
         employee.setRole(role);
+
+        // C-12 (#120): bir calisan buradan admin turu bir role terfi ettirilirse
+        // (once employee/rolsuzken), giriste 2FA zorunlu olacagi icin TOTP
+        // secret'i simdi uretiyoruz (AdminEmployeeService.applyRequest ile ayni
+        // mantik). Zaten bir secret'i varsa dokunmuyoruz.
+        boolean isAdminRole = !"employee".equalsIgnoreCase(role.getName());
+        if (isAdminRole && employee.getTotpSecret() == null) {
+            employee.setTotpSecret(totpService.generateSecret());
+            employee.setTotpEnabled(false);
+        }
+
         employeeRepository.save(employee);
 
         return new EmployeeRoleResponse(employee.getId(), employee.getName(), role.getId(), role.getName());

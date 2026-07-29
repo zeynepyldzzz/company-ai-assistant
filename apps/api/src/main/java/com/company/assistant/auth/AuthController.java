@@ -1,12 +1,14 @@
 package com.company.assistant.auth;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -51,8 +53,11 @@ public class AuthController {
         // Admin ise: token verme, 2FA adimina yonlendir
         if ("admin".equals(roleInfo.role())) {
             String challengeToken = jwtService.generateChallengeToken(employee.getId());
-            return ResponseEntity.ok(
-                    new AuthDtos.TwoFactorRequiredResponse(true, challengeToken));
+            // C-12 (#120): totpEnabled=false -> bu kullanici henuz authenticator
+            // app'ine kayit olmadi (ornegin yeni olusturulmus bir admin hesabi).
+            // Frontend'e QR ekranini once gostermesi gerektigini soyluyoruz.
+            return ResponseEntity.ok(new AuthDtos.TwoFactorRequiredResponse(
+                    true, challengeToken, !employee.isTotpEnabled()));
         }
 
         String accessToken = jwtService.generateAccessToken(
@@ -93,6 +98,40 @@ public class AuthController {
 
     }
 
+    /**
+     * C-12 (#120): self-service TOTP enrollment - kullanici henuz authenticator
+     * app'ine kayitli degilse (totpEnabled=false), giris akisinin 2. adiminda
+     * frontend bu ucu cagirip QR kodu ekranda gosterir. challengeToken zaten
+     * kisa omurlu (5 dk) ve tek kullanicinin kimligini tasidigi icin ayri bir
+     * auth header'a gerek yok - <img> etiketinden dogrudan cagirilabilir.
+     */
+    @GetMapping(value = "/2fa/qr", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> twoFactorQrCode(@RequestParam String challengeToken) {
+        Integer employeeId;
+        try {
+            employeeId = jwtService.parseChallengeToken(challengeToken);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid challenge");
+        }
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .filter(Employee::isActive)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Invalid challenge"));
+
+        if (employee.getTotpSecret() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Bu kullanıcı için TOTP secret üretilmemiş");
+        }
+        if (employee.isTotpEnabled()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "2FA zaten kurulu, tekrar QR gösterilmez");
+        }
+
+        byte[] png = totpService.generateQrCodePng(employee.getEmail(), employee.getTotpSecret());
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(png);
+    }
+
     @PostMapping("/2fa/verify")
     public AuthDtos.LoginResponse verifyTwoFactor(@RequestBody AuthDtos.TwoFactorVerifyRequest request) {
         Integer employeeId;
@@ -110,6 +149,12 @@ public class AuthController {
         if (employee.getTotpSecret() == null
                 || !totpService.verify(employee.getTotpSecret(), request.code())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid code");
+        }
+
+        // C-12 (#120): ilk basarili dogrulama = enrollment'in tamamlanmasi.
+        if (!employee.isTotpEnabled()) {
+            employee.setTotpEnabled(true);
+            employee = employeeRepository.save(employee);
         }
 
         AuthDtos.RoleInfo roleInfo = AuthDtos.RoleInfo.from(employee);

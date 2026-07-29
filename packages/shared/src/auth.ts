@@ -49,6 +49,9 @@ export type RefreshResponse = z.infer<typeof RefreshResponseSchema>;
 export const TwoFactorChallengeSchema = z.object({
   twoFactorRequired: z.literal(true),
   challengeToken: z.string(),
+  // C-12 (#120): true ise kullanici authenticator app'ine henuz kayitli degil,
+  // frontend once QR kodu (GET /auth/2fa/qr) gostermeli.
+  enrollmentRequired: z.boolean(),
 });
 export type TwoFactorChallenge = z.infer<typeof TwoFactorChallengeSchema>;
 
