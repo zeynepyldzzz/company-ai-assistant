@@ -5,7 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ShuttleService {
@@ -41,6 +44,21 @@ public class ShuttleService {
      */
     public List<ShuttleRouteResponse> getAllRoutes() {
         return shuttleRouteRepository.findAll().stream().map(ShuttleRouteResponse::new).toList();
+    }
+
+    /**
+     * A-18 (#127): birden fazla guzergahin duraklari tek sorguda, route id'ye gore gruplu.
+     * Chatbot resolver'i tum hatlari birden gosterdigi icin hat basina sorgu atmak
+     * gereksiz (9 guzergahta mesaj basina 19 sorgu ediyordu).
+     */
+    public Map<Integer, List<ShuttleStopResponse>> getStopsByRoutes(Collection<Integer> routeIds) {
+        if (routeIds.isEmpty()) {
+            return Map.of();
+        }
+        return shuttleStopRepository.findByRouteIds(routeIds).stream()
+                .collect(Collectors.groupingBy(
+                        stop -> stop.getRoute().getId(),
+                        Collectors.mapping(ShuttleStopResponse::new, Collectors.toList())));
     }
 
     public List<ShuttleStopResponse> getStops(Integer routeId) {

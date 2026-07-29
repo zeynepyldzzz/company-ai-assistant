@@ -38,6 +38,14 @@ public class ShuttleVariableResolver {
     private static final String NO_ROUTE_DATA = "Sistemde tanımlı bir servis güzergahı bulunmuyor.";
     private static final String NO_STOP_DATA = "Bu hat için durak bilgisi girilmemiş görünüyor.";
 
+    /**
+     * #127: shuttle_stop tablosunda durak basina tek `time` var; sabah/aksam seferi ayrimi
+     * veri modelinde YOK. Kullanici "aksam servisi saat kacta" diye sordugunda sabah
+     * saatlerini aksammis gibi sunmamak icin yanitin sonuna bir kez eklenir.
+     */
+    private static final String PERIOD_NOTE =
+            "\n\nNot: Sistemde sabah/akşam seferi ayrımı tanımlı değil; yukarıdakiler kayıtlı kalkış saatleridir.";
+
     // Hat adlarinda gecen ama ayirt edici olmayan kelimeler; eslestirmede kullanilmaz.
     // Aksi halde "servis saatleri" sorusundaki 'servis' kelimesi her hatti eslestirir.
     private static final Set<String> GENERIC_WORDS = Set.of(
@@ -62,10 +70,13 @@ public class ShuttleVariableResolver {
             return Map.of(hours ? "servis_saatleri" : "servis_guzergahi", NO_ROUTE_DATA);
         }
 
-        // Her hat icin duraklari bir kez cekilir; hem eslestirmede (durak adi ipucu olabilir)
-        // hem de ciktida kullanilir.
+        // #127: duraklar TEK sorguda cekilir. Onceden hat basina getStops cagriliyordu
+        // (existsById + durak sorgusu = 2), 9 guzergahli kullanimda mesaj basina 19 sorgu
+        // ediyordu. Artik guzergah sayisindan bagimsiz 2 sorgu.
+        Map<Integer, List<ShuttleStopResponse>> stopsByRoute = shuttleService.getStopsByRoutes(
+                routes.stream().map(ShuttleRouteResponse::getId).toList());
         List<RouteWithStops> all = routes.stream()
-                .map(r -> new RouteWithStops(r, shuttleService.getStops(r.getId())))
+                .map(r -> new RouteWithStops(r, stopsByRoute.getOrDefault(r.getId(), List.of())))
                 .toList();
 
         List<RouteWithStops> selected = all.stream().filter(r -> mentions(text, r)).toList();
@@ -78,7 +89,12 @@ public class ShuttleVariableResolver {
         String body = selected.stream()
                 .map(hours ? this::formatHours : this::formatRoute)
                 .collect(Collectors.joining("\n\n"));
-        return Map.of(hours ? "servis_saatleri" : "servis_guzergahi", body);
+        // #127: veri modelinde durak basina TEK saat var, sabah/aksam ayrimi yok. "aksam
+        // servisi saat kacta" sorusunda sabah saatlerini sessizce sunmamak icin not eklenir.
+        if (hours) {
+            return Map.of("servis_saatleri", body + PERIOD_NOTE);
+        }
+        return Map.of("servis_guzergahi", body);
     }
 
     // Hat adi, durak adlari veya PLAKA mesajda geciyor mu?

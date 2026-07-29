@@ -90,7 +90,9 @@ public class ScheduleVariableResolver {
 
         // Hafta modu: "hafta" gecti ya da "hangi gunler" soruldu ve tekil gun ipucu yok.
         if ((text.contains("hafta") || asksWholeWeek(text)) && !hasSingleDayCue(text)) {
-            if (isNextWeek(text)) {
+            // #127: gecmis hafta da kapsam disi. Eskiden yalnizca gelecek hafta kontrol
+            // ediliyordu, "gecen hafta calisma duzenim" BU haftanin planini donduruyordu.
+            if (isNextWeek(text) || isLastWeek(text)) {
                 return Map.of(VARIABLE, ONLY_CURRENT_WEEK);
             }
             return Map.of(VARIABLE, buildWeekBody(schedule));
@@ -143,6 +145,10 @@ public class ScheduleVariableResolver {
 
     private boolean isNextWeek(String text) {
         return text.contains("gelecek") || text.contains("onumuzdeki") || text.contains("haftaya");
+    }
+
+    private boolean isLastWeek(String text) {
+        return text.contains("gecen hafta") || text.contains("onceki hafta");
     }
 
     // Ham (ASCII'ye katlanmis) mesajdan hedef tarihi cikarir. Menudeki resolveTarget ile ayni
