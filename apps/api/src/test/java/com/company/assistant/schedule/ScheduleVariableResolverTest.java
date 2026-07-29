@@ -156,6 +156,45 @@ class ScheduleVariableResolverTest {
         verifyNoInteractions(scheduleService);
     }
 
+    // #124: "obur gun" taninmiyordu ve sessizce BUGUNU donduruyordu.
+    @Test
+    void oburGunIkiGunSonrasiniDoner() {
+        seedFullWeek();
+        LocalDate target = LocalDate.now().plusDays(2);
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "öbür gün ofiste miyim", authentication);
+
+        String reply = vars.get("calisma_duzenim");
+        if (target.getDayOfWeek() == DayOfWeek.SATURDAY || target.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            assertThat(reply).contains("Pazartesi-Cuma");
+        } else if (target.isAfter(weekStart().plusDays(6))) {
+            assertThat(reply).contains("yalnızca içinde bulunduğumuz haftanın");
+        } else {
+            assertThat(reply).contains(TR_DAYS.get(target.getDayOfWeek()));
+        }
+    }
+
+    // #124: "hangi gunler" tekil gun ipucu icermedigi icin BUGUNE dusuyordu.
+    @Test
+    void hangiGunlerSorusuTumHaftayiListeler() {
+        seedFullWeek();
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "hangi günler çalışıyorum", authentication);
+
+        assertThat(vars.get("calisma_duzenim"))
+                .contains("Pazartesi — Ofis")
+                .contains("Cuma — İzinli");
+    }
+
+    private static final Map<DayOfWeek, String> TR_DAYS = Map.of(
+            DayOfWeek.MONDAY, "Pazartesi",
+            DayOfWeek.TUESDAY, "Salı",
+            DayOfWeek.WEDNESDAY, "Çarşamba",
+            DayOfWeek.THURSDAY, "Perşembe",
+            DayOfWeek.FRIDAY, "Cuma",
+            DayOfWeek.SATURDAY, "Cumartesi",
+            DayOfWeek.SUNDAY, "Pazar");
+
     private LocalDate weekStart() {
         return LocalDate.now().with(DayOfWeek.MONDAY);
     }

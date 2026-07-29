@@ -2,12 +2,15 @@ package com.company.assistant.chatbot; // kendi kökünüze göre
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import com.company.assistant.common.TurkishText;
 
 @Service
 public class IntentClassificationService {
@@ -18,21 +21,35 @@ public class IntentClassificationService {
 
     private final JdbcTemplate jdbcTemplate;
     private final EmbeddingClient embeddingClient;
+    private final RuleBasedIntentMatcher ruleMatcher;
     private final double similarityThreshold;
 
     public IntentClassificationService(
             JdbcTemplate jdbcTemplate,
             EmbeddingClient embeddingClient,
+            RuleBasedIntentMatcher ruleMatcher,
             @Value("${app.chatbot.similarity-threshold:0.65}") double similarityThreshold) {
         this.jdbcTemplate = jdbcTemplate;
         this.embeddingClient = embeddingClient;
+        this.ruleMatcher = ruleMatcher;
         this.similarityThreshold = similarityThreshold;
     }
 
     public IntentResult classify(String question) {
+        // A-17 (#124): yapilandirilmis girdiler (plaka gibi) anlamsal benzerlikle
+        // siniflandirilamaz — "34 SR 101" 0.463 ile "merhaba"ya en yakin cikiyordu.
+        // Kural eslesirse embedding hic cagrilmaz.
+        Optional<IntentResult> ruleMatch = ruleMatcher.match(question);
+        if (ruleMatch.isPresent()) {
+            return ruleMatch.get();
+        }
+
         float[] queryVector;
         try {
-            queryVector = embeddingClient.embed(question);
+            // A-17 (#124): sorgu ve seed AYNI normalizasyondan gecmeli. Normalizasyon yokken
+            // "Selam" 0.512 / "selam" 0.787 aliyordu; buyuk harfle baslayan sorular esik
+            // altinda kaliyordu.
+            queryVector = embeddingClient.embed(TurkishText.normalizeForEmbedding(question));
         } catch (Exception e) {
             log.error("Embedding servisi erisilemedi, fallback donuluyor: {}", e.getMessage());
             return IntentResult.noMatch();
