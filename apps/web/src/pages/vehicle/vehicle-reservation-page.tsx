@@ -29,8 +29,8 @@ function ReservationStatusBadge({ status }: { status: Reservation["status"] }) {
   const isConfirmed = status === "confirmed";
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        isConfirmed ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
+      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+        isConfirmed ? "bg-success-soft text-success" : "bg-muted text-muted-foreground"
       }`}
     >
       {isConfirmed ? "Onaylı" : "İptal Edildi"}
@@ -213,6 +213,7 @@ export function VehicleReservationPage() {
                     <Button
                       variant="destructive"
                       size="sm"
+                      className="whitespace-nowrap"
                       onClick={() => handleCancel(reservation)}
                       disabled={cancelMutation.isPending}
                     >
