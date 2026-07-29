@@ -6,6 +6,8 @@ export const ShuttleRouteSchema = z.object({
   id: z.number(),
   name: z.string(),
   plateNumber: z.string().nullable(),
+  driverName: z.string().nullable(),
+  driverPhone: z.string().nullable(),
 });
 export type ShuttleRoute = z.infer<typeof ShuttleRouteSchema>;
 export const ShuttleRoutePagedResponseSchema = pagedResponseSchema(ShuttleRouteSchema);
@@ -24,6 +26,12 @@ export type ShuttleStop = z.infer<typeof ShuttleStopSchema>;
 export const ShuttleStopListSchema = z.array(ShuttleStopSchema);
 export type ShuttleStopList = z.infer<typeof ShuttleStopListSchema>;
 
+// POST/PUT /admin/shuttle-routes response
+export const ShuttleRouteDetailSchema = ShuttleRouteSchema.extend({
+  stops: ShuttleStopListSchema,
+});
+export type ShuttleRouteDetail = z.infer<typeof ShuttleRouteDetailSchema>;
+
 // GET /shuttle-routes/{id}/plate
 export const ShuttleRoutePlateSchema = z.object({
   id: z.number(),
@@ -37,6 +45,8 @@ export const ShuttleRecommendationSchema = z.object({
   routeId: z.number(),
   routeName: z.string(),
   plateNumber: z.string().nullable(),
+  driverName: z.string().nullable(),
+  driverPhone: z.string().nullable(),
   stopId: z.number(),
   stopName: z.string(),
   distanceKm: z.number(),
