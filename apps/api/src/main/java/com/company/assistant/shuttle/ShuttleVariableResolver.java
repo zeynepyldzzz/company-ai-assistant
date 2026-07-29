@@ -81,11 +81,30 @@ public class ShuttleVariableResolver {
         return Map.of(hours ? "servis_saatleri" : "servis_guzergahi", body);
     }
 
-    // Hat adi veya durak adlarindaki ayirt edici kelimelerden biri mesajda geciyor mu?
+    // Hat adi, durak adlari veya PLAKA mesajda geciyor mu?
     private boolean mentions(String text, RouteWithStops route) {
+        if (mentionsPlate(text, route.route().getPlateNumber())) {
+            return true;
+        }
         List<String> words = new ArrayList<>(keywordsOf(route.route().getName()));
         route.stops().forEach(s -> words.addAll(keywordsOf(s.getName())));
         return words.stream().anyMatch(text::contains);
+    }
+
+    /**
+     * #124: plaka ile arama. Karsilastirma harf/rakam disindaki her seyi atarak yapilir,
+     * boylece "34 SR 101", "34 sr 101" ve "34sr101" ayni hatti bulur.
+     */
+    private boolean mentionsPlate(String text, String plateNumber) {
+        if (plateNumber == null || plateNumber.isBlank()) {
+            return false;
+        }
+        String plate = compact(TurkishText.foldToAscii(plateNumber));
+        return !plate.isBlank() && compact(text).contains(plate);
+    }
+
+    private String compact(String value) {
+        return value.replaceAll("[^a-z0-9]", "");
     }
 
     private List<String> keywordsOf(String name) {

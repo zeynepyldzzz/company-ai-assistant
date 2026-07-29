@@ -88,8 +88,8 @@ public class ScheduleVariableResolver {
             return Map.of(VARIABLE, NO_RECORD);
         }
 
-        // Hafta modu: "hafta" gecti ve tekil gun ipucu yok (or. "bu hafta calisma duzenim").
-        if (text.contains("hafta") && !hasSingleDayCue(text)) {
+        // Hafta modu: "hafta" gecti ya da "hangi gunler" soruldu ve tekil gun ipucu yok.
+        if ((text.contains("hafta") || asksWholeWeek(text)) && !hasSingleDayCue(text)) {
             if (isNextWeek(text)) {
                 return Map.of(VARIABLE, ONLY_CURRENT_WEEK);
             }
@@ -129,10 +129,16 @@ public class ScheduleVariableResolver {
     }
 
     private boolean hasSingleDayCue(String text) {
-        if (text.contains("bugun") || text.contains("yarin")) {
+        if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")) {
             return true;
         }
         return TurkishText.WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
+    }
+
+    // "hangi gunler", "hangi gun" gibi cogul/soru kaliplari da tum haftayi ister; bunlar
+    // "hafta" kelimesini icermedigi icin eskiden tek-gun dalina dusup BUGUNU donduruyordu (#124).
+    private boolean asksWholeWeek(String text) {
+        return text.contains("hangi gun") || text.contains("hangi gunler");
     }
 
     private boolean isNextWeek(String text) {
@@ -144,6 +150,11 @@ public class ScheduleVariableResolver {
     private LocalDate resolveTarget(String text, LocalDate today) {
         if (text.contains("yarin")) {
             return today.plusDays(1);
+        }
+        // #124: eskiden taninmiyordu ve varsayilan olarak BUGUNE dusuyordu — kullanici
+        // yarindan sonrasini sorup bugunun cevabini aliyordu.
+        if (text.contains("obur gun")) {
+            return today.plusDays(2);
         }
         boolean nextWeek = isNextWeek(text);
         for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {

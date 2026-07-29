@@ -40,8 +40,9 @@ public class MenuVariableResolver {
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd.MM.yyyy", new Locale("tr"));
 
-    // "N gun sonra" — rakam formu. Yazi formu ayri haritada.
+    // "N gun sonra" / "N gun once" — rakam formu. Yazi formu ayri haritada.
     private static final Pattern DAYS_LATER = Pattern.compile("(\\d+)\\s*gun\\s+sonra");
+    private static final Pattern DAYS_AGO = Pattern.compile("(\\d+)\\s*gun\\s+once");
     private static final Map<String, Integer> WORD_NUMBERS = Map.of(
             "bir", 1, "iki", 2, "uc", 3, "dort", 4, "bes", 5, "alti", 6, "yedi", 7);
 
@@ -62,13 +63,24 @@ public class MenuVariableResolver {
         // Hafta modu: "hafta" var ve tekil gun ipucu yok (or. "bu haftanin listesi").
         // "gelecek hafta cuma" gibi tekil gun iceren istekler asagidaki tek-gun dalina gider.
         if (text.contains("hafta") && !hasSingleDayCue(text)) {
-            List<MenuResponse> week = menuService.getWeeklyMenu();
+            // #124: "haftaya"/"gelecek hafta" ifadeleri eskiden burada goz ardi ediliyor ve
+            // sessizce BU haftanin menusu "Bu haftanın menüsü:" basligiyla donuyordu.
+            int weekOffset = weekOffset(text);
+            List<MenuResponse> week = menuService.getWeeklyMenu(LocalDate.now().plusWeeks(weekOffset));
             if (week.isEmpty()) {
-                // Menu yokken "Bu haftanin menusu:" basligi yaniltici olur; net cumle.
-                variables.put("menu_gunu", "Bu hafta için menü bulunmuyor.");
+                // Menu yokken "... menusu:" basligi yaniltici olur; net cumle.
+                variables.put("menu_gunu", switch (weekOffset) {
+                    case 1 -> "Gelecek hafta için menü girilmemiş görünüyor.";
+                    case -1 -> "Geçen hafta için menü kaydı bulunmuyor.";
+                    default -> "Bu hafta için menü bulunmuyor.";
+                });
                 variables.put("gunun_menusu", "");
             } else {
-                variables.put("menu_gunu", "Bu haftanın menüsü:");
+                variables.put("menu_gunu", switch (weekOffset) {
+                    case 1 -> "Gelecek haftanın menüsü:";
+                    case -1 -> "Geçen haftanın menüsü:";
+                    default -> "Bu haftanın menüsü:";
+                });
                 variables.put("gunun_menusu", buildWeekBody(week));
             }
             return variables;
@@ -90,7 +102,16 @@ public class MenuVariableResolver {
 
     // "2 gun sonra" / "iki gun sonra" -> 2. Bulamazsa null.
     private Integer extractDaysLater(String text) {
-        Matcher m = DAYS_LATER.matcher(text);
+        return extractDayCount(text, DAYS_LATER, " gun sonra");
+    }
+
+    // #124: "3 gun once" / "uc gun once" -> 3. Ileri yonun aynadaki karsiligi.
+    private Integer extractDaysAgo(String text) {
+        return extractDayCount(text, DAYS_AGO, " gun once");
+    }
+
+    private Integer extractDayCount(String text, Pattern digitPattern, String wordSuffix) {
+        Matcher m = digitPattern.matcher(text);
         if (m.find()) {
             try {
                 return Integer.parseInt(m.group(1));
@@ -99,15 +120,32 @@ public class MenuVariableResolver {
             }
         }
         for (Map.Entry<String, Integer> entry : WORD_NUMBERS.entrySet()) {
-            if (text.contains(entry.getKey() + " gun sonra")) {
+            if (text.contains(entry.getKey() + wordSuffix)) {
                 return entry.getValue();
             }
         }
         return null;
     }
 
+    private boolean isNextWeek(String text) {
+        return text.contains("gelecek") || text.contains("onumuzdeki") || text.contains("haftaya");
+    }
+
+    private boolean isLastWeek(String text) {
+        return text.contains("gecen hafta") || text.contains("onceki hafta");
+    }
+
+    /** Hafta modunda hedef hafta: -1 gecen, 0 bu, +1 gelecek. */
+    private int weekOffset(String text) {
+        if (isLastWeek(text)) {
+            return -1;
+        }
+        return isNextWeek(text) ? 1 : 0;
+    }
+
     private boolean hasSingleDayCue(String text) {
-        if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")) {
+        if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")
+                || text.contains("dun") || text.contains("onceki gun")) {
             return true;
         }
         return TurkishText.WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
@@ -124,15 +162,25 @@ public class MenuVariableResolver {
         if (text.contains("obur gun")) {
             return today.plusDays(2);
         }
+        // #124: gecmis yon. "dunki yemek" desteklenmiyordu ve bugune dusuyordu.
+        if (text.contains("dun")) {
+            return today.minusDays(1);
+        }
+        if (text.contains("onceki gun") || text.contains("evvelki gun")) {
+            return today.minusDays(2);
+        }
 
         // "N gun sonra" (rakam veya yazi) — obur gun (+2) ile ayni ailenin genellemesi.
         Integer daysLater = extractDaysLater(text);
         if (daysLater != null) {
             return today.plusDays(daysLater);
         }
+        Integer daysAgo = extractDaysAgo(text);
+        if (daysAgo != null) {
+            return today.minusDays(daysAgo);
+        }
 
-        boolean nextWeek = text.contains("gelecek") || text.contains("onumuzdeki")
-                || text.contains("haftaya");
+        boolean nextWeek = isNextWeek(text);
         for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {
             if (text.contains(entry.getKey())) {
                 LocalDate day = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))

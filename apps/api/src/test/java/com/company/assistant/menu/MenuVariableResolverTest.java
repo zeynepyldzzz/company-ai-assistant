@@ -132,9 +132,65 @@ class MenuVariableResolverTest {
         assertThat(vars.get("gunun_menusu")).isEmpty();
     }
 
+    // #124: "dunki yemek" desteklenmiyordu, sessizce BUGUNUN menusu donuyordu.
+    @Test
+    void dunKelimesiOncekiGunuCeker() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "dünkü yemek neydi");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().minusDays(1));
+    }
+
+    @Test
+    void nGunOnceIfadesiGecmiseGider() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "3 gün önce ne vardı");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().minusDays(3));
+    }
+
+    @Test
+    void yaziIleUcGunOnceDeCalisir() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "üç gün önce menüde ne vardı");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().minusDays(3));
+    }
+
+    // #124: "haftaya" hafta modunda goz ardi ediliyordu ve BU haftanin menusu
+    // "Bu haftanın menüsü:" basligiyla donuyordu.
+    @Test
+    void haftayaIfadesiGelecekHaftayiIster() {
+        when(menuService.getWeeklyMenu(any(LocalDate.class))).thenReturn(List.of());
+
+        Map<String, String> vars = resolver.resolve("yemek_menusu", "haftaya menüde ne var");
+
+        assertThat(capturedWeekAnchor()).isEqualTo(LocalDate.now().plusWeeks(1));
+        assertThat(vars.get("menu_gunu")).contains("Gelecek hafta").doesNotContain("Bu haftanın menüsü");
+    }
+
+    @Test
+    void gecenHaftaIfadesiOncekiHaftayiIster() {
+        when(menuService.getWeeklyMenu(any(LocalDate.class))).thenReturn(List.of());
+
+        Map<String, String> vars = resolver.resolve("yemek_menusu", "geçen hafta neler vardı");
+
+        assertThat(capturedWeekAnchor()).isEqualTo(LocalDate.now().minusWeeks(1));
+        assertThat(vars.get("menu_gunu")).contains("Geçen hafta");
+    }
+
+    private LocalDate capturedWeekAnchor() {
+        ArgumentCaptor<LocalDate> captor = ArgumentCaptor.forClass(LocalDate.class);
+        verify(menuService).getWeeklyMenu(captor.capture());
+        return captor.getValue();
+    }
+
     @Test
     void bosHaftaIsteginde_bulunmuyorMesaji() {
-        when(menuService.getWeeklyMenu()).thenReturn(List.of());
+        when(menuService.getWeeklyMenu(any(LocalDate.class))).thenReturn(List.of());
 
         Map<String, String> vars = resolver.resolve("yemek_menusu", "bu haftanın listesi");
 
@@ -149,7 +205,7 @@ class MenuVariableResolverTest {
         MealItemResponse item = mock(MealItemResponse.class);
         when(item.getName()).thenReturn("Çorba");
         when(day.getItems()).thenReturn(List.of(item));
-        when(menuService.getWeeklyMenu()).thenReturn(List.of(day));
+        when(menuService.getWeeklyMenu(any(LocalDate.class))).thenReturn(List.of(day));
 
         Map<String, String> vars = resolver.resolve("yemek_menusu", "bu haftanın listesi");
 

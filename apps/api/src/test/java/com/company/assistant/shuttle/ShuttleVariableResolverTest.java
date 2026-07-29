@@ -83,6 +83,17 @@ class ShuttleVariableResolverTest {
                 .contains("Bostanci — 07:20");
     }
 
+    // #124: plaka ile arama. Bosluk ve buyuk-kucuk harf farklari eslesmenin onune gecmemeli.
+    @Test
+    void plakaIleHatBulunur() {
+        seedTwoRoutes();
+
+        assertThat(resolver.resolve("servis_guzergah", "34 SR 101 hangi hat").get("servis_guzergahi"))
+                .contains("Kadikoy Hatti").doesNotContain("Besiktas");
+        assertThat(resolver.resolve("servis_guzergah", "34sr202 nereden geciyor").get("servis_guzergahi"))
+                .contains("Besiktas Hatti").doesNotContain("Kadikoy");
+    }
+
     @Test
     void hicGuzergahYoksaNetMesajDoner() {
         when(shuttleService.getAllRoutes()).thenReturn(List.of());
