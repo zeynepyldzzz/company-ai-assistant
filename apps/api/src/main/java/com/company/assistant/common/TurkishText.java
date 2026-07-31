@@ -4,14 +4,16 @@ import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Chatbot resolver'larinin ortak Turkce metin/gun yardimcilari.
  *
  * A-11 (menu) ve A-12 (servis) bu mantigin kendi kopyasini tasiyordu; A-13 (calisma duzeni)
  * ucuncu kopya olacakti — o noktada duplikasyon tesadüf degil desen oldugu icin ortaklastirildi.
- * Kapsam bilerek dar: karakter katlama + gun adlari + gun anahtar kelimeleri. Her resolver'in
- * kendi alanina ozgu cikarimi ("N gun sonra", hafta modu, hat secimi) kendi sinifinda kalir.
+ * Kapsam bilerek dar: karakter katlama + gun adlari + gun anahtar kelimeleri + ucuncu sahis
+ * grup ifadeleri. Her resolver'in kendi alanina ozgu cikarimi ("N gun sonra", hafta modu,
+ * hat secimi) kendi sinifinda kalir.
  */
 public final class TurkishText {
 
@@ -37,7 +39,31 @@ public final class TurkishText {
             Map.entry("cuma", DayOfWeek.FRIDAY),
             Map.entry("pazar", DayOfWeek.SUNDAY));
 
+    /**
+     * "Baskalari hakkinda, coğul" soru kaliplari.
+     *
+     * <p>Birinci grup kelime siniriyla kapali: "kimlik", "kimse" ucuncu sahis sorusu degil.
+     * Grup parantezi sart — "kimler?" ifadesi "kimle" + opsiyonel "r" anlamina gelir ve tek
+     * basina "kim"i kacirir.
+     *
+     * <p>Ikinci grup sonda \b ALMAZ: Turkce sondan eklemeli, "kisilerin"/"calisanlari" da
+     * eslesmeli. "ekip" bilerek yok — "ekipman"i yakalar ve "ofisteki ekip kimler" zaten
+     * birinci grupla eslesiyor.
+     *
+     * <p>A-20 (#139): desen iki katmanda birden gerekiyor — OfficeStatusVariableResolver
+     * kapsam secmek icin, RuleBasedIntentMatcher ise TERSINE, kisi kurali icin. "kimler
+     * ofiste" liste sorusudur ve tek kisilik rehber yanitina KAYMAMALIDIR. Iki taraf ayni
+     * deseni okumazsa aradaki bosluktan yanlis intent sizar.
+     */
+    private static final Pattern THIRD_PERSON_GROUP = Pattern.compile(
+            "\\bkim(ler(in)?)?\\b|\\b(kisiler|calisanlar|personel|olanlar|herkes)");
+
     private TurkishText() {
+    }
+
+    /** @param foldedText {@link #foldToAscii} cikisi olmali; desen ASCII yazilmistir. */
+    public static boolean mentionsThirdPersonGroup(String foldedText) {
+        return foldedText != null && THIRD_PERSON_GROUP.matcher(foldedText).find();
     }
 
     /**

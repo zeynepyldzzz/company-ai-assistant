@@ -45,15 +45,69 @@ class DirectoryVariableResolverTest {
         assertThat(resolver.resolve("yemek_menusu", "Ayşe Kaya kimdir")).isEmpty();
     }
 
+    // A-20 (#139): sorulan alan belliyse yanit TEK SATIR. Eskiden dort satirlik kart
+    // donuyordu ve kullanici kendi sorusunun cevabini kartin icinde ariyordu.
     @Test
-    void tamAdEslesmesiKisiKartiDoner() {
+    void dahiliSorusuYalnizcaTelefonDoner() {
         whenSearch("ayse", employee(1, "Ayse Kaya", "Bilgi Teknolojileri", "1234", "ayse@x.com", "Ofiste"));
         whenSearch("kaya", employee(1, "Ayse Kaya", "Bilgi Teknolojileri", "1234", "ayse@x.com", "Ofiste"));
 
         Map<String, String> vars = resolver.resolve("rehber_kisi", "Ayşe Kaya'nın dahilisi kaç");
 
         assertThat(vars.get("kisi_bilgisi"))
-                .contains("Ayse Kaya")
+                .isEqualTo("Ayse Kaya — telefon: 1234");
+    }
+
+    @Test
+    void ofisDurumuSorusuTekCumleDoner() {
+        whenSearch("ayse", employee(1, "Ayse Kaya", "Bilgi Teknolojileri", "1234", "ayse@x.com", "Uzaktan"));
+        whenSearch("kaya", employee(1, "Ayse Kaya", "Bilgi Teknolojileri", "1234", "ayse@x.com", "Uzaktan"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "Ayşe Kaya ofiste mi");
+
+        assertThat(vars.get("kisi_bilgisi")).isEqualTo("Ayse Kaya şu an Uzaktan görünüyor.");
+    }
+
+    // "nerede calisiyor" departman sorusudur; tek basina "nerede" ofis durumu.
+    @Test
+    void neredeCalisiyorDepartmanDoner() {
+        whenSearch("demir", employee(2, "Mehmet Demir", "Muhasebe ve Finans", "5555", "m@x.com", "Ofiste"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "Mehmet Demir nerede çalışıyor");
+
+        assertThat(vars.get("kisi_bilgisi")).isEqualTo("Mehmet Demir — departman: Muhasebe ve Finans");
+    }
+
+    @Test
+    void neredeSorusuOfisDurumuDoner() {
+        whenSearch("demir", employee(2, "Mehmet Demir", "Muhasebe ve Finans", "5555", "m@x.com", "Ofiste"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "Mehmet Demir nerede");
+
+        assertThat(vars.get("kisi_bilgisi")).isEqualTo("Mehmet Demir şu an Ofiste görünüyor.");
+    }
+
+    // Alan bos oldugunda soru cevapsiz kalmaz: elde ne varsa gosterilir.
+    @Test
+    void sorulanAlanBossaTamKartaDusulur() {
+        whenSearch("demir", employee(2, "Mehmet Demir", "Muhasebe ve Finans", null, "m@x.com", "Ofiste"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "Mehmet Demir'in dahilisi");
+
+        assertThat(vars.get("kisi_bilgisi"))
+                .contains("kayıtlı telefon bilgisi yok")
+                .contains("E-posta: m@x.com");
+    }
+
+    // Acik uclu soruda alan tespit edilemez — tam kart dogru davranistir.
+    @Test
+    void alanBelirtilmeyenSoruTamKartDoner() {
+        whenSearch("ayse", employee(1, "Ayse Kaya", "Bilgi Teknolojileri", "1234", "ayse@x.com", "Ofiste"));
+        whenSearch("kaya", employee(1, "Ayse Kaya", "Bilgi Teknolojileri", "1234", "ayse@x.com", "Ofiste"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "Ayşe Kaya kimdir");
+
+        assertThat(vars.get("kisi_bilgisi"))
                 .contains("Telefon: 1234")
                 .contains("Departman: Bilgi Teknolojileri")
                 .contains("Ofis durumu: Ofiste");

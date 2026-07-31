@@ -131,7 +131,8 @@ public class ScheduleVariableResolver {
     }
 
     private boolean hasSingleDayCue(String text) {
-        if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")) {
+        if (text.contains("bugun") || text.contains("yarin") || text.contains("obur gun")
+                || text.contains("dun") || text.contains("onceki gun")) {
             return true;
         }
         return TurkishText.WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
@@ -161,6 +162,17 @@ public class ScheduleVariableResolver {
         // yarindan sonrasini sorup bugunun cevabini aliyordu.
         if (text.contains("obur gun")) {
             return today.plusDays(2);
+        }
+        // A-20 (#139): gecmis yon. "Dün ofiste miydim" 0.763 ile DOGRU intent'e gidiyor
+        // ama tarih cikarimi yoktu ve varsayilan olarak BUGUNE dusuyordu — kullanici dogru
+        // formatta yanlis cevap aliyordu. Menu tarafi ayni duzeltmeyi A-17'de aldi.
+        // Hafta disina tasarsa (pazartesi -> dun = pazar) asagidaki sinir kontrolu
+        // ONLY_CURRENT_WEEK dondurur; sessizce bu haftadan bir gun gostermek en kotusu olurdu.
+        if (text.contains("dun")) {
+            return today.minusDays(1);
+        }
+        if (text.contains("onceki gun") || text.contains("evvelki gun")) {
+            return today.minusDays(2);
         }
         boolean nextWeek = isNextWeek(text);
         for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {

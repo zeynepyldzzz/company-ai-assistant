@@ -187,6 +187,43 @@ class ScheduleVariableResolverTest {
                 .doesNotContain("Pazartesi — Ofis");
     }
 
+    // A-20 (#139): "Dün ofiste miydim" 0.763 ile DOGRU intent'e gidiyor ama tarih cikarimi
+    // olmadigi icin BUGUNUN cevabini donduruyordu — dogru formatta yanlis bilgi.
+    // "obur gun" testiyle ayni sekilde gunden bagimsiz: hedef hafta disina tasabilir.
+    @Test
+    void dunBirOncekiGununDurumunuDoner() {
+        seedFullWeek();
+        LocalDate target = LocalDate.now().minusDays(1);
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "dün ofiste miydim", authentication);
+
+        String reply = vars.get("calisma_duzenim");
+        if (target.isBefore(weekStart())) {
+            assertThat(reply).contains("yalnızca içinde bulunduğumuz haftanın");
+        } else if (target.getDayOfWeek() == DayOfWeek.SATURDAY || target.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            assertThat(reply).contains("Pazartesi-Cuma");
+        } else {
+            assertThat(reply).contains(TR_DAYS.get(target.getDayOfWeek()));
+        }
+    }
+
+    @Test
+    void oncekiGunIkiGunOncesiniDoner() {
+        seedFullWeek();
+        LocalDate target = LocalDate.now().minusDays(2);
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "önceki gün ofiste miydim", authentication);
+
+        String reply = vars.get("calisma_duzenim");
+        if (target.isBefore(weekStart())) {
+            assertThat(reply).contains("yalnızca içinde bulunduğumuz haftanın");
+        } else if (target.getDayOfWeek() == DayOfWeek.SATURDAY || target.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            assertThat(reply).contains("Pazartesi-Cuma");
+        } else {
+            assertThat(reply).contains(TR_DAYS.get(target.getDayOfWeek()));
+        }
+    }
+
     // #124: "hangi gunler" tekil gun ipucu icermedigi icin BUGUNE dusuyordu.
     @Test
     void hangiGunlerSorusuTumHaftayiListeler() {
