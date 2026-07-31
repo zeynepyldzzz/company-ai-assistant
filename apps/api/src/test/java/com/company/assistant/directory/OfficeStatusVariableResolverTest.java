@@ -55,6 +55,26 @@ class OfficeStatusVariableResolverTest {
         assertThat(resolver.isThirdPersonQuestion("bugun ofiste miyim")).isFalse();
     }
 
+    // A-20 (#139): "kim" tasimayan ucuncu sahis kaliplari. Bunlar eskiden kullanicinin
+    // KENDI haftalik planini donduruyordu — soru baskalari hakkindayken.
+    @Test
+    void kimIcermeyenUcuncuSahisKaliplariDaAyirtEdilir() {
+        assertThat(resolver.isThirdPersonQuestion("ofiste olan kisiler")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("sirkette olan kisilerin listesi")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("calisanlar nerede")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("bugun ofiste olanlar")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("personel durumu nedir")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("herkes ofiste mi")).isTrue();
+    }
+
+    // Birinci sahis sorulari yeni kaliplarla kirilmamali (nobetci).
+    @Test
+    void birinciSahisSorulariUcuncuSahisSayilmaz() {
+        assertThat(resolver.isThirdPersonQuestion("bu hafta hangi gunler ofisteyim")).isFalse();
+        assertThat(resolver.isThirdPersonQuestion("calisma duzenim nedir")).isFalse();
+        assertThat(resolver.isThirdPersonQuestion("yarin uzaktan miyim")).isFalse();
+    }
+
     // "kimlik" / "kimse" gibi kelimeler ucuncu sahis sorusu degildir.
     @Test
     void kimIceren_ama_ucuncuSahisOlmayanKelimelerEslesmez() {
@@ -149,6 +169,53 @@ class OfficeStatusVariableResolverTest {
         assertThat(reply).contains("ve 29 kişi daha");
     }
 
+    // --- A-20 (#139): sirket geneli kapsam ---
+
+    @Test
+    void sirketGeneliSorulursaKullanicininDepartmaniylaSinirlanmaz() {
+        whenCompanySearch("Ofiste",
+                List.of(employee("Ayse Kaya", "Bilgi Teknolojileri"),
+                        employee("Emre Koc", "Satis ve Pazarlama")), 2);
+
+        String reply = resolver.resolve("sirkette olan kisiler", EMPLOYEE_ID);
+
+        assertThat(reply)
+                .contains("Şirket genelinde ofiste görünenler (2 kişi)")
+                .contains("• Ayse Kaya — Bilgi Teknolojileri")
+                .contains("• Emre Koc — Satis ve Pazarlama")
+                .doesNotContain("departmanında");
+    }
+
+    // Departman adi acikca gectiginde dar kapsam kazanir: "tum" kelimesi sirket geneline
+    // kaydirmamali, aksi halde "tum satis departmani" sorusu 40 kisilik liste doner.
+    @Test
+    void acikDepartmanAdiSirketGeneliIpucunuEzer() {
+        whenSearch("Satis ve Pazarlama", "Ofiste", List.of(employee("Emre Koc")), 1);
+        whenCompanyTotal("Ofiste", 5);
+
+        String reply = resolver.resolve("tum satis departmaninda kimler ofiste", EMPLOYEE_ID);
+
+        assertThat(reply).contains("Satis ve Pazarlama departmanında").contains("Emre Koc");
+    }
+
+    @Test
+    void sirketGeneliBosSaAcikMesajDoner() {
+        whenCompanySearch("Izinde", List.of(), 0);
+
+        String reply = resolver.resolve("sirkette kimler izinde", EMPLOYEE_ID);
+
+        assertThat(reply).isEqualTo("Şirket genelinde izinde kimse yok.");
+    }
+
+    @Test
+    void sirketGeneliListesiUstSiniriAsarsaKalanSayiBelirtilir() {
+        whenCompanySearch("Ofiste", List.of(employee("Ayse Kaya", "Bilgi Teknolojileri")), 30);
+
+        String reply = resolver.resolve("tum sirkette kimler ofiste", EMPLOYEE_ID);
+
+        assertThat(reply).contains("(30 kişi)").contains("ve 29 kişi daha");
+    }
+
     private void whenOwnDepartment(String departmentName) {
         EmployeeResponse response = mock(EmployeeResponse.class);
         when(response.getDepartmentName()).thenReturn(departmentName);
@@ -165,9 +232,21 @@ class OfficeStatusVariableResolverTest {
                 .thenReturn(new PagedResponse<>(List.of(), 0, 1, total));
     }
 
+    // Sirket geneli LISTE sorgusu: departman filtresi yok, sayfa boyutu MAX_NAMES (25).
+    // whenCompanyTotal ile karismaz — o eq(1) sayfa boyutuyla yalnizca sayim yapar.
+    private void whenCompanySearch(String status, List<EmployeeResponse> data, long total) {
+        when(directoryService.searchEmployees(isNull(), isNull(), eq(status), eq(0), eq(25)))
+                .thenReturn(new PagedResponse<>(data, 0, 25, total));
+    }
+
     private EmployeeResponse employee(String name) {
+        return employee(name, null);
+    }
+
+    private EmployeeResponse employee(String name, String departmentName) {
         EmployeeResponse response = mock(EmployeeResponse.class);
         lenient().when(response.getName()).thenReturn(name);
+        lenient().when(response.getDepartmentName()).thenReturn(departmentName);
         return response;
     }
 

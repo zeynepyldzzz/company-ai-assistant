@@ -47,10 +47,43 @@ public class DirectoryVariableResolver {
             "eposta", "email", "mail", "adresi", "bilgisi", "bilgileri", "iletisim",
             "departman", "departmani", "departmaninda", "hangi", "kimin", "kimdir",
             "nerede", "nedir", "kacti", "ofiste", "calisiyor", "bulabilir", "miyim",
-            "bey", "beyin", "hanim", "hanimin", "bana", "lutfen", "acaba");
+            "bey", "beyin", "hanim", "hanimin", "bana", "lutfen", "acaba",
+            // A-20 (#139): kural katmani artik "X ofiste mi / X uzaktan mi" sorularini da
+            // buraya yonlendiriyor; durum kelimeleri isim adayi sayilmamali.
+            "uzaktan", "izinde", "izinli", "evden", "durumu", "calisma");
 
     private static final int MIN_TOKEN_LENGTH = 3;
     private static final int MAX_CANDIDATES = 25;
+
+    /**
+     * A-20 (#139): sorunun ODAGINDAKI alan. Tespit edilemezse tam kart basilir — "Ayşe Kaya
+     * kimdir" gibi acik uclu sorularda dogru davranis budur.
+     *
+     * <p>Gerekce: "Ayşe Kaya ofiste mi" sorusuna dort satirlik kart donmek, kullaniciyi
+     * kendi sorusunun cevabini kartin icinde aramaya zorluyor. Sorulan alan biliniyorsa
+     * cevap tek satir olmali.
+     */
+    private enum Field {
+        PHONE("telefon"),
+        EMAIL("e-posta"),
+        DEPARTMENT("departman"),
+        OFFICE_STATUS("ofis durumu");
+
+        private final String label;
+
+        Field(String label) {
+            this.label = label;
+        }
+    }
+
+    private static final List<String> PHONE_CUES = List.of("dahili", "telefon", "numara");
+    // "posta" secildi cunku "e-posta" ASCII katlamadan sonra da tireli kalir ve "eposta"
+    // alt-dizesini ICERMEZ; "mail" ayrica "email"i de yakalar.
+    private static final List<String> EMAIL_CUES = List.of("mail", "posta");
+    private static final List<String> DEPARTMENT_CUES =
+            List.of("departman", "bolum", "birim", "nerede calisiyor", "hangi ekip");
+    private static final List<String> STATUS_CUES =
+            List.of("ofiste", "uzaktan", "izinde", "izinli", "evden", "durumu", "nerede");
 
     private final DirectoryService directoryService;
 
@@ -63,7 +96,8 @@ public class DirectoryVariableResolver {
             return Map.of();
         }
 
-        List<String> tokens = nameTokens(TurkishText.foldToAscii(message));
+        String foldedText = TurkishText.foldToAscii(message);
+        List<String> tokens = nameTokens(foldedText);
         if (tokens.isEmpty()) {
             return Map.of(VARIABLE, NO_NAME);
         }
@@ -87,7 +121,53 @@ public class DirectoryVariableResolver {
         if (winners.size() > 1) {
             return Map.of(VARIABLE, ambiguityQuestion(winners));
         }
-        return Map.of(VARIABLE, employeeCard(winners.get(0)));
+        return Map.of(VARIABLE, answerFor(winners.get(0), detectField(foldedText)));
+    }
+
+    /**
+     * Sira onemli: "nerede calisiyor" DEPARTMENT, tek basina "nerede" ise OFFICE_STATUS
+     * demektir. Departman ipuclari once bakildigi icin uzun kalip kazanir.
+     */
+    private Field detectField(String foldedText) {
+        if (containsAny(foldedText, PHONE_CUES)) {
+            return Field.PHONE;
+        }
+        if (containsAny(foldedText, EMAIL_CUES)) {
+            return Field.EMAIL;
+        }
+        if (containsAny(foldedText, DEPARTMENT_CUES)) {
+            return Field.DEPARTMENT;
+        }
+        if (containsAny(foldedText, STATUS_CUES)) {
+            return Field.OFFICE_STATUS;
+        }
+        return null;
+    }
+
+    private boolean containsAny(String foldedText, List<String> cues) {
+        return cues.stream().anyMatch(foldedText::contains);
+    }
+
+    private String answerFor(EmployeeResponse employee, Field field) {
+        if (field == null) {
+            return employeeCard(employee);
+        }
+        String value = switch (field) {
+            case PHONE -> employee.getPhone();
+            case EMAIL -> employee.getEmail();
+            case DEPARTMENT -> employee.getDepartmentName();
+            case OFFICE_STATUS -> employee.getOfficeStatus();
+        };
+        // Alan bossa soruyu cevapsiz birakmak yerine elde ne varsa gosterilir: kullanici
+        // bilgiyi baska bir alandan cikarabilir (or. telefonu yoksa e-postasi ise yarar).
+        if (value == null || value.isBlank()) {
+            return employee.getName() + " için kayıtlı " + field.label + " bilgisi yok. "
+                    + "Rehberdeki bilgileri:\n" + employeeCard(employee);
+        }
+        if (field == Field.OFFICE_STATUS) {
+            return employee.getName() + " şu an " + value + " görünüyor.";
+        }
+        return employee.getName() + " — " + field.label + ": " + value;
     }
 
     private List<String> nameTokens(String foldedText) {
