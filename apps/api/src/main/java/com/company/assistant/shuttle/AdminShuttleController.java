@@ -39,6 +39,12 @@ public class AdminShuttleController {
         return adminShuttleService.updatePlate(id, request);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoute(@PathVariable Integer id) {
+        adminShuttleService.deleteRoute(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @ExceptionHandler(ShuttleRouteNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ShuttleRouteNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

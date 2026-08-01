@@ -23,7 +23,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -197,6 +200,41 @@ class AdminShuttleControllerTest {
                         .content("{\"plateNumber\": \"34 XYZ 999\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plateNumber").value("34 XYZ 999"));
+    }
+
+    @Test
+    void shuttleAdmin_rotaSilebilir() throws Exception {
+        mockMvc.perform(delete("/admin/shuttle-routes/1")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN")))
+                .andExpect(status().isNoContent());
+
+        verify(adminShuttleService).deleteRoute(1);
+    }
+
+    @Test
+    void shuttleAdmin_bulunamayanRotayiSilerse404Doner() throws Exception {
+        doThrow(new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: 999"))
+                .when(adminShuttleService).deleteRoute(999);
+
+        mockMvc.perform(delete("/admin/shuttle-routes/999")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("SHUTTLE_ROUTE_NOT_FOUND"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HR_ADMIN", "FLEET_ADMIN", "CANTEEN_ADMIN"})
+    void digerAdminAltRolleri_rotaSilmeye403Alir(String subRole) throws Exception {
+        mockMvc.perform(delete("/admin/shuttle-routes/1")
+                        .with(user("test").roles("ADMIN", subRole)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void authOlmadan_rotaSilme401Doner() throws Exception {
+        mockMvc.perform(delete("/admin/shuttle-routes/1"))
+                .andExpect(status().isUnauthorized());
     }
 
     private ShuttleStop stop(String name, int orderIndex) {
