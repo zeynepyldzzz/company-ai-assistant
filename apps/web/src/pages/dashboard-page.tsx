@@ -98,7 +98,7 @@ function SurveyRespondSheet({ survey }: { survey: ActiveSurvey }) {
 const quickLinks = [
   { to: "/directory/employees", label: "Çalışanlar", icon: Users },
   { to: "/vehicles", label: "Araç Rezervasyonu", icon: Car },
-  { to: "/shuttle/recommendation", label: "Servis Rotaları", icon: Bus },
+  { to: "/shuttle", label: "Servisler", icon: Bus },
   { to: "/admin/knowledge-base", label: "Dokümanlar", icon: BookText },
 ];
 
