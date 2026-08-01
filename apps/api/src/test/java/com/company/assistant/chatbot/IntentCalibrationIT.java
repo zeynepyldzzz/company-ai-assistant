@@ -72,7 +72,30 @@ class IntentCalibrationIT {
             new Case("menü", "yemek_menusu", "kisa form"),
             new Case("dünkü yemek", "yemek_menusu", "gecmis kalibi"),
 
+            // --- A-20 (#139): kapsam/alan duzeltmeleri (chat_message_log, 2026-07-30) ---
+            new Case("Ayşe Kaya ofiste mi", "rehber_kisi",
+                    "0.610 intent_bulunamadi — ozel isim + durum, kural katmani"),
+            new Case("Mehmet Demir nerede", "rehber_kisi", "tekil kisi durum sorusu"),
+            new Case("ofiste olan kişiler", "calisma_duzeni",
+                    "0.843 dogru intent'ti ama ucuncu sahis sayilmiyordu"),
+            new Case("şirkette olan kişiler", "calisma_duzeni", "0.692 — sirket geneli kapsam"),
+            new Case("dün ofiste miydim", "calisma_duzeni", "0.763 — gecmis gun"),
+            new Case("Ayşe Kaya kimdir", "rehber_kisi", "0.565 — alan kelimesi yok"),
+            new Case("ayşe kaya", "rehber_kisi", "0.581 — sirf isim"),
+            new Case("şirkette olanları listele", "calisma_duzeni",
+                    "0.643 — emir kipi; en yakini YANLIS intent'teydi (V32)"),
+            new Case("ofiste olanları listele", "calisma_duzeni", "0.673 — esigin kil payi altinda"),
+            new Case("ofiste olanları söyle", "calisma_duzeni", "0.616 — ikinci emir fiili"),
+
             // --- Capraz kirlenme nobetcileri: gun nitelemesi intent'ler arasi paylasilir ---
+            // A-20 nobetcisi: durum kelimesi ("ofiste"/"nerede") tasiyan LISTE sorulari
+            // tek kisilik rehber yanitina KAYMAMALI.
+            new Case("çalışanlar nerede", "calisma_duzeni", "NOBETCI — kural rehber_kisi'ye almamali"),
+            // V32 emir kipi ornekleri TUM intent'lerin emir kipli sorularini calabilir;
+            // #104'te V23 ornekleri "carsamba servis"i menuye calmisti.
+            new Case("bu haftanın menüsünü listele", "yemek_menusu", "NOBETCI — emir kipi (V32)"),
+            new Case("servisleri listele", List.of("servis_guzergah", "servis_saatleri"),
+                    "NOBETCI — emir kipi (V32)"),
             new Case("çarşamba yemekte ne var", "yemek_menusu", "NOBETCI"),
             new Case("çarşamba servisi kaçta", "servis_saatleri", "NOBETCI"),
             new Case("çarşamba ofiste miyim", "calisma_duzeni", "NOBETCI"),
@@ -95,6 +118,35 @@ class IntentCalibrationIT {
 
     @Autowired
     private IntentClassificationService service;
+
+    @Autowired
+    private IntentSuggestionRepository suggestionRepository;
+
+    /**
+     * A-22 (#141): karsilama chip'lerinin HEPSI eslesmeli.
+     *
+     * <p>Chip'e tiklayan kullanicinin "anlamadim" yaniti almasi mumkun olan en kotu
+     * deneyimdir — o soruyu kendimiz onerdik. Vaka listesine elle yazmak yerine DB'den
+     * okunuyor: yeni bir chip eklendiginde bu test onu kendiliginden kapsar, birinin
+     * test setini guncellemeyi hatirlamasi gerekmez.
+     */
+    @Test
+    void vitrinSorularininHepsiEslesir() {
+        List<String> failures = new ArrayList<>();
+        List<ChatSuggestion> suggestions = suggestionRepository.findSuggestions();
+
+        for (ChatSuggestion suggestion : suggestions) {
+            var result = service.classify(suggestion.question());
+            if (NO_INTENT.equals(result.intent())) {
+                failures.add(String.format("%s -> %s (%.3f, en yakin: '%s')",
+                        suggestion.question(), result.intent(),
+                        result.similarity(), result.matchedPhrase()));
+            }
+        }
+
+        assertThat(suggestions).as("Vitrin sorusu hic yok — seed uygulanmamis olabilir").isNotEmpty();
+        assertThat(failures).as("Karsilama chip'leri intent_bulunamadi'ya dusuyor").isEmpty();
+    }
 
     @Test
     void kalibrasyonSeti() {

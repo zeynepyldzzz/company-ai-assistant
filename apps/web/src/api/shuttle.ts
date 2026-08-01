@@ -47,3 +47,7 @@ export async function getShuttleRecommendation(
   });
   return ShuttleRecommendationSchema.parse(data);
 }
+
+export async function deleteShuttleRoute(id: number, token: string): Promise<void> {
+  await apiFetch<void>(`/admin/shuttle-routes/${id}`, { method: "DELETE", token });
+}

@@ -32,6 +32,11 @@ import com.company.assistant.shuttle.ShuttleStopResponse;
  * ("canım sıkıldı" -> Can Ozturk eslesmesi tetiklenmez, cunku dahili/telefon yok) hem de
  * her mesajda gereksiz sorgu atilmasini onler.
  *
+ * <p><b>Tek istisna (A-20/#139):</b> "ayşe kaya" gibi SIRF isimden ibaret mesajlarda alan
+ * kelimesi yoktur. Orada koruma tersine cevrilir: anlamli kelimelerin TAMAMI bir calisan
+ * adiyla eslesmelidir. Bu daha sert bir kosuldur — "deniz kenarında tatil" cumlesinde
+ * "deniz" gercek bir calisan adi olsa bile kural tetiklenmez.
+ *
  * <p>Kural eslesirse embedding hic cagrilmaz. Faz 2'de LLM devreye girdiginde de bu katman
  * onde kalir — yapilandirilmis girdiler icin kural her zaman daha guvenilirdir.
  */
@@ -55,8 +60,42 @@ public class RuleBasedIntentMatcher {
     private static final List<String> SHUTTLE_WORDS =
             List.of("servis", "guzergah", "durak", "hatti");
     private static final List<String> SHUTTLE_TIME_WORDS = List.of("saat", "kacta", "kalkis", "kalkiyor");
+    // "posta" A-20'de eklendi: "e-posta" ASCII katlamadan sonra tireli kalir ve ne "eposta"
+    // ne de "e posta" alt-dizesini icerir — en yaygin yazim bicimi kurala hic takilmiyordu.
     private static final List<String> PERSON_WORDS =
-            List.of("dahili", "telefon", "numara", "mail", "eposta", "e posta");
+            List.of("dahili", "telefon", "numara", "mail", "posta", "eposta");
+
+    /**
+     * A-20 (#139): kisi hakkinda DURUM sorulari. "Ayşe Kaya ofiste mi" 0.610 ile
+     * intent_bulunamadi donuyordu — cumle kalibi rehber ornekleriyle ayni olsa bile ozel
+     * isim benzerligi asagi cekiyor.
+     *
+     * <p>PERSON_WORDS'ten AYRI liste: bu kelimeler tek baslarina liste sorusu da olabilir
+     * ("kimler ofiste"), o yuzden ucuncu sahis grup ipucu varken kural devreye girmemeli.
+     */
+    private static final List<String> PERSON_STATUS_WORDS =
+            List.of("ofiste", "uzaktan", "izinde", "izinli", "nerede", "evden");
+
+    /**
+     * Alan belirtmeyen kisi sorulari: "Ayşe Kaya kimdir", "Ayşe Kaya'nın bilgileri".
+     * Olculdu (elle test, 2026-07-31): 0.565 / 0.558 ile intent_bulunamadi donuyordu.
+     * Bunlar da tekil kisi sorusudur; DirectoryVariableResolver alan tespit edemeyip
+     * TAM KART basar — istenen davranis zaten budur.
+     */
+    private static final List<String> PERSON_INFO_WORDS =
+            List.of("kimdir", "bilgileri", "iletisim", "hakkinda");
+
+    /** "ayşe kaya" gibi sirf isimden ibaret mesajlarda kontrol edilecek en fazla kelime. */
+    private static final int BARE_NAME_MAX_TOKENS = 3;
+
+    /**
+     * Selamlasma/nezaket kelimeleri isim adayi SAYILMAZ. Aksi halde rehbere "Selami" adinda
+     * biri eklendigi gun "selam" mesaji LIKE ile eslesip selamlama intent'ini calardi —
+     * kural embedding'den once calistigi icin sessizce ve aciklamasiz.
+     */
+    private static final List<String> SMALL_TALK_WORDS = List.of(
+            "selam", "selamlar", "merhaba", "gunaydin", "iyi", "gunler", "aksamlar",
+            "tesekkur", "tesekkurler", "sagol", "sagolun", "kolay", "gelsin");
     private static final List<String> DEPARTMENT_WORDS =
             List.of("bolum", "departman", "birim", "yetkili", "sorumlu");
 
@@ -99,7 +138,38 @@ public class RuleBasedIntentMatcher {
         if (containsAny(text, PERSON_WORDS) && matchesEmployee(text)) {
             return rule(INTENT_PERSON, "çalışan adı");
         }
+        // Asagidaki uc dal yalnizca TEKIL kisi sorulari icindir: "kimler ofiste" bir liste
+        // sorusudur ve calisma_duzeni'nde kalmalidir (A-14 rehber kaynakli yanit). Guard
+        // disarida duruyor ki hicbir dal onu atlamasin — ve liste sorularinda DB'ye hic
+        // gidilmesin.
+        if (!TurkishText.mentionsThirdPersonGroup(text)) {
+            if (containsAny(text, PERSON_STATUS_WORDS) && matchesEmployee(text)) {
+                return rule(INTENT_PERSON, "çalışan adı + durum");
+            }
+            if (containsAny(text, PERSON_INFO_WORDS) && matchesEmployee(text)) {
+                return rule(INTENT_PERSON, "çalışan adı + bilgi sorusu");
+            }
+            if (isBareEmployeeName(text)) {
+                return rule(INTENT_PERSON, "sadece çalışan adı");
+            }
+        }
         return Optional.empty();
+    }
+
+    /**
+     * Mesaj SIRF isimden ibaret mi ("ayşe kaya"). Alan kelimesi yoktur, o yuzden iki asamali
+     * tetiklemenin normal korumasi calismaz — yerine daha sert bir kosul konur: anlamli
+     * kelimelerin TAMAMI bir calisan adiyla eslesmeli.
+     *
+     * <p>Bu, "deniz kenarında tatil" gibi cumleleri disarida tutar (ilk eslesmeyen kelimede
+     * kisa devre olur, "deniz" gercek bir calisan adi olsa bile). Kelime siniri da var:
+     * uzun cumlelerde zaten alan kelimesi bulunur, orada bu dala ihtiyac yok.
+     */
+    private boolean isBareEmployeeName(String text) {
+        List<String> tokens = nameTokens(text);
+        return !tokens.isEmpty()
+                && tokens.size() <= BARE_NAME_MAX_TOKENS
+                && tokens.stream().allMatch(directoryService::existsActiveEmployeeNamed);
     }
 
     /**
@@ -162,6 +232,9 @@ public class RuleBasedIntentMatcher {
                 .filter(token -> token.length() >= MIN_TOKEN_LENGTH)
                 .filter(token -> !GENERIC_WORDS.contains(token))
                 .filter(token -> !PERSON_WORDS.contains(token))
+                .filter(token -> !PERSON_STATUS_WORDS.contains(token))
+                .filter(token -> !PERSON_INFO_WORDS.contains(token))
+                .filter(token -> !SMALL_TALK_WORDS.contains(token))
                 .distinct()
                 .limit(MAX_NAME_TOKENS)
                 .toList();

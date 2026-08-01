@@ -37,6 +37,7 @@
 | Method | Endpoint | Açıklama | Rol | FR |
 |---|---|---|---|---|
 | POST | `/chatbot/messages` | Soru gönderir (yazılı/sesli), yanıt döner | Çalışan | FR-08–10, 14, 16 |
+| GET | `/chatbot/welcome` | Sohbet açılış karşılaması: metin + tıklanabilir örnek sorular | Çalışan | A-22 (#141) |
 | POST | `/chatbot/conversations/{id}/attachments` | Sohbete dosya yükler (Faz 2) | Çalışan | FR-15 |Faz (2) satırına da "conversation kavramı kalktığı için Faz 2'de yeniden tasarlanacak"
 | GET | `/chatbot/conversations/{id}` | Tek sohbetin detayı | Çalışan | FR-09 |
 | GET | `/hr/procedures?topic=` | Prosedür/politika bazlı yönlendirme (onboarding, izin, fazla mesai, mazeret izni) | Çalışan | FR-11–13, 51–57 |
@@ -46,6 +47,15 @@
 | PUT | `/admin/knowledge-base/documents/{id}` | Doküman/politika güncelleme (yeni versiyon) | HR/Sistem Yöneticisi | FR-78, 58 |
 | DELETE | `/admin/knowledge-base/documents/{id}` | Doküman kaldırma | HR/Sistem Yöneticisi | FR-78 |
 | GET | `/admin/knowledge-base/documents/{id}/versions` | Doküman versiyon geçmişi | HR/Sistem Yöneticisi | FR-58, 78 |
+
+**Chatbot yanıt alanları (A-22, #141)**
+
+`POST /chatbot/messages` yanıtı iki alan daha taşır; ikisi de her zaman döner (boş dizi olabilir, asla `null` değil):
+
+- `actions: [{ target, label }]` — yanıtın altında gösterilen yönlendirme butonu. **`target` semantik bir hedeftir, web URL'i değil** (`directory_employees`, `menu`, `shuttle_routes`). İstemci onu kendi navigasyonuna çevirir; Faz 2'de mobil istemci aynı yanıtı kullanabilsin diye URL döndürülmez. Buton yalnızca chatbot'un sınıra dayandığı intent'lerde bulunur (kesilen liste, dar kapsam, başka ekranda yapılan işlem).
+- `suggestions: [{ label, question }]` — tıklanabilir örnek sorular. Yalnızca intent bulunamadığında dolar.
+
+`GET /chatbot/welcome` yanıtı: `{ message, suggestions }`. İçerik `intents` tablosundan türetilir (`suggested_question`, `suggestion_order`), karşılama metni `selamlama` intent'inin template'inden gelir — ikinci bir içerik deposu yoktur.
 
 ---
 

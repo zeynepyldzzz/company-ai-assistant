@@ -36,10 +36,12 @@ public class OfficeStatusVariableResolver {
     private static final String STATUS_REMOTE = "Uzaktan";
     private static final String STATUS_LEAVE = "Izinde";
 
-    // "kim" / "kimler" / "kimlerin" — kelime siniriyla, aksi halde "kimlik", "kimse" gibi
-    // kelimeler eslesir. Grup parantezi sart: "kimler?" ifadesi "kimle" + opsiyonel "r"
-    // anlamina gelir ve tek basina "kim"i kacirir.
-    private static final Pattern THIRD_PERSON = Pattern.compile("\\bkim(ler(in)?)?\\b");
+    /**
+     * Sirket geneli kapsam ipuclari. "genel" BILEREK yok: departman adlarindan biri
+     * "Genel Mudurluk" olursa "sirket geneli" sorusu o departmana kayardi. "sirket"
+     * ifadenin kendisinde zaten bulunuyor.
+     */
+    private static final Pattern COMPANY_WIDE = Pattern.compile("\\b(sirket|tum|butun|herkes)");
 
     // Tek departman listesi icin ust sinir; asilirsa "ve N kisi daha" ile kesilir.
     private static final int MAX_NAMES = 25;
@@ -54,9 +56,15 @@ public class OfficeStatusVariableResolver {
         this.departmentService = departmentService;
     }
 
-    /** Ucuncu sahis sorusu mu ("kimler ofiste") — kullanicinin kendi plani mi ("ofiste miyim"). */
+    /**
+     * Ucuncu sahis sorusu mu ("kimler ofiste") — kullanicinin kendi plani mi ("ofiste miyim").
+     *
+     * A-20 (#139): desen TurkishText'e tasindi, cunku kural katmani da ayni ayrimi yapmak
+     * zorunda ("kimler ofiste" tek kisilik rehber yanitina kaymamali). Iki katman ayni
+     * deseni okumazsa aradaki bosluktan yanlis intent sizar.
+     */
     public boolean isThirdPersonQuestion(String foldedText) {
-        return THIRD_PERSON.matcher(foldedText).find();
+        return TurkishText.mentionsThirdPersonGroup(foldedText);
     }
 
     /**
@@ -65,9 +73,16 @@ public class OfficeStatusVariableResolver {
      */
     public String resolve(String foldedText, Integer employeeId) {
         String status = resolveStatus(foldedText);
-        long companyTotal = countByStatus(status);
-
         String department = departmentFromMessage(foldedText);
+
+        // A-20 (#139): "sirkette kimler ofiste" sorusu departman kapsamina hapsolmamali.
+        // Departman adi ACIKCA gectiyse o kazanir — daha dar kapsam her zaman daha
+        // spesifik cevaptir ("tum satis ekibinden kimler ofiste" -> Satis).
+        if (department == null && COMPANY_WIDE.matcher(foldedText).find()) {
+            return companyWideList(status);
+        }
+
+        long companyTotal = countByStatus(status);
         if (department == null) {
             department = ownDepartment(employeeId);
         }
@@ -93,6 +108,34 @@ public class OfficeStatusVariableResolver {
 
         return department + " departmanında " + listLabel(status) + ":\n"
                 + names + more + "\n\n" + companySentence(status, companyTotal);
+    }
+
+    /**
+     * Sirket geneli liste. Departman kapsamli daldan ayri bir metot: orada departman adi
+     * baslikta bir kez yazilir, burada her satirda kisiye eslik etmesi gerekiyor — yoksa
+     * "40 isim" duz bir yigin olur. Ayrica bu dalda ayri bir sayim sorgusu atilmaz;
+     * result.total() zaten sirket toplamidir.
+     */
+    private String companyWideList(String status) {
+        PagedResponse<EmployeeResponse> result =
+                directoryService.searchEmployees(null, null, status, 0, MAX_NAMES);
+        if (result.data().isEmpty()) {
+            return "Şirket genelinde " + emptyLabel(status) + ".";
+        }
+
+        String names = result.data().stream()
+                .map(e -> "• " + e.getName() + departmentSuffix(e))
+                .collect(Collectors.joining("\n"));
+        String more = result.total() > result.data().size()
+                ? "\n• ve " + (result.total() - result.data().size()) + " kişi daha"
+                : "";
+
+        return "Şirket genelinde " + listLabel(status) + " (" + result.total() + " kişi):\n"
+                + names + more;
+    }
+
+    private String departmentSuffix(EmployeeResponse employee) {
+        return employee.getDepartmentName() != null ? " — " + employee.getDepartmentName() : "";
     }
 
     private String resolveStatus(String text) {

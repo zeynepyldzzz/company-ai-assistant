@@ -1,7 +1,9 @@
 package com.company.assistant.chatbot;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -54,6 +56,8 @@ class ChatMessageServiceTest {
     private AnnouncementVariableResolver announcementVariableResolver;
     @Mock
     private SurveyVariableResolver surveyVariableResolver;
+    @Mock
+    private IntentSuggestionRepository suggestionRepository;
     @Mock
     private ChatMessageLogRepository logRepository;
 
@@ -203,6 +207,83 @@ class ChatMessageServiceTest {
                 .containsEntry("kullanici_adi", "Mustafa")
                 .containsEntry("servis_saatleri",
                         "Anadolu Yakasi - Kadikoy Hatti kalkış saatleri:\n• 07:00 Kadikoy Iskele");
+    }
+
+    // A-22 (#141): oneriler YALNIZCA intent bulunamadiginda doner. Karsilama mesaji sohbetin
+    // basinda bir kez gorunur; kullanicinin gercekten kayboldugu an "anlamadim" yanitidir.
+    @Test
+    void intentBulunamazsaOnerilerDoner() {
+        var result = new IntentClassificationService.IntentResult(
+                IntentClassificationService.NO_INTENT, 0.41, "iyi günler", false);
+        when(classificationService.classify(anyString())).thenReturn(result);
+        when(classificationService.getThreshold()).thenReturn(0.68);
+        when(variableResolver.resolve(any())).thenReturn(Map.of());
+        when(hrProcedureVariableResolver.resolve(anyString()))
+                .thenReturn(HrProcedureResolution.notApplicable());
+        when(templateResponseService.buildResponse(anyString(), any())).thenReturn("Anlayamadım.");
+        when(suggestionRepository.findSuggestions())
+                .thenReturn(List.of(new ChatSuggestion("Bugün yemekte ne var?", "Bugün yemekte ne var?")));
+
+        var response = chatMessageService.handleMessage("kedim neden miyavlıyor", null);
+
+        assertThat(response.suggestions()).hasSize(1);
+        assertThat(response.suggestions().get(0).question()).isEqualTo("Bugün yemekte ne var?");
+    }
+
+    // Eslesen yanitta oneri GOSTERILMEZ: kullanici zaten aradigini bulmus durumda,
+    // chip listesi orada yalnizca gurultu olurdu.
+    @Test
+    void eslesenIntenttOnerilerBosDoner() {
+        var result = new IntentClassificationService.IntentResult(
+                "yemek_menusu", 0.91, "bugün yemekte ne var", true);
+        when(classificationService.classify(anyString())).thenReturn(result);
+        when(classificationService.getThreshold()).thenReturn(0.68);
+        when(variableResolver.resolve(any())).thenReturn(Map.of());
+        when(hrProcedureVariableResolver.resolve(anyString()))
+                .thenReturn(HrProcedureResolution.notApplicable());
+        when(templateResponseService.buildResponse(anyString(), any())).thenReturn("Mercimek çorbası.");
+
+        var response = chatMessageService.handleMessage("bugün yemekte ne var", null);
+
+        assertThat(response.suggestions()).isEmpty();
+        verify(suggestionRepository, never()).findSuggestions();
+    }
+
+    @Test
+    void intentinYonlendirmeButonuYanitaEklenir() {
+        var result = new IntentClassificationService.IntentResult(
+                "yemek_menusu", 0.91, "bugün yemekte ne var", true);
+        when(classificationService.classify(anyString())).thenReturn(result);
+        when(classificationService.getThreshold()).thenReturn(0.68);
+        when(variableResolver.resolve(any())).thenReturn(Map.of());
+        when(hrProcedureVariableResolver.resolve(anyString()))
+                .thenReturn(HrProcedureResolution.notApplicable());
+        when(templateResponseService.buildResponse(anyString(), any())).thenReturn("Mercimek çorbası.");
+        when(suggestionRepository.findActionByIntentName("yemek_menusu"))
+                .thenReturn(Optional.of(new ChatAction("menu", "Aylık menüyü gör")));
+
+        var response = chatMessageService.handleMessage("bugün yemekte ne var", null);
+
+        assertThat(response.actions()).containsExactly(new ChatAction("menu", "Aylık menüyü gör"));
+    }
+
+    // Butonu olmayan intent'lerde alan BOS LISTE doner, null degil: istemci her yanitta
+    // ayni sekilde okuyabilmeli.
+    @Test
+    void butonuOlmayanIntenttBosListeDoner() {
+        var result = new IntentClassificationService.IntentResult(
+                "izin_prosedur", 0.93, "yıllık izin nasıl alınır", true);
+        when(classificationService.classify(anyString())).thenReturn(result);
+        when(classificationService.getThreshold()).thenReturn(0.68);
+        when(variableResolver.resolve(any())).thenReturn(Map.of());
+        when(hrProcedureVariableResolver.resolve(anyString()))
+                .thenReturn(HrProcedureResolution.notApplicable());
+        when(templateResponseService.buildResponse(anyString(), any())).thenReturn("İzin adımları...");
+        when(suggestionRepository.findActionByIntentName("izin_prosedur")).thenReturn(Optional.empty());
+
+        var response = chatMessageService.handleMessage("yıllık izin nasıl alınır", null);
+
+        assertThat(response.actions()).isNotNull().isEmpty();
     }
 
     // A-13 / FR-63: calisma duzeni resolver'ina kimlik authentication ile gecirilir;

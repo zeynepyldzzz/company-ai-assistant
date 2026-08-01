@@ -2,6 +2,7 @@ package com.company.assistant.chatbot;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class ChatMessageService {
     private final DepartmentVariableResolver departmentVariableResolver;
     private final AnnouncementVariableResolver announcementVariableResolver;
     private final SurveyVariableResolver surveyVariableResolver;
+    private final IntentSuggestionRepository suggestionRepository;
     private final ChatMessageLogRepository logRepository;
 
     public ChatMessageService(IntentClassificationService classificationService,
@@ -50,6 +52,7 @@ public class ChatMessageService {
                               DepartmentVariableResolver departmentVariableResolver,
                               AnnouncementVariableResolver announcementVariableResolver,
                               SurveyVariableResolver surveyVariableResolver,
+                              IntentSuggestionRepository suggestionRepository,
                               ChatMessageLogRepository logRepository) {
         this.classificationService = classificationService;
         this.templateResponseService = templateResponseService;
@@ -62,6 +65,7 @@ public class ChatMessageService {
         this.departmentVariableResolver = departmentVariableResolver;
         this.announcementVariableResolver = announcementVariableResolver;
         this.surveyVariableResolver = surveyVariableResolver;
+        this.suggestionRepository = suggestionRepository;
         this.logRepository = logRepository;
     }
 
@@ -107,7 +111,33 @@ public class ChatMessageService {
 
         writeCalibrationLog(message, result, elapsedMs);
 
-        return new ChatMessageResponse(reply, result.intent(), Instant.now());
+        return new ChatMessageResponse(
+                reply, result.intent(), Instant.now(),
+                actionsFor(result.intent()),
+                suggestionsFor(result.intent()));
+    }
+
+    /**
+     * A-22 (#141): intent'e bagli yonlendirme butonu. Cogu intent'te yoktur — buton yalnizca
+     * chatbot'un sinira dayandigi yerde anlamli (kesilen liste, dar kapsam, baska ekranda
+     * yapilan islem). Cevabin zaten tam oldugu yerde buton kullaniciya "eksik cevap aldim"
+     * izlenimi verirdi.
+     */
+    private List<ChatAction> actionsFor(String intentName) {
+        return suggestionRepository.findActionByIntentName(intentName)
+                .map(List::of)
+                .orElseGet(List::of);
+    }
+
+    /**
+     * Oneriler YALNIZCA intent bulunamadiginda doner. Karsilama mesaji sohbetin basinda bir
+     * kez gorunur ve kullanicinin gercekten kayboldugu an cok sonra gelir; "anlamadim"
+     * yaniti o anin ta kendisi.
+     */
+    private List<ChatSuggestion> suggestionsFor(String intentName) {
+        return IntentClassificationService.NO_INTENT.equals(intentName)
+                ? suggestionRepository.findSuggestions()
+                : List.of();
     }
 
     /**

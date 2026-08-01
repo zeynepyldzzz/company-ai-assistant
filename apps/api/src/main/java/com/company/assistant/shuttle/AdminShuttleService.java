@@ -62,6 +62,15 @@ public class AdminShuttleService {
         return new ShuttleRoutePlateResponse(route.getId(), route.getName(), route.getPlateNumber());
     }
 
+    @Transactional
+    public void deleteRoute(Integer routeId) {
+        if (!shuttleRouteRepository.existsById(routeId)) {
+            throw new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId);
+        }
+        shuttleStopRepository.deleteByRouteId(routeId);
+        shuttleRouteRepository.deleteById(routeId);
+    }
+
     private List<ShuttleStop> toStops(List<ShuttleStopRequest> requests, ShuttleRoute route) {
         return requests.stream().map(r -> {
             ShuttleStop stop = new ShuttleStop();
