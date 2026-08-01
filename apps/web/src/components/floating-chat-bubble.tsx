@@ -16,7 +16,7 @@ export function FloatingChatBubble() {
     <>
       <div
         className={cn(
-          "bg-card fixed right-6 bottom-24 z-50 flex h-[520px] max-h-[calc(100vh-8rem)] w-[380px] max-w-[calc(100vw-2rem)] origin-bottom-right flex-col rounded-2xl border p-4 shadow-2xl transition-all duration-[220ms] ease-out",
+          "bg-card fixed right-6 bottom-24 z-50 flex h-[600px] max-h-[calc(100vh-8rem)] w-[420px] max-w-[calc(100vw-2rem)] origin-bottom-right flex-col rounded-2xl border p-4 shadow-2xl transition-all duration-[220ms] ease-out",
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-2 scale-95 opacity-0"
         )}
       >

@@ -119,6 +119,35 @@ class IntentCalibrationIT {
     @Autowired
     private IntentClassificationService service;
 
+    @Autowired
+    private IntentSuggestionRepository suggestionRepository;
+
+    /**
+     * A-22 (#141): karsilama chip'lerinin HEPSI eslesmeli.
+     *
+     * <p>Chip'e tiklayan kullanicinin "anlamadim" yaniti almasi mumkun olan en kotu
+     * deneyimdir — o soruyu kendimiz onerdik. Vaka listesine elle yazmak yerine DB'den
+     * okunuyor: yeni bir chip eklendiginde bu test onu kendiliginden kapsar, birinin
+     * test setini guncellemeyi hatirlamasi gerekmez.
+     */
+    @Test
+    void vitrinSorularininHepsiEslesir() {
+        List<String> failures = new ArrayList<>();
+        List<ChatSuggestion> suggestions = suggestionRepository.findSuggestions();
+
+        for (ChatSuggestion suggestion : suggestions) {
+            var result = service.classify(suggestion.question());
+            if (NO_INTENT.equals(result.intent())) {
+                failures.add(String.format("%s -> %s (%.3f, en yakin: '%s')",
+                        suggestion.question(), result.intent(),
+                        result.similarity(), result.matchedPhrase()));
+            }
+        }
+
+        assertThat(suggestions).as("Vitrin sorusu hic yok — seed uygulanmamis olabilir").isNotEmpty();
+        assertThat(failures).as("Karsilama chip'leri intent_bulunamadi'ya dusuyor").isEmpty();
+    }
+
     @Test
     void kalibrasyonSeti() {
         List<String> failures = new ArrayList<>();

@@ -4,6 +4,102 @@
  */
 
 export interface paths {
+    "/schedules/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMySchedule"];
+        put: operations["saveMySchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPreferences"];
+        put: operations["updatePreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/vehicles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateVehicle"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/vehicles/{id}/maintenance-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateMaintenanceStatus"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateRole"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/surveys/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["publish"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/shuttle-routes/{id}": {
         parameters: {
             query?: never;
@@ -36,6 +132,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/knowledge-base/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["addVersion"];
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/employees/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update"];
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_1"];
+        post?: never;
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/announcements/{id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["togglePin"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/surveys/{id}/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submitResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/phonebook/{extension}/call": {
         parameters: {
             query?: never;
@@ -46,6 +238,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["triggerCall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submitFeedback"];
         delete?: never;
         options?: never;
         head?: never;
@@ -132,6 +340,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createVehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/surveys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAll"];
+        put?: never;
+        post: operations["createSurvey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/shuttle-routes": {
         parameters: {
             query?: never;
@@ -164,14 +404,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/vehicles/ping": {
+    "/admin/knowledge-base/documents": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["ping"];
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/employees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listVehicles"];
         put?: never;
         post?: never;
         delete?: never;
@@ -187,7 +491,23 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_1"];
+        get: operations["ping"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/surveys/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getActiveSurveys"];
         put?: never;
         post?: never;
         delete?: never;
@@ -244,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/shuttle-routes/recommendation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getRecommendation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/schedules/ping": {
         parameters: {
             query?: never;
@@ -251,7 +587,39 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_2"];
+        get: operations["ping_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedules/me/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMySummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reservations/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyReservations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -268,6 +636,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["searchPhonebook"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getNotifications"];
         put?: never;
         post?: never;
         delete?: never;
@@ -332,6 +716,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hr/procedures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hr/procedures/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById"];
         put?: never;
         post?: never;
         delete?: never;
@@ -420,6 +836,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/chatbot/welcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["welcome"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/session": {
         parameters: {
             query?: never;
@@ -436,6 +868,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/2fa/qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["twoFactorQrCode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnnouncements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/announcements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnnouncement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/announcements/ping": {
         parameters: {
             query?: never;
@@ -443,7 +923,87 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_3"];
+        get: operations["ping_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/surveys/{id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getResults"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllSchedules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/{type}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["export"];
         put?: never;
         post?: never;
         delete?: never;
@@ -459,7 +1019,23 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ping_4"];
+        get: operations["ping_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/knowledge-base/documents/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["versions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -479,6 +1055,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reservations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["cancelReservation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -504,9 +1096,69 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ScheduleDayDto: {
+            day?: string;
+            /** @enum {string} */
+            status?: "office" | "remote" | "leave";
+        };
+        WeeklyScheduleDto: {
+            /** Format: date */
+            weekStartDate?: string;
+            days?: components["schemas"]["ScheduleDayDto"][];
+        };
+        NotificationPreferenceRequest: {
+            announcementEnabled?: boolean;
+            scheduleEnabled?: boolean;
+            surveyEnabled?: boolean;
+        };
+        NotificationPreferenceResponse: {
+            announcementEnabled?: boolean;
+            scheduleEnabled?: boolean;
+            surveyEnabled?: boolean;
+        };
+        VehicleRequest: {
+            plate: string;
+            model?: string;
+            /** @enum {string} */
+            maintenanceStatus?: "available" | "maintenance";
+        };
+        VehicleResponse: {
+            /** Format: int32 */
+            id?: number;
+            plate?: string;
+            model?: string;
+            /** @enum {string} */
+            maintenanceStatus?: "available" | "maintenance";
+        };
+        MaintenanceStatusUpdateRequest: {
+            /** @enum {string} */
+            maintenanceStatus: "available" | "maintenance";
+        };
+        UpdateRoleRequest: {
+            /** Format: int32 */
+            roleId: number;
+        };
+        EmployeeRoleResponse: {
+            /** Format: int32 */
+            employeeId?: number;
+            employeeName?: string;
+            /** Format: int32 */
+            roleId?: number;
+            roleName?: string;
+        };
+        AdminSurveyResponse: {
+            /** Format: int32 */
+            id?: number;
+            title?: string;
+            published?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         ShuttleRouteRequest: {
             name: string;
             plateNumber?: string;
+            driverName?: string;
+            driverPhone?: string;
             stops: components["schemas"]["ShuttleStopRequest"][];
         };
         ShuttleStopRequest: {
@@ -514,12 +1166,18 @@ export interface components {
             time: string;
             /** Format: int32 */
             orderIndex: number;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
         };
         ShuttleRouteDetailResponse: {
             /** Format: int32 */
             id?: number;
             name?: string;
             plateNumber?: string;
+            driverName?: string;
+            driverPhone?: string;
             stops?: components["schemas"]["ShuttleStopResponse"][];
         };
         ShuttleStopResponse: {
@@ -529,6 +1187,10 @@ export interface components {
             time?: string;
             /** Format: int32 */
             orderIndex?: number;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
         };
         PlateUpdateRequest: {
             plateNumber: string;
@@ -536,7 +1198,115 @@ export interface components {
         ShuttleRoutePlateResponse: {
             /** Format: int32 */
             id?: number;
+            name?: string;
             plateNumber?: string;
+        };
+        ProcedureStep: {
+            /** Format: int32 */
+            order?: number;
+            title?: string;
+            detail?: string;
+        };
+        VersionCreateRequest: {
+            content?: string;
+            steps?: components["schemas"]["ProcedureStep"][];
+            /** Format: date */
+            effectiveDate: string;
+        };
+        PolicyVersionResponse: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: int32 */
+            documentId?: number;
+            /** Format: int32 */
+            versionNo?: number;
+            content?: string;
+            steps?: components["schemas"]["ProcedureStep"][];
+            /** Format: date */
+            effectiveDate?: string;
+            isCurrent?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: int32 */
+            createdBy?: number;
+        };
+        AdminEmployeeRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            phone?: string;
+            officeStatus?: string;
+            /** Format: int32 */
+            departmentId?: number;
+            /** Format: int32 */
+            roleId?: number;
+            password?: string;
+        };
+        EmployeeResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            email?: string;
+            phone?: string;
+            officeStatus?: string;
+            /** Format: int32 */
+            departmentId?: number;
+            departmentName?: string;
+            /** Format: int32 */
+            roleId?: number;
+            roleName?: string;
+        };
+        AdminDepartmentRequest: {
+            name: string;
+            responsibilities?: string;
+            /** Format: int32 */
+            managerId?: number;
+        };
+        DepartmentResponse: {
+            /** Format: int32 */
+            id?: number;
+            name?: string;
+            responsibilities?: string;
+            /** Format: int32 */
+            managerId?: number;
+            managerName?: string;
+            managerEmail?: string;
+            managerPhone?: string;
+        };
+        AnnouncementDto: {
+            /** Format: int32 */
+            id?: number;
+            title?: string;
+            content?: string;
+            pinned?: boolean;
+            /** Format: date-time */
+            publishedAt?: string;
+        };
+        SurveyResponseRequest: {
+            answers?: {
+                [key: string]: unknown;
+            };
+        };
+        ReservationRequest: {
+            /** Format: int32 */
+            vehicleId: number;
+            /** Format: date-time */
+            startTime: string;
+            /** Format: date-time */
+            endTime: string;
+        };
+        ReservationResponse: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: int32 */
+            vehicleId?: number;
+            vehiclePlate?: string;
+            /** Format: date-time */
+            startTime?: string;
+            /** Format: date-time */
+            endTime?: string;
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled";
         };
         CallTriggerResponse: {
             extension?: string;
@@ -544,14 +1314,29 @@ export interface components {
             /** Format: date-time */
             triggeredAt?: string;
         };
+        FeedbackRequest: {
+            /** Format: int32 */
+            surveyId?: number;
+            content?: string;
+        };
         ChatMessageRequest: {
             message: string;
+        };
+        ChatAction: {
+            target?: string;
+            label?: string;
         };
         ChatMessageResponse: {
             reply?: string;
             intent?: string;
             /** Format: date-time */
             timestamp?: string;
+            actions?: components["schemas"]["ChatAction"][];
+            suggestions?: components["schemas"]["ChatSuggestion"][];
+        };
+        ChatSuggestion: {
+            label?: string;
+            question?: string;
         };
         RefreshRequest: {
             refreshToken?: string;
@@ -581,6 +1366,9 @@ export interface components {
             role?: string;
             subRole?: string;
         };
+        AdminSurveyCreateRequest: {
+            title?: string;
+        };
         MenuImportResponse: {
             committed?: boolean;
             /** Format: int32 */
@@ -600,6 +1388,26 @@ export interface components {
             date?: string;
             items?: components["schemas"]["ParsedMealItemDto"][];
         };
+        DocumentCreateRequest: {
+            /** Format: int32 */
+            procedureId: number;
+            title: string;
+            content?: string;
+            steps?: components["schemas"]["ProcedureStep"][];
+            /** Format: date */
+            effectiveDate: string;
+        };
+        AdminAnnouncementCreateRequest: {
+            title?: string;
+            content?: string;
+        };
+        SurveyDto: {
+            /** Format: int32 */
+            id?: number;
+            title?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         PagedResponseShuttleRouteResponse: {
             data?: components["schemas"]["ShuttleRouteResponse"][];
             /** Format: int32 */
@@ -614,6 +1422,31 @@ export interface components {
             id?: number;
             name?: string;
             plateNumber?: string;
+            driverName?: string;
+            driverPhone?: string;
+        };
+        ShuttleRecommendationResponse: {
+            /** Format: int32 */
+            routeId?: number;
+            routeName?: string;
+            plateNumber?: string;
+            driverName?: string;
+            driverPhone?: string;
+            /** Format: int32 */
+            stopId?: number;
+            stopName?: string;
+            /** Format: double */
+            distanceKm?: number;
+            /** Format: int32 */
+            estimatedMinutes?: number;
+        };
+        ScheduleSummaryDto: {
+            /** Format: int32 */
+            office?: number;
+            /** Format: int32 */
+            remote?: number;
+            /** Format: int32 */
+            leave?: number;
         };
         PagedResponsePhonebookEntryResponse: {
             data?: components["schemas"]["PhonebookEntryResponse"][];
@@ -648,16 +1481,40 @@ export interface components {
             weekNumber?: number;
             items?: components["schemas"]["MealItemResponse"][];
         };
-        EmployeeResponse: {
+        HrProcedureSummary: {
             /** Format: int32 */
             id?: number;
-            name?: string;
-            email?: string;
-            phone?: string;
-            officeStatus?: string;
+            title?: string;
+            category?: string;
+            responsibleDepartment?: string;
+            responsibleContact?: string;
             /** Format: int32 */
-            departmentId?: number;
-            departmentName?: string;
+            versionNo?: number;
+            /** Format: date */
+            effectiveDate?: string;
+        };
+        PagedResponseHrProcedureSummary: {
+            data?: components["schemas"]["HrProcedureSummary"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
+        HrProcedureDetail: {
+            /** Format: int32 */
+            id?: number;
+            title?: string;
+            category?: string;
+            responsibleDepartment?: string;
+            responsibleContact?: string;
+            /** Format: int32 */
+            versionNo?: number;
+            /** Format: date */
+            effectiveDate?: string;
+            content?: string;
+            steps?: components["schemas"]["ProcedureStep"][];
         };
         PagedResponseEmployeeResponse: {
             data?: components["schemas"]["EmployeeResponse"][];
@@ -668,19 +1525,88 @@ export interface components {
             /** Format: int64 */
             total?: number;
         };
-        DepartmentResponse: {
+        PagedResponseDepartmentResponse: {
+            data?: components["schemas"]["DepartmentResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
+        ChatWelcomeResponse: {
+            message?: string;
+            suggestions?: components["schemas"]["ChatSuggestion"][];
+        };
+        SurveyResultsResponse: {
+            /** Format: int32 */
+            surveyId?: number;
+            title?: string;
+            published?: boolean;
+            /** Format: int32 */
+            totalResponses?: number;
+            /** Format: int32 */
+            totalFeedback?: number;
+            answerCounts?: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            feedbackComments?: string[];
+        };
+        AdminScheduleResponse: {
+            /** Format: date */
+            weekStartDate?: string;
+            employees?: components["schemas"]["EmployeeScheduleDto"][];
+        };
+        EmployeeScheduleDto: {
+            /** Format: int32 */
+            employeeId?: number;
+            employeeName?: string;
+            days?: components["schemas"]["ScheduleDayDto"][];
+        };
+        RoleResponse: {
             /** Format: int32 */
             id?: number;
             name?: string;
-            responsibilities?: string;
-            /** Format: int32 */
-            managerId?: number;
-            managerName?: string;
-            managerEmail?: string;
-            managerPhone?: string;
         };
-        PagedResponseDepartmentResponse: {
-            data?: components["schemas"]["DepartmentResponse"][];
+        UsageReportResponse: {
+            type?: string;
+            /** Format: date-time */
+            generatedAt?: string;
+            rows?: components["schemas"]["UsageReportRow"][];
+        };
+        UsageReportRow: {
+            module?: string;
+            metric?: string;
+            /** Format: int64 */
+            count?: number;
+        };
+        DocumentSummary: {
+            /** Format: int32 */
+            id?: number;
+            /** Format: int32 */
+            procedureId?: number;
+            title?: string;
+            procedureCategory?: string;
+            /** Format: int32 */
+            currentVersionNo?: number;
+            /** Format: date */
+            currentEffectiveDate?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PagedResponseDocumentSummary: {
+            data?: components["schemas"]["DocumentSummary"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int64 */
+            total?: number;
+        };
+        PagedResponsePolicyVersionResponse: {
+            data?: components["schemas"]["PolicyVersionResponse"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -697,6 +1623,194 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getMySchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WeeklyScheduleDto"];
+                };
+            };
+        };
+    };
+    saveMySchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeeklyScheduleDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WeeklyScheduleDto"];
+                };
+            };
+        };
+    };
+    getPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotificationPreferenceResponse"];
+                };
+            };
+        };
+    };
+    updatePreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPreferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotificationPreferenceResponse"];
+                };
+            };
+        };
+    };
+    updateVehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleResponse"];
+                };
+            };
+        };
+    };
+    updateMaintenanceStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceStatusUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleResponse"];
+                };
+            };
+        };
+    };
+    updateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EmployeeRoleResponse"];
+                };
+            };
+        };
+    };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminSurveyResponse"];
+                };
+            };
+        };
+    };
     updateRoute: {
         parameters: {
             query?: never;
@@ -749,6 +1863,214 @@ export interface operations {
             };
         };
     };
+    addVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyVersionResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EmployeeResponse"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminDepartmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DepartmentResponse"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    togglePin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"];
+                };
+            };
+        };
+    };
+    submitResponse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReservationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReservationResponse"];
+                };
+            };
+        };
+    };
     triggerCall: {
         parameters: {
             query?: never;
@@ -768,6 +2090,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["CallTriggerResponse"];
                 };
+            };
+        };
+    };
+    submitFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -889,6 +2233,74 @@ export interface operations {
             };
         };
     };
+    createVehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleResponse"];
+                };
+            };
+        };
+    };
+    listAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminSurveyResponse"][];
+                };
+            };
+        };
+    };
+    createSurvey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminSurveyCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminSurveyResponse"];
+                };
+            };
+        };
+    };
     createRoute: {
         parameters: {
             query?: never;
@@ -942,6 +2354,147 @@ export interface operations {
             };
         };
     };
+    list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponseDocumentSummary"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PolicyVersionResponse"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EmployeeResponse"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminDepartmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DepartmentResponse"];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAnnouncementCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"];
+                };
+            };
+        };
+    };
+    listVehicles: {
+        parameters: {
+            query?: {
+                available?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleResponse"][];
+                };
+            };
+        };
+    };
     ping: {
         parameters: {
             query?: never;
@@ -962,7 +2515,7 @@ export interface operations {
             };
         };
     };
-    ping_1: {
+    getActiveSurveys: {
         parameters: {
             query?: never;
             header?: never;
@@ -977,7 +2530,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": components["schemas"]["SurveyDto"][];
                 };
             };
         };
@@ -1049,7 +2602,31 @@ export interface operations {
             };
         };
     };
-    ping_2: {
+    getRecommendation: {
+        parameters: {
+            query?: {
+                lat?: number;
+                lng?: number;
+                address?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ShuttleRecommendationResponse"];
+                };
+            };
+        };
+    };
+    ping_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1065,6 +2642,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    getMySummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ScheduleSummaryDto"];
+                };
+            };
+        };
+    };
+    getMyReservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReservationResponse"][];
                 };
             };
         };
@@ -1089,6 +2706,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PagedResponsePhonebookEntryResponse"];
+                };
+            };
+        };
+    };
+    getNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"][];
                 };
             };
         };
@@ -1171,6 +2808,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserDto"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query: {
+                page?: number;
+                pageSize?: number;
+                topic: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HrProcedureDetail"] | components["schemas"]["PagedResponseHrProcedureSummary"];
+                };
+            };
+        };
+    };
+    getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HrProcedureDetail"];
                 };
             };
         };
@@ -1291,6 +2974,26 @@ export interface operations {
             };
         };
     };
+    welcome: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatWelcomeResponse"];
+                };
+            };
+        };
+    };
     session: {
         parameters: {
             query?: never;
@@ -1311,7 +3014,71 @@ export interface operations {
             };
         };
     };
-    ping_3: {
+    twoFactorQrCode: {
+        parameters: {
+            query: {
+                challengeToken: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                };
+            };
+        };
+    };
+    getAnnouncements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"][];
+                };
+            };
+        };
+    };
+    getAnnouncement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"];
+                };
+            };
+        };
+    };
+    ping_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1331,7 +3098,115 @@ export interface operations {
             };
         };
     };
-    ping_4: {
+    getResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyResultsResponse"];
+                };
+            };
+        };
+    };
+    getAllSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminScheduleResponse"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RoleResponse"][];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UsageReportResponse"];
+                };
+            };
+        };
+    };
+    export: {
+        parameters: {
+            query?: {
+                format?: string;
+            };
+            header?: never;
+            path: {
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    ping_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1349,6 +3224,28 @@ export interface operations {
                     "*/*": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedResponsePolicyVersionResponse"];
                 };
             };
         };
@@ -1372,6 +3269,26 @@ export interface operations {
                         [key: string]: string;
                     };
                 };
+            };
+        };
+    };
+    cancelReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
