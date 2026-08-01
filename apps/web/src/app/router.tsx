@@ -10,9 +10,7 @@ import { EmployeesPage } from "@/pages/directory/employees-page";
 import { DepartmentsPage } from "@/pages/directory/departments-page";
 import { DepartmentDetailPage } from "@/pages/directory/department-detail-page";
 import { MenuPage } from "@/pages/menu/menu-page";
-import { ShuttleRoutesPage } from "@/pages/shuttle/shuttle-routes-page";
-import { ShuttleRouteDetailPage } from "@/pages/shuttle/shuttle-route-detail-page";
-import { ShuttleRecommendationPage } from "@/pages/shuttle/shuttle-recommendation-page";
+import { ShuttlePage } from "@/pages/shuttle/shuttle-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
 import { VehicleReservationPage } from "@/pages/vehicle/vehicle-reservation-page";
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
@@ -41,9 +39,7 @@ export const router = createBrowserRouter([
           { path: "/directory/departments/:id", element: <DepartmentDetailPage /> },
           { path: "/menu", element: <MenuPage /> },
           { path: "/my-schedule", element: <SchedulePage /> },
-          { path: "/shuttle/routes", element: <ShuttleRoutesPage /> },
-          { path: "/shuttle/routes/:id", element: <ShuttleRouteDetailPage /> },
-          { path: "/shuttle/recommendation", element: <ShuttleRecommendationPage /> },
+          { path: "/shuttle", element: <ShuttlePage /> },
           { path: "/vehicles", element: <VehicleReservationPage /> },
           {
             element: <RequireRole roles={["admin"]} />,

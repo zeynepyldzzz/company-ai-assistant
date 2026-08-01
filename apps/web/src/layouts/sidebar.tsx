@@ -6,7 +6,6 @@ import {
   Users,
   Building2,
   Bus,
-  MapPin,
   CalendarDays,
   Car,
   Megaphone,
@@ -53,13 +52,7 @@ export const navItems: Array<{
     icon: CalendarDays,
     roles: ["employee", "admin"],
   },
-  { to: "/shuttle/routes", label: "Servis Güzergahları", icon: Bus, roles: ["employee", "admin"] },
-  {
-    to: "/shuttle/recommendation",
-    label: "Bana En Yakın Servis",
-    icon: MapPin,
-    roles: ["employee", "admin"],
-  },
+  { to: "/shuttle", label: "Servisler", icon: Bus, roles: ["employee", "admin"] },
   { to: "/vehicles", label: "Araç Rezervasyonu", icon: Car, roles: ["employee", "admin"] },
   { to: "/admin/announcements", label: "Duyurular", icon: Megaphone, roles: ["admin"] },
   {

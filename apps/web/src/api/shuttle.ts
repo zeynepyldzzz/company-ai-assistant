@@ -38,11 +38,11 @@ export async function getShuttlePlate(routeId: number, token: string): Promise<S
 }
 
 export async function getShuttleRecommendation(
-  lat: number,
-  lng: number,
+  params: { lat: number; lng: number } | { address: string },
   token: string
 ): Promise<ShuttleRecommendation> {
-  const data = await apiFetch<unknown>(`/shuttle-routes/recommendation${buildQuery({ lat, lng })}`, {
+  const query = "address" in params ? { address: params.address } : { lat: params.lat, lng: params.lng };
+  const data = await apiFetch<unknown>(`/shuttle-routes/recommendation${buildQuery(query)}`, {
     token,
   });
   return ShuttleRecommendationSchema.parse(data);
