@@ -40,6 +40,25 @@ export const ShuttleRoutePlateSchema = z.object({
 });
 export type ShuttleRoutePlate = z.infer<typeof ShuttleRoutePlateSchema>;
 
+// POST/PUT /admin/shuttle-routes govdesi (B-13/B-14/B-15)
+export const AdminShuttleStopRequestSchema = z.object({
+  name: z.string().min(1),
+  time: z.string().min(1),
+  orderIndex: z.number(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+});
+export type AdminShuttleStopRequest = z.infer<typeof AdminShuttleStopRequestSchema>;
+
+export const AdminShuttleRouteRequestSchema = z.object({
+  name: z.string().min(1),
+  plateNumber: z.string().nullable().optional(),
+  driverName: z.string().nullable().optional(),
+  driverPhone: z.string().nullable().optional(),
+  stops: z.array(AdminShuttleStopRequestSchema).min(1),
+});
+export type AdminShuttleRouteRequest = z.infer<typeof AdminShuttleRouteRequestSchema>;
+
 // GET /shuttle-routes/recommendation?lat=&lng= (B-6)
 export const ShuttleRecommendationSchema = z.object({
   routeId: z.number(),

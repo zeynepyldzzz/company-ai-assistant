@@ -2,11 +2,14 @@ import {
   ShuttleRoutePagedResponseSchema,
   ShuttleStopListSchema,
   ShuttleRoutePlateSchema,
+  ShuttleRouteDetailSchema,
   ShuttleRecommendationSchema,
   type ShuttleRoutePagedResponse,
   type ShuttleStopList,
   type ShuttleRoutePlate,
+  type ShuttleRouteDetail,
   type ShuttleRecommendation,
+  type AdminShuttleRouteRequest,
 } from "@company/shared";
 import { apiFetch } from "./client";
 
@@ -50,4 +53,30 @@ export async function getShuttleRecommendation(
 
 export async function deleteShuttleRoute(id: number, token: string): Promise<void> {
   await apiFetch<void>(`/admin/shuttle-routes/${id}`, { method: "DELETE", token });
+}
+
+// B-17: admin servis guzergahi CRUD (FR-73, shuttle_admin/system_admin).
+export async function createShuttleRoute(
+  body: AdminShuttleRouteRequest,
+  token: string
+): Promise<ShuttleRouteDetail> {
+  const data = await apiFetch<unknown>("/admin/shuttle-routes", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
+  return ShuttleRouteDetailSchema.parse(data);
+}
+
+export async function updateShuttleRoute(
+  id: number,
+  body: AdminShuttleRouteRequest,
+  token: string
+): Promise<ShuttleRouteDetail> {
+  const data = await apiFetch<unknown>(`/admin/shuttle-routes/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(body),
+  });
+  return ShuttleRouteDetailSchema.parse(data);
 }
