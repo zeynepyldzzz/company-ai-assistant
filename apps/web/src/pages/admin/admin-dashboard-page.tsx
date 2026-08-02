@@ -9,6 +9,7 @@ import {
   KeyRound,
   ChefHat,
   Building2,
+  Bus,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/auth/auth-context";
@@ -51,6 +52,7 @@ const links = [
   { to: "/admin/roles", label: "Rol / İzin Yönetimi", icon: KeyRound },
   { to: "/admin/menu", label: "Menü Yönetimi", icon: ChefHat },
   { to: "/admin/departments", label: "Departman Yönetimi", icon: Building2 },
+  { to: "/admin/shuttle-routes", label: "Servis Güzergah Yönetimi", icon: Bus },
 ];
 
 export function AdminDashboardPage() {

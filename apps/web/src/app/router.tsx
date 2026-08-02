@@ -23,6 +23,7 @@ import { AdminDepartmentsPage } from "@/pages/admin/departments/admin-department
 import { AdminRolesPage } from "@/pages/admin/roles/admin-roles-page";
 import { AdminReportsPage } from "@/pages/admin/reports/admin-reports-page";
 import { AdminMenuPage } from "@/pages/admin/menu/admin-menu-page";
+import { AdminShuttleRoutesPage } from "@/pages/admin/shuttle-routes/admin-shuttle-routes-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -78,6 +79,12 @@ export const router = createBrowserRouter([
             // subRole kisitlamasi yok - herhangi bir admin excel yukleyebilir/silebilir.
             element: <RequireRole roles={["admin"]} />,
             children: [{ path: "/admin/menu", element: <AdminMenuPage /> }],
+          },
+          {
+            // B-17: servis guzergahi yonetimi yalnizca shuttle_admin / system_admin
+            // (B-15 backend guard'ini yansitir).
+            element: <RequireRole roles={["admin"]} subRoles={["shuttle_admin", "system_admin"]} />,
+            children: [{ path: "/admin/shuttle-routes", element: <AdminShuttleRoutesPage /> }],
           },
         ],
       },
