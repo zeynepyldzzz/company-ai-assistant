@@ -87,6 +87,35 @@ class RuleBasedIntentMatcherTest {
         assertThat(result.get().matchedPhrase()).isEqualTo("[kural] servis + saat");
     }
 
+    // A-21 (#146): yakinlik ifadesi servis alaniyla birlesince yonlendirme intent'ine gider.
+    @Test
+    void enYakinServisSorusuYonlendirmeIntentineGider() {
+        var result = matcher.match("bana en yakın servis hangisi");
+
+        assertThat(result.get().intent()).isEqualTo("servis_en_yakin");
+        assertThat(result.get().matchedPhrase()).isEqualTo("[kural] en yakın + servis");
+    }
+
+    // KRITIK: bilinen durak adi gecse bile yakinlik kurali ONCE calisir. Aksi halde
+    // "kadıköy'e en yakın servis" durak adi eslesmesiyle servis_guzergah'a giderdi ve
+    // embedding'e hic dusmezdi — yani ornek cumle eklemek bu vakayi cozmezdi.
+    @Test
+    void durakAdiGecseDeEnYakinKuraliOnceliklidir() {
+        var result = matcher.match("kadıköy'e en yakın servis");
+
+        assertThat(result.get().intent()).isEqualTo("servis_en_yakin");
+        verifyNoInteractions(shuttleService);
+    }
+
+    // NOBETCI: yakinlik ifadesi TASIMAYAN servis sorulari eski davranisinda kalmali.
+    @Test
+    void yakinlikIfadesiYoksaServisSorulariDegismez() {
+        seedShuttle();
+
+        assertThat(matcher.match("kadıköy servisi kaçta").get().intent()).isEqualTo("servis_saatleri");
+        assertThat(matcher.match("kadıköy servisi").get().intent()).isEqualTo("servis_guzergah");
+    }
+
     @Test
     void departmanAdiVeBolumKelimesiDepartmanIntentineGider() {
         seedDepartments();
