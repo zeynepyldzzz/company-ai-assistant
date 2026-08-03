@@ -60,6 +60,11 @@ export async function updateAnnouncement(
   return AnnouncementSchema.parse(data);
 }
 
+// B-21: DELETE /admin/announcements/{id} — duyuruyu siler.
+export async function deleteAnnouncement(id: number, token: string): Promise<void> {
+  await apiFetch<void>(`${ADMIN_BASE}/${id}`, { method: "DELETE", token });
+}
+
 // GET /notifications/preferences — calisanin kendi bildirim tercihleri.
 export async function getNotificationPreferences(token: string): Promise<NotificationPreference> {
   const data = await apiFetch<unknown>("/notifications/preferences", { token });
