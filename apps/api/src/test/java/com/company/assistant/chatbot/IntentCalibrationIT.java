@@ -94,6 +94,25 @@ class IntentCalibrationIT {
                     "durak adi geciyor ama yakinlik kurali oncelikli"),
             new Case("yakınımdaki servis durağı", "servis_en_yakin", "kisa form"),
 
+            // --- A-24 (#155): tek kelimelik / kisa form sorgular ---
+            // Ikisi ayni cozumu paylasiyor ama farkli semptom gosteriyordu: bir grupta
+            // siralama dogruydu ve yalnizca esik yetmiyordu, digerinde kisa girdi anlamdan
+            // bagimsiz olarak SELAMLAMAYA kaciyordu (uzunluk benzerligi anlami bastiriyor).
+            new Case("Servisler", List.of("servis_guzergah", "servis_saatleri"),
+                    "0.585 — iki servis intent'i de mesru"),
+            new Case("Duraklar", "servis_guzergah", "0.494 — en yakini 'iyi günler' idi"),
+            new Case("Menüler", "yemek_menusu", "0.656"),
+            new Case("Yemekler", "yemek_menusu", "0.669 — esigin binde onbir altinda"),
+            new Case("Departmanlar", "rehber_departman", "0.602"),
+            new Case("Departmanları listele", "rehber_departman", "0.650 — emir kipi"),
+            new Case("Rehber", List.of("rehber_kisi", "rehber_departman"),
+                    "0.646 — en yakini 'merhaba' idi; iki rehber intent'i de mesru"),
+
+            // Olculdu ve GECIYOR; yeni kisa formlar bunlari calmamali.
+            new Case("Anketleri listele", "anket", "REGRESYON — 0.873"),
+            new Case("Duyuruları göster", "duyurular", "REGRESYON — 0.812"),
+            new Case("Çalışanları listele", "calisma_duzeni", "REGRESYON — 0.827"),
+
             // --- Capraz kirlenme nobetcileri: gun nitelemesi intent'ler arasi paylasilir ---
             // A-21 nobetcileri: uc servis intent'i de "servis" kelimesini paylasiyor,
             // ayrim yalnizca "en yakin" ifadesinde. En kirilgan yer burasi.
@@ -125,7 +144,21 @@ class IntentCalibrationIT {
             // --- Belirsiz kalmali: eslestirmek YANLIS cevap uretir ---
             new Case("çarşamba", NO_INTENT, "tek basina belirsiz — 0.611 ile selamlamaya yakin"),
             new Case("ekran", NO_INTENT, "0.576"),
-            new Case("bitcoin fiyatı ne kadar", NO_INTENT, "alakasiz"));
+            new Case("bitcoin fiyatı ne kadar", NO_INTENT, "alakasiz"),
+            // A-24 (#155): BILINCLI karar. Sistemde dort ayri prosedur kategorisi var
+            // (izin, fazla mesai, oryantasyon, mazeret) ve bu sorgu hangisini kastettigini
+            // soylemiyor. Belirsiz soruyu rastgele bir kategoriye zorlamaktansa
+            // intent_bulunamadi donup A-22 oneri chip'lerini gostermek dogru davranis.
+            new Case("Prosedürler", NO_INTENT, "0.503 — kasitli olarak eslesmiyor"),
+            // A-24 (#155): "Hatlar" da kasitli olarak belirsiz birakildi. Ayni kalibin
+            // digerleri gecti — "Servisler" ~ "servisler neler" 0.699, "Duraklar" ~
+            // "duraklar neler" 0.686 — ama "Hatlar" ~ "hatlar neler" 0.628'in ALTINDA kaldi.
+            // Ornek eksikligi degil: cumle zaten ekli ve embedding'i var. Sebep kelimenin
+            // kendisi; "hat" Turkce'de cok anlamli (telefon hatti, cizgi, hat sanati) ve
+            // model onu bizim kastettigimiz anlama sabitleyemiyor. Eklenecek her ornek ayni
+            // duvara carpar. Tek basina "Hatlar" gercek kullanimda marjinal ve eslesmedigi
+            // durumda A-22 oneri chip'leri devreye giriyor.
+            new Case("Hatlar", NO_INTENT, "0.628 — kelime cok anlamli, kasitli olarak birakildi"));
 
     @Autowired
     private IntentClassificationService service;
