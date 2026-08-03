@@ -40,6 +40,13 @@ public class AdminAnnouncementController {
         return ResponseEntity.ok(adminAnnouncementService.togglePin(id));
     }
 
+    /** Duyuru duzenleme: baslik, icerik ve gecerlilik tarihi guncellenir. */
+    @PutMapping("/{id}")
+    public ResponseEntity<AnnouncementDto> update(@PathVariable("id") Integer id,
+                                                    @RequestBody AdminAnnouncementUpdateRequest request) {
+        return ResponseEntity.ok(adminAnnouncementService.update(id, request));
+    }
+
     @ExceptionHandler(AnnouncementNotFoundException.class)
     public ResponseEntity<String> handleNotFound(AnnouncementNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());

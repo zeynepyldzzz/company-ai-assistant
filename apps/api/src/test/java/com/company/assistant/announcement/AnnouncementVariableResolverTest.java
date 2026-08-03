@@ -74,7 +74,7 @@ class AnnouncementVariableResolverTest {
     @Test
     void tarihiOlmayanDuyuruNullBasmaz() {
         when(announcementService.getAnnouncements())
-                .thenReturn(List.of(new AnnouncementDto(1, "Tarihsiz duyuru", "govde", false, null)));
+                .thenReturn(List.of(new AnnouncementDto(1, "Tarihsiz duyuru", "govde", false, null, null, true)));
 
         assertThat(resolver.resolve("duyurular").get("duyurular")).doesNotContain("null");
     }
@@ -84,7 +84,7 @@ class AnnouncementVariableResolverTest {
     void duyuruGovdesiYanittaYerAlmaz() {
         when(announcementService.getAnnouncements()).thenReturn(List.of(
                 new AnnouncementDto(1, "Kısa başlık", "Çok uzun duyuru gövdesi metni", false,
-                        LocalDateTime.of(2026, 7, 20, 9, 0))));
+                        LocalDateTime.of(2026, 7, 20, 9, 0), null, true)));
 
         assertThat(resolver.resolve("duyurular").get("duyurular"))
                 .contains("Kısa başlık")
@@ -92,6 +92,6 @@ class AnnouncementVariableResolverTest {
     }
 
     private AnnouncementDto announcement(String title, boolean pinned) {
-        return new AnnouncementDto(1, title, "govde", pinned, LocalDateTime.of(2026, 7, 20, 9, 0));
+        return new AnnouncementDto(1, title, "govde", pinned, LocalDateTime.of(2026, 7, 20, 9, 0), null, true);
     }
 }

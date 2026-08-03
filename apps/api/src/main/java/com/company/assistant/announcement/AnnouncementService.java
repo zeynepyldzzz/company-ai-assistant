@@ -30,6 +30,14 @@ public class AnnouncementService {
                 .toList();
     }
 
+    /** GET /announcements/active: ana sayfada gosterilecek, suresi dolmamis duyurular. */
+    @Transactional(readOnly = true)
+    public List<AnnouncementDto> getActiveAnnouncements() {
+        return announcementRepository.findActiveOrderByPinnedDescPublishedAtDesc(LocalDateTime.now()).stream()
+                .map(AnnouncementDto::from)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public AnnouncementDto getAnnouncement(Integer id) {
         Announcement announcement = announcementRepository.findById(id)

@@ -36,6 +36,7 @@ public class AdminAnnouncementService {
         announcement.setPublishedBy(adminEmployeeId);
         announcement.setPublishedAt(LocalDateTime.now());
         announcement.setPinned(false);
+        announcement.setExpiresAt(request.expiresAt());
 
         return AnnouncementDto.from(announcementRepository.save(announcement));
     }
@@ -46,6 +47,24 @@ public class AdminAnnouncementService {
         Announcement announcement = announcementRepository.findById(id)
                 .orElseThrow(() -> new AnnouncementNotFoundException("Duyuru bulunamadı: " + id));
         announcement.setPinned(!announcement.isPinned());
+        return AnnouncementDto.from(announcementRepository.save(announcement));
+    }
+
+    /** PUT /admin/announcements/{id}: baslik, icerik ve gecerlilik tarihini gunceller. */
+    @Transactional
+    public AnnouncementDto update(Integer id, AdminAnnouncementUpdateRequest request) {
+        if (request == null || request.title() == null || request.title().isBlank()) {
+            throw new IllegalArgumentException("Duyuru başlığı boş olamaz");
+        }
+        if (request.content() == null || request.content().isBlank()) {
+            throw new IllegalArgumentException("Duyuru içeriği boş olamaz");
+        }
+
+        Announcement announcement = announcementRepository.findById(id)
+                .orElseThrow(() -> new AnnouncementNotFoundException("Duyuru bulunamadı: " + id));
+        announcement.setTitle(request.title());
+        announcement.setContent(request.content());
+        announcement.setExpiresAt(request.expiresAt());
         return AnnouncementDto.from(announcementRepository.save(announcement));
     }
 }
