@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, X } from "lucide-react";
+import { Pencil, Plus, X } from "lucide-react";
+import type { AdminSurvey } from "@company/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,23 +17,39 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
-import { createSurvey } from "@/api/survey";
+import { updateSurvey } from "@/api/survey";
 
-// C-8 (#52): POST /admin/surveys — taslak (published=false) olarak olusturur.
-// Yayimlama ayri bir adim (liste sayfasindaki "Yayımla" butonu).
-// C-13 (#121): deadline (opsiyonel) ve sabit secenek listesi (min 2) eklendi.
-export function SurveyCreateSheet() {
+// C-13 (#121): admin mevcut anketin basligini, seceneklerini ve gecerlilik
+// (deadline) tarihini duzenleyebilir. "Duzenle" butonu acik mavi.
+function toDatetimeLocal(value: string | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function SurveyEditSheet({ survey }: { survey: AdminSurvey }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [options, setOptions] = useState(["", ""]);
+  const [title, setTitle] = useState(survey.title);
+  const [deadline, setDeadline] = useState(toDatetimeLocal(survey.deadline));
+  const [options, setOptions] = useState(
+    survey.options.length > 0 ? survey.options.map((o) => o.optionText) : ["", ""]
+  );
+
+  function resetFromSurvey() {
+    setTitle(survey.title);
+    setDeadline(toDatetimeLocal(survey.deadline));
+    setOptions(survey.options.length > 0 ? survey.options.map((o) => o.optionText) : ["", ""]);
+  }
 
   const mutation = useMutation({
     mutationFn: () =>
-      createSurvey(
+      updateSurvey(
+        survey.id,
         {
           title: title.trim(),
           deadline: deadline ? new Date(deadline).toISOString() : null,
@@ -41,15 +58,12 @@ export function SurveyCreateSheet() {
         token!
       ),
     onSuccess: () => {
-      toast.success("Anket oluşturuldu (taslak). Yayımlamayı unutmayın.");
+      toast.success("Anket güncellendi.");
       queryClient.invalidateQueries({ queryKey: ["admin", "surveys"] });
-      setTitle("");
-      setDeadline("");
-      setOptions(["", ""]);
       setOpen(false);
     },
     onError: (error) => {
-      const message = error instanceof ApiError ? error.message : "Anket oluşturulamadı.";
+      const message = error instanceof ApiError ? error.message : "Anket güncellenemedi.";
       toast.error(message);
     },
   });
@@ -77,39 +91,47 @@ export function SurveyCreateSheet() {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) resetFromSurvey();
+      }}
+    >
       <SheetTrigger
         render={
-          <Button>
-            <Plus />
-            Yeni Anket
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-sky-300 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+          >
+            <Pencil className="size-4" />
+            Düzenle
           </Button>
         }
       />
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Yeni Anket</SheetTitle>
+          <SheetTitle>Anketi Düzenle</SheetTitle>
           <SheetDescription>
-            Anket taslak olarak oluşturulur; çalışanlar görene kadar listede "Yayımla" ile
-            yayımlamanız gerekir.
+            Başlığı, seçenekleri ve geçerlilik (son yanıt) tarihini güncelleyebilirsiniz.
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">
           <div className="space-y-1.5">
-            <Label htmlFor="survey-title">Başlık (soru)</Label>
+            <Label htmlFor="survey-edit-title">Başlık (soru)</Label>
             <Input
-              id="survey-title"
+              id="survey-edit-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Örn. Yeni kafeterya menüsünden memnun musunuz?"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="survey-deadline">Son yanıt tarihi (opsiyonel)</Label>
+            <Label htmlFor="survey-edit-deadline">Geçerlilik (son yanıt) tarihi</Label>
             <Input
-              id="survey-deadline"
+              id="survey-edit-deadline"
               type="datetime-local"
               value={deadline}
               onChange={(event) => setDeadline(event.target.value)}
@@ -150,7 +172,7 @@ export function SurveyCreateSheet() {
 
           <SheetFooter className="px-0">
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Kaydediliyor…" : "Oluştur"}
+              {mutation.isPending ? "Kaydediliyor…" : "Kaydet"}
             </Button>
           </SheetFooter>
         </form>

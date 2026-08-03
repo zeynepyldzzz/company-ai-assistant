@@ -6,8 +6,8 @@ import java.util.Map;
 /**
  * GET /admin/surveys/{id}/results cevabi.
  * FR-44: yetkili kullanicilar anket sonuclarini gorebilmeli.
- * "Ozet/grafik halinde": her soru icin cevap degeri -> kac kisi verdigi
- * (answerCounts), boylece admin UI bunu bar/pie chart olarak cizebilir.
+ * C-13 (#121): "answers" serbest map yerine sabit secenek -> oy sayisi (answerCounts,
+ * tek soruluk anket oldugu icin ic ic map yerine duz map yeterli).
  */
 public record SurveyResultsResponse(
         Integer surveyId,
@@ -15,6 +15,6 @@ public record SurveyResultsResponse(
         boolean published,
         int totalResponses,
         int totalFeedback,
-        Map<String, Map<String, Long>> answerCounts,
+        Map<String, Long> answerCounts,
         List<String> feedbackComments) {
 }

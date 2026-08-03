@@ -50,6 +50,16 @@ public class SurveyController {
     }
 
     /**
+     * C-13 (#121): calisana acik response-count endpoint'i (dashboard progress bar icin).
+     * Admin'e ozel /admin/surveys/{id}/results'tan farkli olarak sonuc detayi vermez,
+     * sadece toplam yanit sayisini dondurur.
+     */
+    @GetMapping("/surveys/{id}/response-count")
+    public ResponseEntity<SurveyResponseCountResponse> getResponseCount(@PathVariable("id") Integer surveyId) {
+        return ResponseEntity.ok(surveyService.getResponseCount(surveyId));
+    }
+
+    /**
      * FR-43: anonim geri bildirim. Authentication PARAMETRE OLARAK BILE ALINMAZ —
      * employeeId hicbir sekilde okunmaz/kaydedilmez (anonimlik garantisi).
      */
@@ -67,5 +77,20 @@ public class SurveyController {
     @ExceptionHandler(SurveyNotPublishedException.class)
     public ResponseEntity<String> handleNotPublished(SurveyNotPublishedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(SurveyAlreadyRespondedException.class)
+    public ResponseEntity<String> handleAlreadyResponded(SurveyAlreadyRespondedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(SurveyDeadlinePassedException.class)
+    public ResponseEntity<String> handleDeadlinePassed(SurveyDeadlinePassedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleValidation(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }
