@@ -165,10 +165,73 @@ class ShuttleVariableResolverTest {
         assertThat(route).doesNotContain("sabah/akşam seferi ayrımı");
     }
 
+    // --- A-23 (#148): sofor bilgisi ---
+
+    @Test
+    void saatYanitindaSoforBilgisiGorunur() {
+        seedTwoRoutes();
+
+        Map<String, String> vars = resolver.resolve("servis_saatleri", "kadıköy servisi kaçta");
+
+        assertThat(vars.get("servis_saatleri")).contains("Şoför: Ahmet Yilmaz — 0532 111 22 33");
+    }
+
+    @Test
+    void guzergahYanitindaSoforBilgisiGorunur() {
+        seedTwoRoutes();
+
+        Map<String, String> vars = resolver.resolve("servis_guzergah", "kadıköy servisi nereden geçiyor");
+
+        assertThat(vars.get("servis_guzergahi")).contains("Şoför: Ahmet Yilmaz — 0532 111 22 33");
+    }
+
+    // Sofor atanmamis hatta satir HIC basilmaz: eksikligi duyurmak gereksiz gurultu.
+    @Test
+    void soforuOlmayanHattaSatirBasilmaz() {
+        when(shuttleService.getAllRoutes()).thenReturn(List.of(route(1, "Yeni Hat", "34 XX 001")));
+        when(shuttleService.getStopsByRoutes(anyCollection()))
+                .thenReturn(Map.of(1, List.of(stop("Merkez", LocalTime.of(8, 0), 1))));
+
+        Map<String, String> vars = resolver.resolve("servis_saatleri", "servis kaçta");
+
+        assertThat(vars.get("servis_saatleri"))
+                .doesNotContain("Şoför")
+                .doesNotContain("null");
+    }
+
+    @Test
+    void telefonuOlmayanSofordeYalnizcaAdBasilir() {
+        when(shuttleService.getAllRoutes())
+                .thenReturn(List.of(routeWithDriver(1, "Yeni Hat", "34 XX 001", "Veli Kaya", null)));
+        when(shuttleService.getStopsByRoutes(anyCollection()))
+                .thenReturn(Map.of(1, List.of(stop("Merkez", LocalTime.of(8, 0), 1))));
+
+        Map<String, String> vars = resolver.resolve("servis_saatleri", "servis kaçta");
+
+        assertThat(vars.get("servis_saatleri"))
+                .contains("Şoför: Veli Kaya")
+                .doesNotContain("—")
+                .doesNotContain("null");
+    }
+
+    // Tum hatlar listelendiginde her hat KENDI soforunu tasimali; satir basliga bagli.
+    @Test
+    void tumHatlarListelendigindeHerHatKendiSoforunuGosterir() {
+        seedTwoRoutes();
+
+        Map<String, String> vars = resolver.resolve("servis_saatleri", "servis saatleri nedir");
+
+        assertThat(vars.get("servis_saatleri"))
+                .contains("Şoför: Ahmet Yilmaz")
+                .contains("Şoför: Mehmet Ozturk");
+    }
+
     private void seedTwoRoutes() {
         lenient().when(shuttleService.getAllRoutes()).thenReturn(List.of(
-                route(1, "Anadolu Yakasi - Kadikoy Hatti", "34 SR 101"),
-                route(2, "Avrupa Yakasi - Besiktas Hatti", "34 SR 202")));
+                routeWithDriver(1, "Anadolu Yakasi - Kadikoy Hatti", "34 SR 101",
+                        "Ahmet Yilmaz", "0532 111 22 33"),
+                routeWithDriver(2, "Avrupa Yakasi - Besiktas Hatti", "34 SR 202",
+                        "Mehmet Ozturk", "0533 444 55 66")));
         // #127: duraklar artik hat basina degil, tek toplu sorguyla cekiliyor.
         lenient().when(shuttleService.getStopsByRoutes(anyCollection())).thenReturn(Map.of(
                 1, List.of(
@@ -179,11 +242,19 @@ class ShuttleVariableResolverTest {
                         stop("Mecidiyekoy", LocalTime.of(7, 35), 2))));
     }
 
+    /** Sofor bilgisi olmayan hat — A-23 oncesi davranisi da temsil eder. */
     private ShuttleRouteResponse route(Integer id, String name, String plate) {
+        return routeWithDriver(id, name, plate, null, null);
+    }
+
+    private ShuttleRouteResponse routeWithDriver(Integer id, String name, String plate,
+                                                 String driverName, String driverPhone) {
         ShuttleRoute entity = new ShuttleRoute();
         entity.setId(id);
         entity.setName(name);
         entity.setPlateNumber(plate);
+        entity.setDriverName(driverName);
+        entity.setDriverPhone(driverPhone);
         return new ShuttleRouteResponse(entity);
     }
 
