@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,22 +17,24 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
-import { createAnnouncement } from "@/api/announcement";
+import { updateAnnouncement } from "@/api/announcement";
 import { todayDateInputValue } from "@/lib/utils";
+import type { Announcement } from "@company/shared";
 
-// C-9 (#53): POST /admin/announcements.
-export function AnnouncementCreateSheet() {
+// B-18: PUT /admin/announcements/{id} — baslik, icerik, gecerlilik tarihi duzenleme.
+export function AnnouncementEditSheet({ announcement }: { announcement: Announcement }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
+  const [title, setTitle] = useState(announcement.title);
+  const [content, setContent] = useState(announcement.content);
+  const [expiresAt, setExpiresAt] = useState(announcement.expiresAt?.slice(0, 10) ?? "");
 
   const mutation = useMutation({
     mutationFn: () =>
-      createAnnouncement(
+      updateAnnouncement(
+        announcement.id,
         {
           title: title.trim(),
           content: content.trim(),
@@ -41,16 +43,13 @@ export function AnnouncementCreateSheet() {
         token!
       ),
     onSuccess: () => {
-      toast.success("Duyuru oluşturuldu.");
+      toast.success("Duyuru güncellendi.");
       queryClient.invalidateQueries({ queryKey: ["admin", "announcements"] });
       queryClient.invalidateQueries({ queryKey: ["announcements", "active"] });
-      setTitle("");
-      setContent("");
-      setExpiresAt("");
       setOpen(false);
     },
     onError: (error) => {
-      const message = error instanceof ApiError ? error.message : "Duyuru oluşturulamadı.";
+      const message = error instanceof ApiError ? error.message : "Duyuru güncellenemedi.";
       toast.error(message);
     },
   });
@@ -68,37 +67,49 @@ export function AnnouncementCreateSheet() {
     mutation.mutate();
   }
 
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      setTitle(announcement.title);
+      setContent(announcement.content);
+      setExpiresAt(announcement.expiresAt?.slice(0, 10) ?? "");
+    }
+    setOpen(next);
+  }
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger
         render={
-          <Button>
-            <Plus />
-            Yeni Duyuru
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+          >
+            <Pencil />
+            Düzenle
           </Button>
         }
       />
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Yeni Duyuru</SheetTitle>
-          <SheetDescription>Duyuru tüm çalışanların listesinde hemen görünür.</SheetDescription>
+          <SheetTitle>Duyuruyu Düzenle</SheetTitle>
+          <SheetDescription>Değişiklikler kaydedilince tüm çalışanların listesine yansır.</SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">
           <div className="space-y-1.5">
-            <Label htmlFor="announcement-title">Başlık</Label>
+            <Label htmlFor="announcement-edit-title">Başlık</Label>
             <Input
-              id="announcement-title"
+              id="announcement-edit-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Örn. Yaz Tatili Duyurusu"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="announcement-content">İçerik</Label>
+            <Label htmlFor="announcement-edit-content">İçerik</Label>
             <Textarea
-              id="announcement-content"
+              id="announcement-edit-content"
               value={content}
               onChange={(event) => setContent(event.target.value)}
               rows={5}
@@ -106,9 +117,9 @@ export function AnnouncementCreateSheet() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="announcement-expires-at">Geçerlilik Tarihi (Bitiş)</Label>
+            <Label htmlFor="announcement-edit-expires-at">Geçerlilik Tarihi (Bitiş)</Label>
             <Input
-              id="announcement-expires-at"
+              id="announcement-edit-expires-at"
               type="date"
               min={todayDateInputValue()}
               value={expiresAt}
@@ -119,7 +130,7 @@ export function AnnouncementCreateSheet() {
 
           <SheetFooter className="px-0">
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Kaydediliyor…" : "Oluştur"}
+              {mutation.isPending ? "Kaydediliyor…" : "Kaydet"}
             </Button>
           </SheetFooter>
         </form>

@@ -54,6 +54,9 @@ export const navItems: Array<{
   },
   { to: "/shuttle", label: "Servisler", icon: Bus, roles: ["employee", "admin"] },
   { to: "/vehicles", label: "Araç Rezervasyonu", icon: Car, roles: ["employee", "admin"] },
+  // B-20: calisanlar salt-okunur /announcements'a, adminler yonetim ekrani
+  // /admin/announcements'a gider - roller ayrik oldugu icin tek NavLink karismaz.
+  { to: "/announcements", label: "Duyurular", icon: Megaphone, roles: ["employee"] },
   { to: "/admin/announcements", label: "Duyurular", icon: Megaphone, roles: ["admin"] },
   {
     to: "/admin/reports",
@@ -148,7 +151,7 @@ export function Sidebar() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/" || to === "/admin"}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
                 cn(

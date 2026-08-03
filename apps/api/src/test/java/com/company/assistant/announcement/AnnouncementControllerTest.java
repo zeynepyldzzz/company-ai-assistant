@@ -54,8 +54,8 @@ class AnnouncementControllerTest {
     @Test
     void girisYapmisCalisan_duyurulariGorebilir() throws Exception {
         when(announcementService.getAnnouncements()).thenReturn(java.util.List.of(
-                new AnnouncementDto(1, "Sabitli Duyuru", "icerik", true, LocalDateTime.of(2026, 7, 20, 9, 0)),
-                new AnnouncementDto(2, "Yeni Duyuru", "icerik2", false, LocalDateTime.of(2026, 7, 27, 9, 0))));
+                new AnnouncementDto(1, "Sabitli Duyuru", "icerik", true, LocalDateTime.of(2026, 7, 20, 9, 0), null, true),
+                new AnnouncementDto(2, "Yeni Duyuru", "icerik2", false, LocalDateTime.of(2026, 7, 27, 9, 0), null, true)));
 
         mockMvc.perform(get("/announcements")
                         .with(user("1").roles("EMPLOYEE")))
@@ -68,6 +68,19 @@ class AnnouncementControllerTest {
     void authOlmadan_duyurulariGoremez() throws Exception {
         mockMvc.perform(get("/announcements"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void aktifDuyurularSuresiDolmusOlanlariHaricTutar() throws Exception {
+        when(announcementService.getActiveAnnouncements()).thenReturn(java.util.List.of(
+                new AnnouncementDto(1, "Aktif Duyuru", "icerik", false,
+                        LocalDateTime.of(2026, 7, 20, 9, 0), null, true)));
+
+        mockMvc.perform(get("/announcements/active")
+                        .with(user("1").roles("EMPLOYEE")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].active").value(true));
     }
 
     @Test
