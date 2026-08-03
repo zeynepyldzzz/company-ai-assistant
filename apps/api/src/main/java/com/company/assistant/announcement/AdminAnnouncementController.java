@@ -3,6 +3,7 @@ package com.company.assistant.announcement;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * C-9 (#53): POST /admin/announcements, PUT /admin/announcements/{id}/pin.
+ * B-21: DELETE /admin/announcements/{id}.
  * /admin/** yolu SecurityConfig'te hasRole("ADMIN") ile korunuyor.
  */
 @RestController
@@ -45,6 +47,13 @@ public class AdminAnnouncementController {
     public ResponseEntity<AnnouncementDto> update(@PathVariable("id") Integer id,
                                                     @RequestBody AdminAnnouncementUpdateRequest request) {
         return ResponseEntity.ok(adminAnnouncementService.update(id, request));
+    }
+
+    /** B-21: duyuruyu siler. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable("id") Integer id) {
+        adminAnnouncementService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(AnnouncementNotFoundException.class)
