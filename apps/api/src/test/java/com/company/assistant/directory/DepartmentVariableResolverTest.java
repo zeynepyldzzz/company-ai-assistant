@@ -2,6 +2,7 @@ package com.company.assistant.directory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -26,12 +27,14 @@ class DepartmentVariableResolverTest {
 
     @Mock
     private DepartmentService departmentService;
+    @Mock
+    private DirectoryService directoryService;
 
     private DepartmentVariableResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new DepartmentVariableResolver(departmentService);
+        resolver = new DepartmentVariableResolver(departmentService, directoryService);
     }
 
     @Test
@@ -99,6 +102,151 @@ class DepartmentVariableResolverTest {
 
         assertThat(resolver.resolve("rehber_departman", "muhasebe").get("departman_bilgisi"))
                 .isEqualTo("Sistemde tanımlı departman bulunmuyor.");
+    }
+
+    // --- A-25 (#169): departman calisan listesi ---
+
+    // Olculdu: "Muhasebe çalışanları" 0.644 ile intent_bulunamadi donuyordu; eslesse bile
+    // eski davranis yonetici bilgisi dondururdu, liste degil.
+    @Test
+    void calisanListesiIstenirseKisilerListelenir() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans",
+                List.of(employee("Elif Sahin", "Ofiste"), employee("Burak Yildiz", "Izinde")), 2);
+
+        String reply = resolver.resolve("rehber_departman", "muhasebe çalışanları")
+                .get("departman_bilgisi");
+
+        assertThat(reply)
+                .contains("Muhasebe ve Finans departmanında 2 kişi çalışıyor")
+                .contains("• Elif Sahin — Ofiste")
+                .contains("• Burak Yildiz — Izinde")
+                .doesNotContain("Yönetici:");
+    }
+
+    @Test
+    void kimlerVarSorusuDaListeDoner() {
+        seedDepartments();
+        whenEmployeeSearch("Bilgi Teknolojileri", List.of(employee("Emre Koc", "Uzaktan")), 1);
+
+        assertThat(resolver.resolve("rehber_departman", "bilgi teknolojilerinde kimler var")
+                .get("departman_bilgisi")).contains("Emre Koc");
+    }
+
+    // Alan ipucu yoksa DAVRANIS DEGISMEZ: iletisim bilgisi doner (A-18 regresyonu).
+    @Test
+    void listeIpucuYoksaIletisimBilgisiDoner() {
+        seedDepartments();
+
+        String reply = resolver.resolve("rehber_departman", "muhasebe departmanı yetkilisi kim")
+                .get("departman_bilgisi");
+
+        assertThat(reply).contains("Yönetici: Elif Sahin").doesNotContain("kişi çalışıyor");
+    }
+
+    @Test
+    void bosDepartmandaAcikMesajDoner() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", List.of(), 0);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebe çalışanları").get("departman_bilgisi"))
+                .isEqualTo("Muhasebe ve Finans departmanında kayıtlı çalışan görünmüyor.");
+    }
+
+    @Test
+    void listeUstSiniriAsilirsaKalanSayiBelirtilir() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", List.of(employee("Elif Sahin", "Ofiste")), 30);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebe çalışanları").get("departman_bilgisi"))
+                .contains("30 kişi çalışıyor")
+                .contains("ve 29 kişi daha");
+    }
+
+    // Ofis durumu girilmemis calisanda ham "null" gorunmemeli.
+    @Test
+    void durumuOlmayanCalisanNullBasmaz() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", List.of(employee("Test Calisan", null)), 1);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebe çalışanları").get("departman_bilgisi"))
+                .contains("• Test Calisan")
+                .doesNotContain("null");
+    }
+
+    // A-25 duzeltmesi: durum filtreli sorular ASLINDA calisma_duzeni'ne ait, ama V44
+    // ornekleri onlari bu kategoriye cekebiliyor (olculdu: 0.742 / 0.693). Savunma katmani —
+    // yanlis kategoriye gelse bile dogru cevap donmeli.
+    @Test
+    void durumIpucuVarsaListeOnaGoreFiltrelenir() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", "Uzaktan", List.of(employee("Elif Sahin", "Uzaktan")), 1);
+
+        String reply = resolver.resolve("rehber_departman", "muhasebede kimler uzaktan çalışıyor")
+                .get("departman_bilgisi");
+
+        assertThat(reply)
+                .contains("Muhasebe ve Finans departmanında uzaktan çalışan 1 kişi:")
+                .contains("• Elif Sahin");
+    }
+
+    @Test
+    void izindeOlanlarSorusuFiltreliListeDoner() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", "Izinde", List.of(employee("Burak Yildiz", "Izinde")), 1);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebe izinde olanlar").get("departman_bilgisi"))
+                .contains("izinde olan 1 kişi")
+                .contains("• Burak Yildiz");
+    }
+
+    // Elle test (2026-08-03): kullanici "ofisde" yazinca durum filtresi hic uygulanmiyor ve
+    // TUM liste donuyordu. Durum ipuclari artik kok olarak araniyor.
+    @Test
+    void durumKelimesininYazimVaryantlariDaTaninir() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", "Ofiste", List.of(employee("Ayse Kaya", "Ofiste")), 1);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebede kimler ofisde")
+                .get("departman_bilgisi")).contains("ofiste görünen 1 kişi");
+    }
+
+    // Iki ipucu birden gecerse sonuc DETERMINISTIK olmali: liste sirasi Map yerine
+    // bilerek List ile sabitlendi.
+    @Test
+    void ikiDurumIpucuVarsaDahaSpesifikOlanSecilir() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", "Izinde", List.of(employee("Burak Yildiz", "Izinde")), 1);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebede ofiste olmayıp izinli olanlar")
+                .get("departman_bilgisi")).contains("izinde olan 1 kişi");
+    }
+
+    @Test
+    void durumFiltresiSonucsuzsaAcikMesajDoner() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", "Izinde", List.of(), 0);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebede izinde olanlar").get("departman_bilgisi"))
+                .isEqualTo("Muhasebe ve Finans departmanında izinde olan kimse yok.");
+    }
+
+    private void whenEmployeeSearch(String department, List<EmployeeResponse> data, long total) {
+        whenEmployeeSearch(department, null, data, total);
+    }
+
+    private void whenEmployeeSearch(String department, String status,
+                                    List<EmployeeResponse> data, long total) {
+        when(directoryService.searchEmployees(isNull(), eq(department),
+                status == null ? isNull() : eq(status), eq(0), anyInt()))
+                .thenReturn(new PagedResponse<>(data, 0, 25, total));
+    }
+
+    private EmployeeResponse employee(String name, String officeStatus) {
+        EmployeeResponse response = mock(EmployeeResponse.class);
+        lenient().when(response.getName()).thenReturn(name);
+        lenient().when(response.getOfficeStatus()).thenReturn(officeStatus);
+        return response;
     }
 
     private void seedDepartments() {

@@ -82,8 +82,12 @@ public class RuleBasedIntentMatcher {
      * <p>PERSON_WORDS'ten AYRI liste: bu kelimeler tek baslarina liste sorusu da olabilir
      * ("kimler ofiste"), o yuzden ucuncu sahis grup ipucu varken kural devreye girmemeli.
      */
+    // "ofisde" yaygin bir yazim varyanti (elle test, 2026-08-03). Burada KOK ("ofis")
+    // kullanilamaz: bu liste asagida nameTokens() icinde isim adaylarini elemek icin de
+    // kullaniliyor ve orada TAM kelime eslesmesi yapiliyor — kok koyulursa "ofiste" tokeni
+    // elenmez ve her mesajda gereksiz rehber sorgusu atilir.
     private static final List<String> PERSON_STATUS_WORDS =
-            List.of("ofiste", "uzaktan", "izinde", "izinli", "nerede", "evden");
+            List.of("ofiste", "ofisde", "uzaktan", "izinde", "izinli", "nerede", "evden");
 
     /**
      * Alan belirtmeyen kisi sorulari: "Ayşe Kaya kimdir", "Ayşe Kaya'nın bilgileri".
@@ -107,6 +111,20 @@ public class RuleBasedIntentMatcher {
             "tesekkur", "tesekkurler", "sagol", "sagolun", "kolay", "gelsin");
     private static final List<String> DEPARTMENT_WORDS =
             List.of("bolum", "departman", "birim", "yetkili", "sorumlu");
+
+    /**
+     * A-25 (#169): "muhasebe çalışanları" tipi sorular — departmanin CALISAN LISTESI.
+     * Olculdu: "Muhasebe çalışanları" 0.644, "Muhasebede kimler var" 0.590, "Bilgi
+     * teknolojileri çalışanları" 0.613 ile intent_bulunamadi donuyordu ve en yakin cumleler
+     * IKI AYRI kategoriye dagiliyordu — yani ortada boyle bir kalip yoktu.
+     *
+     * <p>DEPARTMENT_WORDS'ten ayri liste, cunku bu kelimeler DURUM sorulariyla birlesince
+     * baska bir seye donusuyor: "muhasebede kimler ofiste" bir calisan listesi degil, durum
+     * filtreli bir sorudur ve calisma_duzeni'ne aittir. Ayrim asagida durum kelimesi
+     * kontroluyle yapiliyor.
+     */
+    private static final List<String> DEPARTMENT_ROSTER_WORDS =
+            List.of("calisan", "kimler", "ekip", "personel");
 
     /** Varlik adlarindan anahtar kelime turetirken elenen, ayirt edici olmayan kelimeler. */
     private static final List<String> GENERIC_WORDS = List.of(
@@ -147,6 +165,13 @@ public class RuleBasedIntentMatcher {
         }
         if (containsAny(text, DEPARTMENT_WORDS) && matchesDepartment(text)) {
             return rule(INTENT_DEPARTMENT, "departman adı");
+        }
+        // A-25: departman adi + calisan listesi istegi. DURUM kelimesi varsa devreye GIRMEZ —
+        // "muhasebede kimler ofiste" durum filtreli bir sorudur ve calisma_duzeni'ne aittir.
+        if (containsAny(text, DEPARTMENT_ROSTER_WORDS)
+                && !containsAny(text, PERSON_STATUS_WORDS)
+                && matchesDepartment(text)) {
+            return rule(INTENT_DEPARTMENT, "departman + çalışan listesi");
         }
         if (containsAny(text, PERSON_WORDS) && matchesEmployee(text)) {
             return rule(INTENT_PERSON, "çalışan adı");

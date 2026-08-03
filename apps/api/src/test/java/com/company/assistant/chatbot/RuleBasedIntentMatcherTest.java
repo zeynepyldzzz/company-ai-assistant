@@ -126,6 +126,41 @@ class RuleBasedIntentMatcherTest {
         assertThat(result.get().matchedPhrase()).isEqualTo("[kural] departman adı");
     }
 
+    // A-25 (#169): olculdu — "Muhasebe çalışanları" 0.644 ile intent_bulunamadi donuyordu.
+    @Test
+    void departmanAdiVeCalisanKelimesiDepartmanIntentineGider() {
+        seedDepartments();
+
+        var result = matcher.match("muhasebe çalışanları");
+
+        assertThat(result.get().intent()).isEqualTo("rehber_departman");
+        assertThat(result.get().matchedPhrase()).isEqualTo("[kural] departman + çalışan listesi");
+    }
+
+    @Test
+    void departmandaKimlerVarSorusuDaDepartmanIntentineGider() {
+        seedDepartments();
+
+        assertThat(matcher.match("muhasebede kimler var").get().intent()).isEqualTo("rehber_departman");
+    }
+
+    // KRITIK NOBETCI: durum kelimesi varsa bu kural devreye GIRMEZ. "muhasebede kimler ofiste"
+    // bir calisan listesi degil, durum filtreli bir sorudur ve calisma_duzeni'ne aittir.
+    @Test
+    void durumKelimesiVarsaDepartmanListeKuraliCalismaz() {
+        assertThat(matcher.match("muhasebede kimler ofiste")).isEmpty();
+        assertThat(matcher.match("bilgi teknolojilerinde kimler uzaktan")).isEmpty();
+    }
+
+    // NOBETCI: departman adi olmadan calisan listesi kurali tetiklenmemeli.
+    @Test
+    void departmanAdiYoksaListeKuraliCalismaz() {
+        seedDepartments();
+
+        assertThat(matcher.match("çalışanlar nerede")).isEmpty();
+        assertThat(matcher.match("kimler var")).isEmpty();
+    }
+
     @Test
     void calisanAdiVeDahiliKelimesiKisiIntentineGider() {
         when(directoryService.existsActiveEmployeeNamed(anyString())).thenReturn(true);
