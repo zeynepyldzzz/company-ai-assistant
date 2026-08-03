@@ -134,7 +134,7 @@ public class ShuttleVariableResolver {
     }
 
     private String formatHours(RouteWithStops route) {
-        String header = route.route().getName() + " kalkış saatleri:";
+        String header = route.route().getName() + " kalkış saatleri:" + driverLine(route.route());
         if (route.stops().isEmpty()) {
             return header + "\n" + NO_STOP_DATA;
         }
@@ -144,13 +144,36 @@ public class ShuttleVariableResolver {
     }
 
     private String formatRoute(RouteWithStops route) {
-        String header = route.route().getName() + " (plaka: " + route.route().getPlateNumber() + ")";
+        String header = route.route().getName() + " (plaka: " + route.route().getPlateNumber() + ")"
+                + driverLine(route.route());
         if (route.stops().isEmpty()) {
             return header + "\n" + NO_STOP_DATA;
         }
         return header + "\n" + route.stops().stream()
                 .map(s -> "• " + s.getName() + " — " + formatTime(s))
                 .collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * A-23 (#148): sofor bilgisi. Servisi kaciran ya da gecikecegini haber vermek isteyen
+     * calisanin sofore ulasmasi gerekiyor; veri B-16 ile zaten geldi (shuttle_route.driver_*).
+     *
+     * <p>Eksik veri SESSIZCE atlanir — sofor atanmamis hatta satir hic basilmaz. Saat/durak
+     * alanlarindaki "belirtilmemiş" yaklasimindan farkli davraniyor, cunku orada eksiklik
+     * sorunun ta kendisiyle ilgili (kullanici saati soruyor); burada ise sofor satiri ek
+     * bilgi, yoklugunu duyurmak gereksiz gurultu olur.
+     *
+     * <p>Adi olup telefonu olmayan sofor icin yalnizca ad yazilir; hatlar birden fazla
+     * listelendiginde her hat kendi soforunu tasir (satir basliga bagli, gövdeye degil).
+     */
+    private String driverLine(ShuttleRouteResponse route) {
+        String name = route.getDriverName();
+        if (name == null || name.isBlank()) {
+            return "";
+        }
+        String phone = route.getDriverPhone();
+        boolean hasPhone = phone != null && !phone.isBlank();
+        return "\nŞoför: " + name + (hasPhone ? " — " + phone : "");
     }
 
     // Saat girilmemis durakta "null" basmak yerine acik metin.
