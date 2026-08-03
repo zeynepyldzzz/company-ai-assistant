@@ -13,6 +13,7 @@ import { MenuPage } from "@/pages/menu/menu-page";
 import { ShuttlePage } from "@/pages/shuttle/shuttle-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
 import { VehicleReservationPage } from "@/pages/vehicle/vehicle-reservation-page";
+import { AnnouncementsPage } from "@/pages/announcements/announcements-page";
 import { AdminSchedulesPage } from "@/pages/admin/admin-schedules-page";
 import { AdminVehiclesPage } from "@/pages/admin/admin-vehicles-page";
 import { KnowledgeBasePage } from "@/pages/admin/knowledge-base/knowledge-base-page";
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
           { path: "/my-schedule", element: <SchedulePage /> },
           { path: "/shuttle", element: <ShuttlePage /> },
           { path: "/vehicles", element: <VehicleReservationPage /> },
+          { path: "/announcements", element: <AnnouncementsPage /> },
           {
             element: <RequireRole roles={["admin"]} />,
             children: [

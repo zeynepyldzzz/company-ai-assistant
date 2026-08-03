@@ -80,7 +80,11 @@ export function AnnouncementEditSheet({ announcement }: { announcement: Announce
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger
         render={
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+          >
             <Pencil />
             Düzenle
           </Button>
