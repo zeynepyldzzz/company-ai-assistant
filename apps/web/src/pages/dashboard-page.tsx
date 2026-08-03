@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { Users, Car, Bus, BookText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +20,7 @@ import { useMe } from "@/auth/use-me";
 import { getTodayMenu } from "@/api/menu";
 import { getMySchedule, getMySummary } from "@/api/schedule";
 import { listActiveSurveys, submitSurveyResponse, type ActiveSurvey } from "@/api/survey";
+import { getActiveAnnouncements } from "@/api/announcement";
 import type { ScheduleDay } from "@company/shared";
 import { ApiError } from "@/api/client";
 import { cn } from "@/lib/utils";
@@ -95,16 +95,15 @@ function SurveyRespondSheet({ survey }: { survey: ActiveSurvey }) {
   );
 }
 
-const quickLinks = [
-  { to: "/directory/employees", label: "Çalışanlar", icon: Users },
-  { to: "/vehicles", label: "Araç Rezervasyonu", icon: Car },
-  { to: "/shuttle", label: "Servisler", icon: Bus },
-  { to: "/admin/knowledge-base", label: "Dokümanlar", icon: BookText },
-];
-
 export function DashboardPage() {
   const { token } = useAuth();
   const { data: me } = useMe();
+
+  const announcementsQuery = useQuery({
+    queryKey: ["announcements", "active"],
+    queryFn: () => getActiveAnnouncements(token!),
+    enabled: Boolean(token),
+  });
 
   const surveysQuery = useQuery({
     queryKey: ["surveys", "active"],
@@ -139,6 +138,37 @@ export function DashboardPage() {
           Hoş geldin{firstName ? `, ${firstName}` : ""} 👋
         </h2>
       </div>
+
+      <section className="space-y-3">
+        <p className="text-muted-foreground text-[11px] font-bold tracking-[0.04em] uppercase">
+          Duyurular
+        </p>
+        {announcementsQuery.isLoading && (
+          <p className="text-muted-foreground text-sm">Yükleniyor…</p>
+        )}
+        {announcementsQuery.data?.length === 0 && (
+          <p className="text-muted-foreground text-sm">Şu anda aktif duyuru yok.</p>
+        )}
+        {announcementsQuery.data && announcementsQuery.data.length > 0 && (
+          <div className="space-y-3">
+            {announcementsQuery.data.map((announcement) => (
+              <Card key={announcement.id}>
+                <CardContent className="space-y-1 py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{announcement.title}</span>
+                    {announcement.pinned && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                        Sabitlendi
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-sm">{announcement.content}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-3">
         <p className="text-muted-foreground text-[11px] font-bold tracking-[0.04em] uppercase">
@@ -233,24 +263,6 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      <section className="space-y-3">
-        <p className="text-muted-foreground text-[11px] font-bold tracking-[0.04em] uppercase">
-          Hızlı Erişim
-        </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {quickLinks.map(({ to, label, icon: Icon }) => (
-            <Link key={to} to={to}>
-              <Card className="hover:border-primary/40 transition-colors">
-                <CardContent className="flex flex-col items-center gap-2 py-5 text-center">
-                  <Icon className="text-primary size-5" />
-                  <span className="text-sm font-medium">{label}</span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
