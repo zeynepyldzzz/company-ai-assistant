@@ -60,8 +60,12 @@ class IntentCalibrationIT {
             // --- Olculmus basarisizliklar (chat_message_log, 2026-07-29) ---
             new Case("anketler", "anket", "0.675 — esigin bes binde bir altinda"),
             new Case("duyurular", "duyurular", "kisa form"),
-            new Case("kadıköy servisi", List.of("servis_guzergah", "servis_saatleri"),
-                    "0.572 — yer adi + kisa form; iki servis intent'i de mesru"),
+            // NOT: yer adlari SEED VERISINE bagli. B-22 (V42/V43) sirket Izmir'de oldugu icin
+            // Istanbul hatlarini silip Izmir hatlarini ekledi ve "kadıköy servisi" vakasi
+            // kirildi — durak adi artik DB'de yok, kural katmani eslesme bulamiyor. Vakalar
+            // guncel duraklarla yazildi; seed degisirse burasi da guncellenmeli.
+            new Case("bornova servisi", List.of("servis_guzergah", "servis_saatleri"),
+                    "yer adi + kisa form; iki servis intent'i de mesru"),
             new Case("muhasebe bölümü", "rehber_departman", "0.545 — 'bolum' ~ 'departman'"),
             new Case("muhasebe departmanı yetkilisi", "rehber_departman", "0.572"),
             new Case("kimler ofiste", "calisma_duzeni", "0.498 — ornegin tam alt-dizesi"),
@@ -90,7 +94,7 @@ class IntentCalibrationIT {
             // --- A-21 (#146): en yakin servis yonlendirmesi ---
             new Case("bana en yakın servis hangisi", "servis_en_yakin", "kural: en yakın + servis"),
             new Case("en yakın durak nerede", "servis_en_yakin", "kural"),
-            new Case("kadıköy'e en yakın servis", "servis_en_yakin",
+            new Case("bornova'ya en yakın servis", "servis_en_yakin",
                     "durak adi geciyor ama yakinlik kurali oncelikli"),
             new Case("yakınımdaki servis durağı", "servis_en_yakin", "kisa form"),
 
@@ -113,10 +117,26 @@ class IntentCalibrationIT {
             new Case("Duyuruları göster", "duyurular", "REGRESYON — 0.812"),
             new Case("Çalışanları listele", "calisma_duzeni", "REGRESYON — 0.827"),
 
+            // --- A-25 (#169): departman calisan listesi ---
+            new Case("Muhasebe çalışanları", "rehber_departman", "0.644 — kural katmani"),
+            new Case("Muhasebede kimler var", "rehber_departman", "0.590"),
+            new Case("Satış ekibinde kimler çalışıyor", "rehber_departman",
+                    "0.751 — eslesiyordu ama YANLIS cevap veriyordu (yonetici bilgisi)"),
+            // A-25 nobetcisi: durum kelimesi soruyu calisma_duzeni'ne tasir; departman adi
+            // gecmesi bunu degistirmemeli.
+            new Case("muhasebede kimler ofiste", "calisma_duzeni",
+                    "NOBETCI — departman adi var ama durum sorusu"),
+            // V44 ornekleri bu ikisini rehber_departman'a cekmisti (0.742 / 0.693);
+            // V45 dengeyi geri cevirdi. Ayrica resolver'da savunma katmani var.
+            new Case("Muhasebede kimler uzaktan çalışıyor", "calisma_duzeni",
+                    "NOBETCI — V44 regresyonu, V45 ile duzeltildi"),
+            new Case("Muhasebe izinde olanlar", "calisma_duzeni",
+                    "NOBETCI — V44 regresyonu, V45 ile duzeltildi"),
+
             // --- Capraz kirlenme nobetcileri: gun nitelemesi intent'ler arasi paylasilir ---
             // A-21 nobetcileri: uc servis intent'i de "servis" kelimesini paylasiyor,
             // ayrim yalnizca "en yakin" ifadesinde. En kirilgan yer burasi.
-            new Case("kadıköy servisi kaçta", "servis_saatleri", "NOBETCI — A-21 calmamali"),
+            new Case("bornova servisi kaçta", "servis_saatleri", "NOBETCI — A-21 calmamali"),
             new Case("servis saatleri", "servis_saatleri", "NOBETCI — vitrin sorusu (A-22)"),
             // A-20 nobetcisi: durum kelimesi ("ofiste"/"nerede") tasiyan LISTE sorulari
             // tek kisilik rehber yanitina KAYMAMALI.

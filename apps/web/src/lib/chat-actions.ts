@@ -21,6 +21,9 @@ const ACTION_ROUTES: Record<string, string> = {
   directory_employees: "/directory/employees",
   directory_departments: "/directory/departments",
   vehicles: "/vehicles",
+  // A-25: B-21 ile calisana acik duyuru ekrani geldi; A-22'de bos birakilan buton
+  // artik bir yere goturebiliyor.
+  announcements: "/announcements",
   dashboard: "/",
 };
 
