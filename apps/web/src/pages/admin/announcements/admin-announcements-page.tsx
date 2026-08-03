@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pin, PinOff } from "lucide-react";
+import { Pin, PinOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
-import { listAnnouncements, togglePinAnnouncement } from "@/api/announcement";
+import { deleteAnnouncement, listAnnouncements, togglePinAnnouncement } from "@/api/announcement";
 import { AnnouncementCreateSheet } from "./announcement-create-sheet";
 import { AnnouncementEditSheet } from "./announcement-edit-sheet";
 
@@ -33,6 +33,19 @@ export function AdminAnnouncementsPage() {
     },
     onError: (error) => {
       const message = error instanceof ApiError ? error.message : "Duyuru güncellenemedi.";
+      toast.error(message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteAnnouncement(id, token!),
+    onSuccess: () => {
+      toast.success("Duyuru silindi.");
+      queryClient.invalidateQueries({ queryKey: ["admin", "announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["announcements", "active"] });
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : "Duyuru silinemedi.";
       toast.error(message);
     },
   });
@@ -105,11 +118,25 @@ export function AdminAnnouncementsPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
                           onClick={() => pinMutation.mutate(announcement.id)}
                           disabled={pinMutation.isPending}
                         >
                           {announcement.pinned ? <PinOff /> : <Pin />}
                           {announcement.pinned ? "Sabitlemeyi Kaldır" : "Sabitle"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            if (confirm(`"${announcement.title}" silinsin mi?`)) {
+                              deleteMutation.mutate(announcement.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 />
+                          Sil
                         </Button>
                       </div>
                     </td>
