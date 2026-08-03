@@ -33,7 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 // C-8 (#52): POST /admin/surveys, PUT /admin/surveys/{id}/publish, GET /admin/surveys/{id}/results.
 // C-13 (#121): olusturma govdesine deadline + options (min 2) eklendi.
-// /admin/** SecurityConfig'te hasRole("ADMIN") ile korunuyor.
+// C-14 (#123): /admin/** SecurityConfig'te genel hasRole("ADMIN") ile korunuyor, ayrica
+// controller seviyesinde @PreAuthorize ile hr_admin/system_admin sub-role'u de gerekiyor.
 @WebMvcTest(AdminSurveyController.class)
 @Import({SecurityConfig.class, RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class})
 class AdminSurveyControllerTest {
@@ -64,7 +65,7 @@ class AdminSurveyControllerTest {
                         null, java.util.List.of(new SurveyOptionDto(3, "A"), new SurveyOptionDto(4, "B")))));
 
         mockMvc.perform(get("/admin/surveys")
-                        .with(user("1").roles("ADMIN")))
+                        .with(user("1").roles("ADMIN", "HR_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[1].published").value(false));
@@ -77,7 +78,7 @@ class AdminSurveyControllerTest {
                         null, java.util.List.of(new SurveyOptionDto(1, "Evet"), new SurveyOptionDto(2, "Hayır"))));
 
         mockMvc.perform(post("/admin/surveys")
-                        .with(user("1").roles("ADMIN")).with(csrf())
+                        .with(user("1").roles("ADMIN", "HR_ADMIN")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"title\": \"Memnuniyet Anketi\", \"options\": [\"Evet\", \"Hayır\"] }"))
                 .andExpect(status().isCreated())
@@ -91,6 +92,17 @@ class AdminSurveyControllerTest {
     void duzCalisan_anketOlusturmayaErisemez() throws Exception {
         mockMvc.perform(post("/admin/surveys")
                         .with(user("1").roles("EMPLOYEE")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"title\": \"Memnuniyet Anketi\", \"options\": [\"Evet\", \"Hayır\"] }"))
+                .andExpect(status().isForbidden());
+    }
+
+    // C-14 (#123): ROLE_ADMIN'e sahip (filter-chain seviyesini gecer) ama hr_admin/system_admin
+    // degil - method-level @PreAuthorize reddetmeli.
+    @Test
+    void baskaAdminAltRolu_403Doner() throws Exception {
+        mockMvc.perform(post("/admin/surveys")
+                        .with(user("1").roles("ADMIN", "FLEET_ADMIN")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"title\": \"Memnuniyet Anketi\", \"options\": [\"Evet\", \"Hayır\"] }"))
                 .andExpect(status().isForbidden());
@@ -112,7 +124,7 @@ class AdminSurveyControllerTest {
                         null, java.util.List.of(new SurveyOptionDto(1, "Evet"), new SurveyOptionDto(2, "Hayır"))));
 
         mockMvc.perform(put("/admin/surveys/10/publish")
-                        .with(user("1").roles("ADMIN")).with(csrf()))
+                        .with(user("1").roles("ADMIN", "HR_ADMIN")).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.published").value(true));
     }
@@ -137,7 +149,7 @@ class AdminSurveyControllerTest {
         when(adminSurveyService.publish(999)).thenThrow(new SurveyNotFoundException("Anket bulunamadı: 999"));
 
         mockMvc.perform(put("/admin/surveys/999/publish")
-                        .with(user("1").roles("ADMIN")).with(csrf()))
+                        .with(user("1").roles("ADMIN", "HR_ADMIN")).with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
@@ -149,7 +161,7 @@ class AdminSurveyControllerTest {
                 java.util.List.of("harika bir anket")));
 
         mockMvc.perform(get("/admin/surveys/10/results")
-                        .with(user("1").roles("ADMIN")))
+                        .with(user("1").roles("ADMIN", "HR_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalResponses").value(2))
                 .andExpect(jsonPath("$.totalFeedback").value(1))
