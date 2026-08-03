@@ -67,4 +67,13 @@ public class AdminAnnouncementService {
         announcement.setExpiresAt(request.expiresAt());
         return AnnouncementDto.from(announcementRepository.save(announcement));
     }
+
+    /** B-21: DELETE /admin/announcements/{id}: duyuruyu siler. */
+    @Transactional
+    public void delete(Integer id) {
+        if (!announcementRepository.existsById(id)) {
+            throw new AnnouncementNotFoundException("Duyuru bulunamadı: " + id);
+        }
+        announcementRepository.deleteById(id);
+    }
 }

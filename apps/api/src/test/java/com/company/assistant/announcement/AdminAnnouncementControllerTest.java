@@ -21,9 +21,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -145,6 +148,32 @@ class AdminAnnouncementControllerTest {
                         .with(user("1").roles("ADMIN")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"title\": \"Baslik\", \"content\": \"icerik\" }"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void admin_duyuruyuSilebilir() throws Exception {
+        mockMvc.perform(delete("/admin/announcements/10")
+                        .with(user("1").roles("ADMIN")).with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(adminAnnouncementService).delete(10);
+    }
+
+    @Test
+    void duzCalisan_duyuruSilemez() throws Exception {
+        mockMvc.perform(delete("/admin/announcements/10")
+                        .with(user("1").roles("EMPLOYEE")).with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void olmayanDuyuruSilinirse404Doner() throws Exception {
+        doThrow(new AnnouncementNotFoundException("Duyuru bulunamadı: 999"))
+                .when(adminAnnouncementService).delete(999);
+
+        mockMvc.perform(delete("/admin/announcements/999")
+                        .with(user("1").roles("ADMIN")).with(csrf()))
                 .andExpect(status().isNotFound());
     }
 }
