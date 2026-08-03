@@ -49,9 +49,14 @@ export const router = createBrowserRouter([
             children: [
               { path: "/admin", element: <AdminDashboardPage /> },
               { path: "/admin/schedules", element: <AdminSchedulesPage /> },
-              { path: "/admin/surveys", element: <AdminSurveysPage /> },
               { path: "/admin/announcements", element: <AdminAnnouncementsPage /> },
             ],
+          },
+          {
+            // C-14 (#123): anket yonetimi yalnizca hr_admin / system_admin
+            // (AdminSurveyController backend guard'ini yansitir).
+            element: <RequireRole roles={["admin"]} subRoles={["hr_admin", "system_admin"]} />,
+            children: [{ path: "/admin/surveys", element: <AdminSurveysPage /> }],
           },
           {
             // B-9: arac yonetimi yalnizca fleet_admin / system_admin (B-8 backend guard'ini yansitir)
@@ -77,9 +82,11 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            // C-2 (#18): menu yonetimi backend'de sadece hasRole('ADMIN') istiyor,
-            // subRole kisitlamasi yok - herhangi bir admin excel yukleyebilir/silebilir.
-            element: <RequireRole roles={["admin"]} />,
+            // C-2 (#18): menu yonetimi.
+            // C-14 (#123): once backend'de sadece genel hasRole('ADMIN') vardi, herhangi
+            // bir admin excel yukleyebiliyordu. Artik yalnizca canteen_admin / system_admin
+            // (AdminMenuController backend guard'ini yansitir).
+            element: <RequireRole roles={["admin"]} subRoles={["canteen_admin", "system_admin"]} />,
             children: [{ path: "/admin/menu", element: <AdminMenuPage /> }],
           },
           {
