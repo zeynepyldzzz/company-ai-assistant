@@ -31,6 +31,12 @@ public class AnnouncementController {
         return ResponseEntity.ok(announcementService.getAnnouncements());
     }
 
+    /** Ana sayfada sadece aktif (suresi dolmamis) duyurular gosterilir. */
+    @GetMapping("/announcements/active")
+    public ResponseEntity<List<AnnouncementDto>> getActiveAnnouncements() {
+        return ResponseEntity.ok(announcementService.getActiveAnnouncements());
+    }
+
     @GetMapping("/announcements/{id}")
     public ResponseEntity<AnnouncementDto> getAnnouncement(@PathVariable("id") Integer id) {
         return ResponseEntity.ok(announcementService.getAnnouncement(id));

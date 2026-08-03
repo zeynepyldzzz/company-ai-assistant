@@ -35,6 +35,9 @@ public class Announcement {
     @Column(name = "is_pinned", nullable = false)
     private boolean pinned = false;
 
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
     public Integer getId() {
         return id;
     }
@@ -81,5 +84,13 @@ public class Announcement {
 
     public void setPinned(boolean pinned) {
         this.pinned = pinned;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

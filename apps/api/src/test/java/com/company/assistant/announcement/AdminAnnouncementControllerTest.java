@@ -54,7 +54,7 @@ class AdminAnnouncementControllerTest {
     @Test
     void admin_duyuruOlusturabilir() throws Exception {
         when(adminAnnouncementService.create(eq(1), any())).thenReturn(
-                new AnnouncementDto(10, "Baslik", "icerik", false, LocalDateTime.of(2026, 7, 27, 10, 0)));
+                new AnnouncementDto(10, "Baslik", "icerik", false, LocalDateTime.of(2026, 7, 27, 10, 0), null, true));
 
         mockMvc.perform(post("/admin/announcements")
                         .with(user("1").roles("ADMIN")).with(csrf())
@@ -79,7 +79,7 @@ class AdminAnnouncementControllerTest {
     @Test
     void admin_duyuruyuSabitleyebilir() throws Exception {
         when(adminAnnouncementService.togglePin(10)).thenReturn(
-                new AnnouncementDto(10, "Baslik", "icerik", true, LocalDateTime.of(2026, 7, 27, 10, 0)));
+                new AnnouncementDto(10, "Baslik", "icerik", true, LocalDateTime.of(2026, 7, 27, 10, 0), null, true));
 
         mockMvc.perform(put("/admin/announcements/10/pin")
                         .with(user("1").roles("ADMIN")).with(csrf()))
@@ -93,6 +93,58 @@ class AdminAnnouncementControllerTest {
 
         mockMvc.perform(put("/admin/announcements/999/pin")
                         .with(user("1").roles("ADMIN")).with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void admin_gecerlilikTarihiIleDuyuruOlusturabilir() throws Exception {
+        when(adminAnnouncementService.create(eq(1), any())).thenReturn(
+                new AnnouncementDto(10, "Baslik", "icerik", false, LocalDateTime.of(2026, 7, 27, 10, 0),
+                        LocalDateTime.of(2026, 8, 10, 0, 0), true));
+
+        mockMvc.perform(post("/admin/announcements")
+                        .with(user("1").roles("ADMIN")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"title\": \"Baslik\", \"content\": \"icerik\", \"expiresAt\": \"2026-08-10T00:00:00\" }"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.expiresAt").value("2026-08-10T00:00:00"));
+    }
+
+    @Test
+    void admin_duyuruyuGuncelleyebilir() throws Exception {
+        when(adminAnnouncementService.update(eq(10), any())).thenReturn(
+                new AnnouncementDto(10, "Yeni Baslik", "Yeni icerik", false,
+                        LocalDateTime.of(2026, 7, 27, 10, 0), LocalDateTime.of(2026, 9, 1, 0, 0), true));
+
+        mockMvc.perform(put("/admin/announcements/10")
+                        .with(user("1").roles("ADMIN")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"title\": \"Yeni Baslik\", \"content\": \"Yeni icerik\", "
+                                + "\"expiresAt\": \"2026-09-01T00:00:00\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Yeni Baslik"));
+
+        verify(adminAnnouncementService).update(eq(10), any());
+    }
+
+    @Test
+    void duzCalisan_duyuruGuncelleyemez() throws Exception {
+        mockMvc.perform(put("/admin/announcements/10")
+                        .with(user("1").roles("EMPLOYEE")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"title\": \"Baslik\", \"content\": \"icerik\" }"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void olmayanDuyuruGuncellenirse404Doner() throws Exception {
+        when(adminAnnouncementService.update(eq(999), any()))
+                .thenThrow(new AnnouncementNotFoundException("Duyuru bulunamadı: 999"));
+
+        mockMvc.perform(put("/admin/announcements/999")
+                        .with(user("1").roles("ADMIN")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"title\": \"Baslik\", \"content\": \"icerik\" }"))
                 .andExpect(status().isNotFound());
     }
 }
