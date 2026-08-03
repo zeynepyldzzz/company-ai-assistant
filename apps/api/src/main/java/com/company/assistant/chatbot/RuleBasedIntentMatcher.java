@@ -45,6 +45,7 @@ public class RuleBasedIntentMatcher {
 
     private static final String INTENT_SHUTTLE_ROUTE = "servis_guzergah";
     private static final String INTENT_SHUTTLE_HOURS = "servis_saatleri";
+    private static final String INTENT_SHUTTLE_NEAREST = "servis_en_yakin";
     private static final String INTENT_PERSON = "rehber_kisi";
     private static final String INTENT_DEPARTMENT = "rehber_departman";
 
@@ -60,6 +61,14 @@ public class RuleBasedIntentMatcher {
     private static final List<String> SHUTTLE_WORDS =
             List.of("servis", "guzergah", "durak", "hatti");
     private static final List<String> SHUTTLE_TIME_WORDS = List.of("saat", "kacta", "kalkis", "kalkiyor");
+
+    /**
+     * A-21 (#146): yakinlik ifadeleri. Bu kural SHUTTLE bloğundan ONCE calismali, cunku
+     * "kadıköy'e en yakın servis" cumlesinde bilinen bir durak adi geciyor ve mevcut kural
+     * onu dogrudan servis_guzergah'a yonlendirirdi — embedding'e hic dusmeden. Yani yalnizca
+     * ornek cumle eklemek bu vakayi COZMEZDI.
+     */
+    private static final List<String> NEAREST_WORDS = List.of("en yakin", "yakinimdaki", "yakinimda");
     // "posta" A-20'de eklendi: "e-posta" ASCII katlamadan sonra tireli kalir ve ne "eposta"
     // ne de "e posta" alt-dizesini icerir — en yaygin yazim bicimi kurala hic takilmiyordu.
     private static final List<String> PERSON_WORDS =
@@ -125,6 +134,10 @@ public class RuleBasedIntentMatcher {
 
         if (PLATE.matcher(text).find()) {
             return rule(INTENT_SHUTTLE_ROUTE, "plaka");
+        }
+        // A-21: yakinlik + servis alani -> yonlendirme intent'i. Durak adi kuralindan ONCE.
+        if (containsAny(text, NEAREST_WORDS) && containsAny(text, SHUTTLE_WORDS)) {
+            return rule(INTENT_SHUTTLE_NEAREST, "en yakın + servis");
         }
         if (containsAny(text, SHUTTLE_WORDS)) {
             Optional<IntentClassificationService.IntentResult> shuttle = matchShuttle(text);

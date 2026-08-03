@@ -87,7 +87,18 @@ class IntentCalibrationIT {
             new Case("ofiste olanları listele", "calisma_duzeni", "0.673 — esigin kil payi altinda"),
             new Case("ofiste olanları söyle", "calisma_duzeni", "0.616 — ikinci emir fiili"),
 
+            // --- A-21 (#146): en yakin servis yonlendirmesi ---
+            new Case("bana en yakın servis hangisi", "servis_en_yakin", "kural: en yakın + servis"),
+            new Case("en yakın durak nerede", "servis_en_yakin", "kural"),
+            new Case("kadıköy'e en yakın servis", "servis_en_yakin",
+                    "durak adi geciyor ama yakinlik kurali oncelikli"),
+            new Case("yakınımdaki servis durağı", "servis_en_yakin", "kisa form"),
+
             // --- Capraz kirlenme nobetcileri: gun nitelemesi intent'ler arasi paylasilir ---
+            // A-21 nobetcileri: uc servis intent'i de "servis" kelimesini paylasiyor,
+            // ayrim yalnizca "en yakin" ifadesinde. En kirilgan yer burasi.
+            new Case("kadıköy servisi kaçta", "servis_saatleri", "NOBETCI — A-21 calmamali"),
+            new Case("servis saatleri", "servis_saatleri", "NOBETCI — vitrin sorusu (A-22)"),
             // A-20 nobetcisi: durum kelimesi ("ofiste"/"nerede") tasiyan LISTE sorulari
             // tek kisilik rehber yanitina KAYMAMALI.
             new Case("çalışanlar nerede", "calisma_duzeni", "NOBETCI — kural rehber_kisi'ye almamali"),
