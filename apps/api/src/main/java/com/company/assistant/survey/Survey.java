@@ -37,6 +37,10 @@ public class Survey {
     @Column(name = "published", nullable = false)
     private boolean published = false;
 
+    /** C-13 (#121): anketin son yanit tarihi. Null ise deadline yok, hep acik. */
+    @Column(name = "deadline")
+    private LocalDateTime deadline;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -51,4 +55,12 @@ public class Survey {
 
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
+
+    public LocalDateTime getDeadline() { return deadline; }
+    public void setDeadline(LocalDateTime deadline) { this.deadline = deadline; }
+
+    /** C-13 (#121): deadline gecmisse anket kapali sayilir (deadline null ise her zaman acik). */
+    public boolean isExpired() {
+        return deadline != null && LocalDateTime.now().isAfter(deadline);
+    }
 }

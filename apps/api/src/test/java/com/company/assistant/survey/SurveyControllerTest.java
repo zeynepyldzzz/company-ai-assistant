@@ -20,6 +20,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,11 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// C-7 (#51) Test: FR-42/FR-43.
-// Not: /feedback icin Authentication PARAMETRE OLARAK BILE ALINMAZ; bu yuzden
-// "kimligi gormezden gelir" gibi bir test yazmak yerine (aksi mumkun olmadigi
-// icin), gercek davranisi kanitliyoruz: submitFeedback SADECE govde ile cagrilir,
-// hicbir employeeId parametresi YOKTUR (metot imzasinda yer almaz).
+// C-7 (#51) Test: FR-42/FR-43. C-13 (#121): sabit secenek (optionId) + response-count.
 @WebMvcTest(SurveyController.class)
 @Import({SecurityConfig.class, RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class})
 class SurveyControllerTest {
@@ -76,7 +73,7 @@ class SurveyControllerTest {
         mockMvc.perform(post("/surveys/7/responses")
                         .with(user("42")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"answers\": { \"q1\": \"evet\" } }"))
+                        .content("{ \"optionId\": 3 }"))
                 .andExpect(status().isCreated());
 
         verify(surveyService).submitResponse(eq(7), eq(42), any());
@@ -87,10 +84,45 @@ class SurveyControllerTest {
         mockMvc.perform(post("/surveys/7/responses")
                         .with(user("99")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"answers\": { \"q1\": \"evet\" } }"))
+                        .content("{ \"optionId\": 3 }"))
                 .andExpect(status().isCreated());
 
         verify(surveyService).submitResponse(eq(7), eq(99), any());
+    }
+
+    // C-13 (#121): ayni calisan ikinci kez oy vermeye calisirsa 409 doner.
+    @Test
+    void postResponse_dahaOnceYanitVerdiyse_409Doner() throws Exception {
+        doThrow(new SurveyAlreadyRespondedException("Bu ankete daha önce yanıt verdiniz: 7"))
+                .when(surveyService).submitResponse(eq(7), eq(42), any());
+
+        mockMvc.perform(post("/surveys/7/responses")
+                        .with(user("42")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"optionId\": 3 }"))
+                .andExpect(status().isConflict());
+    }
+
+    // C-13 (#121): deadline gecmisse 409 doner.
+    @Test
+    void postResponse_deadlineGectiyse_409Doner() throws Exception {
+        doThrow(new SurveyDeadlinePassedException("Anketin son yanıt tarihi geçti: 7"))
+                .when(surveyService).submitResponse(eq(7), eq(42), any());
+
+        mockMvc.perform(post("/surveys/7/responses")
+                        .with(user("42")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"optionId\": 3 }"))
+                .andExpect(status().isConflict());
+    }
+
+    // C-13 (#121): calisana acik response-count endpoint'i.
+    @Test
+    void responseCount_girisYapmisCalisan_200Doner() throws Exception {
+        when(surveyService.getResponseCount(7)).thenReturn(new SurveyResponseCountResponse(7, 5L));
+
+        mockMvc.perform(get("/surveys/7/response-count").with(user("42")))
+                .andExpect(status().isOk());
     }
 
     // FR-43 anonimlik: /feedback govdesinde employeeId gibi bir alan gonderilse

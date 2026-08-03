@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // C-8 (#52): POST /admin/surveys, PUT /admin/surveys/{id}/publish, GET /admin/surveys/{id}/results.
+// C-13 (#121): olusturma govdesine deadline + options (min 2) eklendi.
 // /admin/** SecurityConfig'te hasRole("ADMIN") ile korunuyor.
 @WebMvcTest(AdminSurveyController.class)
 @Import({SecurityConfig.class, RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class})
@@ -57,8 +58,10 @@ class AdminSurveyControllerTest {
     @Test
     void admin_tumAnketleriListeleyebilir() throws Exception {
         when(adminSurveyService.listAll()).thenReturn(java.util.List.of(
-                new AdminSurveyResponse(10, "Memnuniyet Anketi", true, LocalDateTime.of(2026, 7, 27, 10, 0)),
-                new AdminSurveyResponse(11, "Taslak Anket", false, LocalDateTime.of(2026, 7, 26, 9, 0))));
+                new AdminSurveyResponse(10, "Memnuniyet Anketi", true, LocalDateTime.of(2026, 7, 27, 10, 0),
+                        null, java.util.List.of(new SurveyOptionDto(1, "Evet"), new SurveyOptionDto(2, "Hayır"))),
+                new AdminSurveyResponse(11, "Taslak Anket", false, LocalDateTime.of(2026, 7, 26, 9, 0),
+                        null, java.util.List.of(new SurveyOptionDto(3, "A"), new SurveyOptionDto(4, "B")))));
 
         mockMvc.perform(get("/admin/surveys")
                         .with(user("1").roles("ADMIN")))
@@ -70,12 +73,13 @@ class AdminSurveyControllerTest {
     @Test
     void admin_anketOlusturabilir() throws Exception {
         when(adminSurveyService.createSurvey(eq(1), any())).thenReturn(
-                new AdminSurveyResponse(10, "Memnuniyet Anketi", false, LocalDateTime.of(2026, 7, 27, 10, 0)));
+                new AdminSurveyResponse(10, "Memnuniyet Anketi", false, LocalDateTime.of(2026, 7, 27, 10, 0),
+                        null, java.util.List.of(new SurveyOptionDto(1, "Evet"), new SurveyOptionDto(2, "Hayır"))));
 
         mockMvc.perform(post("/admin/surveys")
                         .with(user("1").roles("ADMIN")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"title\": \"Memnuniyet Anketi\" }"))
+                        .content("{ \"title\": \"Memnuniyet Anketi\", \"options\": [\"Evet\", \"Hayır\"] }"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.published").value(false));
@@ -88,7 +92,7 @@ class AdminSurveyControllerTest {
         mockMvc.perform(post("/admin/surveys")
                         .with(user("1").roles("EMPLOYEE")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"title\": \"Memnuniyet Anketi\" }"))
+                        .content("{ \"title\": \"Memnuniyet Anketi\", \"options\": [\"Evet\", \"Hayır\"] }"))
                 .andExpect(status().isForbidden());
     }
 
@@ -97,14 +101,15 @@ class AdminSurveyControllerTest {
         mockMvc.perform(post("/admin/surveys")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"title\": \"Memnuniyet Anketi\" }"))
+                        .content("{ \"title\": \"Memnuniyet Anketi\", \"options\": [\"Evet\", \"Hayır\"] }"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void admin_anketiYayimlayabilir() throws Exception {
         when(adminSurveyService.publish(10)).thenReturn(
-                new AdminSurveyResponse(10, "Memnuniyet Anketi", true, LocalDateTime.of(2026, 7, 27, 10, 0)));
+                new AdminSurveyResponse(10, "Memnuniyet Anketi", true, LocalDateTime.of(2026, 7, 27, 10, 0),
+                        null, java.util.List.of(new SurveyOptionDto(1, "Evet"), new SurveyOptionDto(2, "Hayır"))));
 
         mockMvc.perform(put("/admin/surveys/10/publish")
                         .with(user("1").roles("ADMIN")).with(csrf()))
@@ -140,7 +145,7 @@ class AdminSurveyControllerTest {
     void admin_sonuclariOzetHalindeGorebilir() throws Exception {
         when(adminSurveyService.getResults(10)).thenReturn(new SurveyResultsResponse(
                 10, "Memnuniyet Anketi", true, 2, 1,
-                Map.of("q1", Map.of("evet", 2L)),
+                Map.of("Evet", 2L, "Hayır", 0L),
                 java.util.List.of("harika bir anket")));
 
         mockMvc.perform(get("/admin/surveys/10/results")
@@ -148,7 +153,7 @@ class AdminSurveyControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalResponses").value(2))
                 .andExpect(jsonPath("$.totalFeedback").value(1))
-                .andExpect(jsonPath("$.answerCounts.q1.evet").value(2));
+                .andExpect(jsonPath("$.answerCounts.Evet").value(2));
     }
 
     // C-T3 (#54): sonuc goruntuleme ucu da yetkisiz rollerce cagrilamamali.
