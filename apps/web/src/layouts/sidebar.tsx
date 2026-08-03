@@ -148,7 +148,7 @@ export function Sidebar() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/" || to === "/admin"}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
                 cn(
