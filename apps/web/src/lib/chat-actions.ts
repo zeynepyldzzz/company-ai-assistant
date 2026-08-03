@@ -11,8 +11,13 @@
  */
 const ACTION_ROUTES: Record<string, string> = {
   menu: "/menu",
-  shuttle_routes: "/shuttle/routes",
-  shuttle_recommendation: "/shuttle/recommendation",
+  // B-13 iki servis sayfasini (guzergahlar + en yakin servis) tek /shuttle altinda
+  // birlestirdi; A-22'de yazilan /shuttle/routes ve /shuttle/recommendation rotalari
+  // artik YOK ve butonlar bos sayfaya goturuyordu. Iki hedef de ayni sayfaya cikiyor,
+  // ancak SEMANTIK ayrim korunuyor: sayfa ileride tekrar bolunurse yalnizca bu harita
+  // degisir, backend ve mobil istemci etkilenmez.
+  shuttle_routes: "/shuttle",
+  shuttle_recommendation: "/shuttle",
   directory_employees: "/directory/employees",
   directory_departments: "/directory/departments",
   vehicles: "/vehicles",
