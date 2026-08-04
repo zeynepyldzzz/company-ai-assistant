@@ -1,11 +1,13 @@
 import {
   ShuttleRoutePagedResponseSchema,
   ShuttleStopListSchema,
+  ShuttleRouteGeometrySchema,
   ShuttleRoutePlateSchema,
   ShuttleRouteDetailSchema,
   ShuttleRecommendationSchema,
   type ShuttleRoutePagedResponse,
   type ShuttleStopList,
+  type ShuttleRouteGeometry,
   type ShuttleRoutePlate,
   type ShuttleRouteDetail,
   type ShuttleRecommendation,
@@ -33,6 +35,11 @@ export async function listShuttleRoutes(
 export async function getShuttleStops(routeId: number, token: string): Promise<ShuttleStopList> {
   const data = await apiFetch<unknown>(`/shuttle-routes/${routeId}/stops`, { token });
   return ShuttleStopListSchema.parse(data);
+}
+
+export async function getShuttleRouteGeometry(routeId: number, token: string): Promise<ShuttleRouteGeometry> {
+  const data = await apiFetch<unknown>(`/shuttle-routes/${routeId}/geometry`, { token });
+  return ShuttleRouteGeometrySchema.parse(data);
 }
 
 export async function getShuttlePlate(routeId: number, token: string): Promise<ShuttleRoutePlate> {

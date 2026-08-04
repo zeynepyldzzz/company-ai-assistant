@@ -14,6 +14,7 @@ import com.company.assistant.auth.RestAccessDeniedHandler;
 import com.company.assistant.auth.RestAuthenticationEntryPoint;
 import com.company.assistant.common.PagedResponse;
 import com.company.assistant.config.SecurityConfig;
+import com.company.assistant.routing.Coordinate;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -86,6 +87,30 @@ class ShuttleControllerTest {
                 .thenThrow(new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: 999"));
 
         mockMvc.perform(get("/shuttle-routes/999/stops").with(user("calisan")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("SHUTTLE_ROUTE_NOT_FOUND"));
+    }
+
+    @Test
+    void getGeometry_dondurur() throws Exception {
+        List<Coordinate> geometry = List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04));
+        when(shuttleService.getRouteGeometry(1)).thenReturn(new ShuttleRouteGeometryResponse(1, geometry));
+
+        mockMvc.perform(get("/shuttle-routes/1/geometry").with(user("calisan")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.routeId").value(1))
+                .andExpect(jsonPath("$.coordinates[0].lat").value(40.98))
+                .andExpect(jsonPath("$.coordinates[0].lng").value(29.03))
+                .andExpect(jsonPath("$.coordinates[1].lat").value(40.99))
+                .andExpect(jsonPath("$.coordinates[1].lng").value(29.04));
+    }
+
+    @Test
+    void getGeometry_bulunamayanRota404Doner() throws Exception {
+        when(shuttleService.getRouteGeometry(999))
+                .thenThrow(new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: 999"));
+
+        mockMvc.perform(get("/shuttle-routes/999/geometry").with(user("calisan")))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("SHUTTLE_ROUTE_NOT_FOUND"));
     }
