@@ -11,12 +11,14 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * C-2: POST /admin/menus/import, DELETE /admin/menus/{id}
  *
- * @PreAuthorize("hasRole('ADMIN')") -> bu satır olmadan HERKES menü
- * yükleyebilir/silebilir demektir.
+ * C-14 (#123): once sadece genel hasRole("ADMIN") kontrolu vardi (hangi
+ * sub-role oldugu onemsizdi, ornegin bir hr_admin de menu yukleyebiliyordu).
+ * Diger admin modulleriyle tutarli olmasi icin canteen_admin ve system_admin
+ * ile sinirlandirildi.
  */
 @RestController
 @RequestMapping("/admin/menus")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('ROLE_CANTEEN_ADMIN') or hasAuthority('ROLE_SYSTEM_ADMIN')")
 public class AdminMenuController {
 
     private final MenuImportService menuImportService;

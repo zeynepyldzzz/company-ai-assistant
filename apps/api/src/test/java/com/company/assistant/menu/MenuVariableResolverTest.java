@@ -58,6 +58,52 @@ class MenuVariableResolverTest {
         assertThat(capturedDate()).isEqualTo(LocalDate.now().plusDays(1));
     }
 
+    // --- A-27 (#176): hafta ofseti goreli gun ipuclarina da uygulanir ---
+
+    // Olculdu (chat_message_log): "haftaya bugün yemekte ne var" 0.916 ile dogru kategoriye
+    // gidiyordu, yani hata siniflandirmada degil tarih cikarimindaydi — "haftaya" bilgisi
+    // sessizce kayboluyor ve BUGUN donuyordu.
+    @Test
+    void haftayaBugunBirHaftaSonrasiniCeker() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "haftaya bugün yemekte ne var");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().plusDays(7));
+    }
+
+    @Test
+    void gecenHaftaBugunBirHaftaOncesiniCeker() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "geçen hafta bugün ne yedim");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().minusDays(7));
+    }
+
+    // Gun adi dalinda eskiden yalnizca ileri yon vardi; "geçen hafta çarşamba" BU haftanin
+    // carsambasini donduruyordu.
+    @Test
+    void gecenHaftaGunAdiOncekiHaftayaGider() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "geçen hafta çarşamba ne vardı");
+
+        LocalDate captured = capturedDate();
+        assertThat(captured.getDayOfWeek()).isEqualTo(DayOfWeek.WEDNESDAY);
+        assertThat(captured).isEqualTo(currentMonday().minusDays(7).plusDays(2));
+    }
+
+    // NOBETCI: hafta ofseti TASIMAYAN sorular degismedi.
+    @Test
+    void haftaOfsetiYoksaGoreliGunlerDegismez() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "dün ne vardı");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now().minusDays(1));
+    }
+
     @Test
     void gunAdiBuHaftakiOGuneCozulur() {
         when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());

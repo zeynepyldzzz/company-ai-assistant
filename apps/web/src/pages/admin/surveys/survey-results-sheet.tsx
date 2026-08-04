@@ -63,31 +63,23 @@ export function SurveyResultsSheet({ survey }: { survey: AdminSurvey }) {
               {Object.keys(data.answerCounts).length === 0 ? (
                 <p className="text-muted-foreground text-sm">Henüz yanıt gönderilmemiş.</p>
               ) : (
-                <div className="space-y-5">
-                  {Object.entries(data.answerCounts).map(([question, counts]) => {
-                    const entries = Object.entries(counts);
-                    const max = Math.max(...entries.map(([, count]) => count), 1);
+                <div className="space-y-1.5">
+                  {Object.entries(data.answerCounts).map(([option, count]) => {
+                    const max = Math.max(...Object.values(data.answerCounts), 1);
                     return (
-                      <div key={question} className="space-y-2">
-                        <div className="text-sm font-medium">{question}</div>
-                        <div className="space-y-1.5">
-                          {entries.map(([answer, count]) => (
-                            <div key={answer} className="flex items-center gap-2 text-xs">
-                              <span className="w-24 shrink-0 truncate" title={answer}>
-                                {answer}
-                              </span>
-                              <div className="bg-muted h-4 flex-1 overflow-hidden rounded">
-                                <div
-                                  className="bg-primary h-full rounded"
-                                  style={{ width: `${(count / max) * 100}%` }}
-                                />
-                              </div>
-                              <span className="text-muted-foreground w-6 shrink-0 text-right">
-                                {count}
-                              </span>
-                            </div>
-                          ))}
+                      <div key={option} className="flex items-center gap-2 text-xs">
+                        <span className="w-24 shrink-0 truncate" title={option}>
+                          {option}
+                        </span>
+                        <div className="bg-muted h-4 flex-1 overflow-hidden rounded">
+                          <div
+                            className="bg-primary h-full rounded"
+                            style={{ width: `${(count / max) * 100}%` }}
+                          />
                         </div>
+                        <span className="text-muted-foreground w-6 shrink-0 text-right">
+                          {count}
+                        </span>
                       </div>
                     );
                   })}

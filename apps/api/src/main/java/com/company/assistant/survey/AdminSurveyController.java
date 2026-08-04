@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,10 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * C-8 (#52): Admin anket olusturma + yayimlama + sonuc goruntuleme.
- * /admin/** yolu SecurityConfig'te hasRole("ADMIN") ile korunuyor.
+ * C-14 (#123): once /admin/** yolu SecurityConfig'te sadece genel hasRole("ADMIN")
+ * ile korunuyordu (hangi sub-role oldugu onemsizdi). Diger admin modulleriyle
+ * (AdminVehicleController, AdminShuttleController, PolicyDocumentController vb.)
+ * tutarli olmasi icin anket yonetimi hr_admin ve system_admin ile sinirlandirildi.
  */
 @RestController
 @RequestMapping("/admin/surveys")
+@PreAuthorize("hasAuthority('ROLE_HR_ADMIN') or hasAuthority('ROLE_SYSTEM_ADMIN')")
 public class AdminSurveyController {
 
     private final AdminSurveyService adminSurveyService;
@@ -47,6 +53,20 @@ public class AdminSurveyController {
     @PutMapping("/{id}/publish")
     public ResponseEntity<AdminSurveyResponse> publish(@PathVariable("id") Integer id) {
         return ResponseEntity.ok(adminSurveyService.publish(id));
+    }
+
+    /** C-13 (#121): anket duzenleme - baslik, secenekler, gecerlilik (deadline) tarihi. */
+    @PutMapping("/{id}")
+    public ResponseEntity<AdminSurveyResponse> updateSurvey(@PathVariable("id") Integer id,
+                                                             @RequestBody AdminSurveyUpdateRequest request) {
+        return ResponseEntity.ok(adminSurveyService.updateSurvey(id, request));
+    }
+
+    /** C-13 (#121): anket silme - bagli secenek/yanit/geri bildirim kayitlariyla birlikte. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSurvey(@PathVariable("id") Integer id) {
+        adminSurveyService.deleteSurvey(id);
+        return ResponseEntity.noContent().build();
     }
 
     /** FR-44: yetkili kullanicilar anket sonuclarini gorebilir. */

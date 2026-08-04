@@ -19,9 +19,9 @@ import { useAuth } from "@/auth/auth-context";
 import { useMe } from "@/auth/use-me";
 import { getTodayMenu } from "@/api/menu";
 import { getMySchedule, getMySummary } from "@/api/schedule";
-import { listActiveSurveys, submitSurveyResponse, type ActiveSurvey } from "@/api/survey";
+import { listActiveSurveys, submitSurveyResponse, submitFeedback } from "@/api/survey";
 import { getActiveAnnouncements } from "@/api/announcement";
-import type { ScheduleDay } from "@company/shared";
+import type { ScheduleDay, Survey } from "@company/shared";
 import { ApiError } from "@/api/client";
 import { cn } from "@/lib/utils";
 
@@ -45,18 +45,27 @@ const statusLabels: Record<ScheduleDay["status"], string> = {
   leave: "İzinli",
 };
 
-function SurveyRespondSheet({ survey }: { survey: ActiveSurvey }) {
+// C-13 (#121): sikli soruya oy verme + istege bagli anonim yorum.
+function SurveyRespondSheet({ survey }: { survey: Survey }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [answer, setAnswer] = useState("");
+  const [optionId, setOptionId] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => submitSurveyResponse(survey.id, answer.trim(), token!),
+    mutationFn: async () => {
+      await submitSurveyResponse(survey.id, optionId!, token!);
+      if (comment.trim()) {
+        // FR-43: anonim - kimlik hic gonderilmez, sadece surveyId + yorum metni.
+        await submitFeedback(comment.trim(), survey.id, token!);
+      }
+    },
     onSuccess: () => {
       toast.success("Yanıtınız kaydedildi.");
       setOpen(false);
-      setAnswer("");
+      setOptionId(null);
+      setComment("");
       queryClient.invalidateQueries({ queryKey: ["surveys", "active"] });
     },
     onError: (err) => {
@@ -70,21 +79,44 @@ function SurveyRespondSheet({ survey }: { survey: ActiveSurvey }) {
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{survey.title}</SheetTitle>
-          <SheetDescription>Görüşünüzü kısaca yazın.</SheetDescription>
+          <SheetDescription>Bir seçenek seçin. İsterseniz anonim bir yorum da ekleyebilirsiniz.</SheetDescription>
         </SheetHeader>
-        <div className="px-4">
-          <Textarea
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Yanıtınız…"
-            rows={5}
-            autoFocus
-          />
+        <div className="space-y-4 px-4">
+          <div className="space-y-2">
+            {survey.options.map((option) => (
+              <label
+                key={option.id}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm",
+                  optionId === option.id && "border-primary bg-primary/5"
+                )}
+              >
+                <input
+                  type="radio"
+                  name={`survey-${survey.id}`}
+                  checked={optionId === option.id}
+                  onChange={() => setOptionId(option.id)}
+                />
+                {option.optionText}
+              </label>
+            ))}
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-muted-foreground text-xs font-medium">
+              Anonim yorum (opsiyonel — kimliğiniz kaydedilmez)
+            </span>
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Eklemek istediğiniz bir şey var mı?"
+              rows={3}
+            />
+          </div>
         </div>
         <SheetFooter>
           <Button
             onClick={() => mutation.mutate()}
-            disabled={!answer.trim() || mutation.isPending}
+            disabled={optionId === null || mutation.isPending}
           >
             {mutation.isPending ? "Gönderiliyor…" : "Gönder"}
           </Button>
@@ -185,7 +217,21 @@ export function DashboardPage() {
             {surveysQuery.data.map((survey) => (
               <Card key={survey.id}>
                 <CardContent className="flex items-center justify-between gap-3 py-1">
-                  <span className="text-sm font-medium">{survey.title}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium">{survey.title}</span>
+                    {survey.deadline && (
+                      <span className="text-muted-foreground text-xs">
+                        Son yanıt:{" "}
+                        {new Date(survey.deadline).toLocaleString("tr-TR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    )}
+                  </div>
                   <SurveyRespondSheet survey={survey} />
                 </CardContent>
               </Card>

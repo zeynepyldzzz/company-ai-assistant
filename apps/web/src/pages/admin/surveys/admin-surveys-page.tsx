@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
-import { listAdminSurveys, publishSurvey } from "@/api/survey";
+import { listAdminSurveys, publishSurvey, deleteSurvey } from "@/api/survey";
 import { SurveyCreateSheet } from "./survey-create-sheet";
+import { SurveyEditSheet } from "./survey-edit-sheet";
 import { SurveyResultsSheet } from "./survey-results-sheet";
 
 function formatDate(value: string): string {
@@ -13,6 +15,7 @@ function formatDate(value: string): string {
 }
 
 // C-8 (#52): Admin anket oluşturma + yayımlama + sonuç görüntüleme (FR-44, FR-76).
+// C-13 (#121): düzenleme (mavi), silme (kırmızı) ve geçerlilik (deadline) tarihi eklendi.
 export function AdminSurveysPage() {
   const { token } = useAuth();
   const queryClient = useQueryClient();
@@ -34,6 +37,24 @@ export function AdminSurveysPage() {
       toast.error(message);
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteSurvey(id, token!),
+    onSuccess: () => {
+      toast.success("Anket silindi.");
+      queryClient.invalidateQueries({ queryKey: ["admin", "surveys"] });
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : "Anket silinemedi.";
+      toast.error(message);
+    },
+  });
+
+  function handleDelete(id: number, title: string) {
+    if (window.confirm(`"${title}" anketini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
+      deleteMutation.mutate(id);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -58,13 +79,14 @@ export function AdminSurveysPage() {
                 <th className="px-4 py-2 text-left font-medium">Başlık</th>
                 <th className="px-4 py-2 text-center font-medium">Durum</th>
                 <th className="px-4 py-2 text-left font-medium">Oluşturulma</th>
+                <th className="px-4 py-2 text-left font-medium">Geçerlilik (Son Yanıt)</th>
                 <th className="px-4 py-2 text-right font-medium">İşlemler</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-muted-foreground px-4 py-3 text-center">
+                  <td colSpan={5} className="text-muted-foreground px-4 py-3 text-center">
                     Henüz anket yok.
                   </td>
                 </tr>
@@ -86,6 +108,9 @@ export function AdminSurveysPage() {
                     <td className="text-muted-foreground px-4 py-2">
                       {formatDate(survey.createdAt)}
                     </td>
+                    <td className="text-muted-foreground px-4 py-2">
+                      {survey.deadline ? formatDate(survey.deadline) : "Süresiz"}
+                    </td>
                     <td className="px-4 py-2">
                       <div className="flex justify-end gap-2">
                         {!survey.published && (
@@ -97,6 +122,17 @@ export function AdminSurveysPage() {
                             Yayımla
                           </Button>
                         )}
+                        <SurveyEditSheet survey={survey} />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleDelete(survey.id, survey.title)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="size-4" />
+                          Sil
+                        </Button>
                         <SurveyResultsSheet survey={survey} />
                       </div>
                     </td>
