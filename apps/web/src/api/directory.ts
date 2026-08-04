@@ -1,10 +1,12 @@
 import {
+  CreateEmployeeResponseSchema,
   DepartmentPagedResponseSchema,
   DepartmentSchema,
   EmployeePagedResponseSchema,
   EmployeeSchema,
   type AdminDepartmentRequest,
   type AdminEmployeeRequest,
+  type CreateEmployeeResponse,
   type Department,
   type DepartmentPagedResponse,
   type Employee,
@@ -48,13 +50,30 @@ export async function getDepartmentById(id: number, token: string): Promise<Depa
 }
 
 // #84 (Hafta 4): admin çalışan CRUD (FR-68-71, hr_admin/system_admin).
-export async function createEmployee(body: AdminEmployeeRequest, token: string): Promise<Employee> {
+// A-29: sifre gonderilmezse backend uretir ve yanitta BIR KEZ doner.
+export async function createEmployee(
+  body: AdminEmployeeRequest,
+  token: string
+): Promise<CreateEmployeeResponse> {
   const data = await apiFetch<unknown>("/admin/employees", {
     method: "POST",
     token,
     body: JSON.stringify(body),
   });
-  return EmployeeSchema.parse(data);
+  return CreateEmployeeResponseSchema.parse(data);
+}
+
+// A-29: yeni gecici sifre uretir ve BIR KEZ doner; kullanici ilk girisinde kendi
+// sifresini belirler.
+export async function resetEmployeePassword(
+  id: number,
+  token: string
+): Promise<CreateEmployeeResponse> {
+  const data = await apiFetch<unknown>(`/admin/employees/${id}/reset-password`, {
+    method: "POST",
+    token,
+  });
+  return CreateEmployeeResponseSchema.parse(data);
 }
 
 export async function updateEmployee(

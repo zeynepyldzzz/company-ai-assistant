@@ -13,8 +13,19 @@ public class AuthDtos {
 
     }
 
+    /**
+     * A-29 (#178): {@code mustChangePassword} true ise kullanicinin sifresi sistem tarafindan
+     * uretilmis gecici bir sifredir ve kendi sifresini belirlemeden once baska bir sey
+     * yapmamalidir. Token yine de verilir — sifre degistirme ucu da kimlik dogrulamasi
+     * istiyor, dolayisiyla token olmadan akis tamamlanamazdi.
+     */
     public record LoginResponse(String accessToken, String refreshToken,
-            UserDto user) {
+            UserDto user, boolean mustChangePassword) {
+
+    }
+
+    /** A-29 (#178): POST /auth/password govdesi. */
+    public record ChangePasswordRequest(String currentPassword, String newPassword) {
 
     }
 

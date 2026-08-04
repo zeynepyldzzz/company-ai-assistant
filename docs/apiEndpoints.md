@@ -25,6 +25,7 @@
 | POST   | `/auth/refresh`             | Oturum token'ını yeniler                                                   | Herkes   | FR-03         |
 | POST   | `/auth/logout`              | Oturumu sonlandırır                                                        | Herkes   | FR-03         |
 | GET    | `/auth/session`             | Aktif oturum + rol bilgisini döner                                         | Herkes   | FR-03, NFR-04 |
+| POST   | `/auth/password`            | Kullanıcının kendi şifresini değiştirmesi (mevcut şifre doğrulanır)        | Herkes   | A-29 (#178)   |
 | GET    | `/me`                       | Giriş yapan kullanıcının profil bilgisi                                    | Herkes   | FR-07         |
 | GET    | `/dashboard`                | Kişiselleştirilmiş ana panel (hızlı erişim kartları, bekleyen bildirimler) | Çalışan  | FR-04–06      |
 | POST   | `/me/device-tokens`         | Mobil push bildirim cihaz token'ı kaydetme (Faz 2)                         | Herkes   | FR-46, 65–66  |
@@ -47,6 +48,15 @@
 | PUT | `/admin/knowledge-base/documents/{id}` | Doküman/politika güncelleme (yeni versiyon) | HR/Sistem Yöneticisi | FR-78, 58 |
 | DELETE | `/admin/knowledge-base/documents/{id}` | Doküman kaldırma | HR/Sistem Yöneticisi | FR-78 |
 | GET | `/admin/knowledge-base/documents/{id}/versions` | Doküman versiyon geçmişi | HR/Sistem Yöneticisi | FR-58, 78 |
+
+**Şifre akışı (A-29, #178)**
+
+Şifreyi yalnızca kullanıcının kendisi belirler; admin hiçbir uçtan şifre gönderemez.
+
+- `POST /admin/employees` — istek gövdesinde **şifre alanı yoktur**. Sistem geçici bir şifre üretir ve yanıtta bir kez döndürür: `{ employee, generatedPassword }`. Veritabanında yalnızca hash saklanır, düz metin hiçbir yerde tutulmaz.
+- `POST /admin/employees/{id}/reset-password` — aynı yanıt biçimi. Çalışan şifresini unuttuğunda kullanılır.
+- Geçici şifreyle giriş yapıldığında `POST /auth/login` (ve admin akışında `POST /auth/2fa/verify`) yanıtında `mustChangePassword: true` döner; istemci kullanıcıyı şifre değiştirmeye yönlendirir.
+- `POST /auth/password` — `{ currentPassword, newPassword }`. Mevcut şifre doğrulanır (token'a sahip olmak yeterli değil), yeni şifre en az 8 karakter olmalı ve eskisiyle aynı olamaz. Başarıda 204 döner ve `mustChangePassword` false olur.
 
 **Chatbot yanıt alanları (A-22, #141)**
 
@@ -159,6 +169,7 @@
 | POST   | `/admin/employees`                            | Çalışan oluşturma                                   | İK Yöneticisi     | FR-68 |
 | PUT    | `/admin/employees/{id}`                       | Çalışan güncelleme                                  | İK Yöneticisi     | FR-69 |
 | DELETE | `/admin/employees/{id}`                       | Çalışan silme                                       | İK Yöneticisi     | FR-70 |
+| POST   | `/admin/employees/{id}/reset-password`        | Yeni geçici şifre üretir (yanıtta bir kez döner)    | İK Yöneticisi     | A-29 (#178) |
 | POST   | `/admin/departments`                          | Departman oluşturma                                 | İK Yöneticisi     | FR-71 |
 | PUT    | `/admin/departments/{id}`                     | Departman güncelleme                                | İK Yöneticisi     | FR-71 |
 | DELETE | `/admin/departments/{id}`                     | Departman silme                                     | İK Yöneticisi     | FR-71 |

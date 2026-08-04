@@ -13,10 +13,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.company.assistant.auth.Role;
 import com.company.assistant.auth.RoleRepository;
+import com.company.assistant.auth.TemporaryPasswordGenerator;
 import com.company.assistant.auth.TotpService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -45,50 +45,62 @@ class AdminEmployeeServiceTest {
     @BeforeEach
     void setUp() {
         service = new AdminEmployeeService(
-                employeeRepository, departmentRepository, roleRepository, passwordEncoder, totpService);
-        // lenient: sifre-zorunlu testleri save()'e hic ulasmadan hata firlatiyor,
-        // bu stub o testlerde kullanilmiyor - strict stubbing bunu "gereksiz" sayar.
+                employeeRepository, departmentRepository, roleRepository, passwordEncoder,
+                totpService, new TemporaryPasswordGenerator());
         lenient().when(employeeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
+    // A-29 (#178): admin ARTIK HICBIR YOLLA sifre belirlemiyor — istek govdesinde password
+    // alani bile yok. Olusturmada sistem her zaman gecici sifre uretir.
+    //
+    // Gerekce: admin'in calisanin sifresini bilmesi, sifreyi kimlik dogrulama araci olmaktan
+    // cikarir. Once "admin isterse girsin" seklinde birakilmisti; iki yolun da sonucu gecici
+    // sifre oldugu icin birincisi tamamen kaldirildi ve kural tek cumleye indi.
     @Test
-    void sifresizOlusturmaGirisimi_hataFirlatir() {
+    void olusturmada_sistemHerZamanGeciciSifreUretir() {
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Test Calisan", "test@company.com", null, null, null, null, null);
+                "Test Calisan", "test@company.com", null, null, null, null);
 
-        assertThatThrownBy(() -> service.create(request))
-                .isInstanceOf(EmployeePasswordRequiredException.class);
-    }
-
-    @Test
-    void bosStringSifreyleOlusturma_hataFirlatir() {
-        AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Test Calisan", "test@company.com", null, null, null, null, "   ");
-
-        assertThatThrownBy(() -> service.create(request))
-                .isInstanceOf(EmployeePasswordRequiredException.class);
-    }
-
-    @Test
-    void sifreVerilirse_hashlenipKaydedilir() {
-        AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Test Calisan", "test@company.com", null, null, null, null, "gizliSifre123");
-
-        EmployeeResponse response = service.create(request);
+        AdminEmployeeCreateResponse response = service.create(request);
 
         ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
         org.mockito.Mockito.verify(employeeRepository).save(captor.capture());
         Employee saved = captor.getValue();
 
-        assertThat(saved.getPasswordHash()).isNotNull();
-        assertThat(passwordEncoder.matches("gizliSifre123", saved.getPasswordHash())).isTrue();
-        assertThat(response.getName()).isEqualTo("Test Calisan");
+        assertThat(response.generatedPassword()).isNotBlank();
+        assertThat(saved.isMustChangePassword()).isTrue();
+        // Uretilen sifre DUZ METIN saklanmaz; yalnizca hash'i kaydedilir.
+        assertThat(saved.getPasswordHash()).isNotEqualTo(response.generatedPassword());
+        assertThat(passwordEncoder.matches(response.generatedPassword(), saved.getPasswordHash())).isTrue();
+    }
+
+    // "Calisan sifresini unuttu" senaryosu: admin yeni bir GECICI sifre uretir, kalici
+    // sifreyi yine bilmez.
+    @Test
+    void sifreSifirlamada_yeniGeciciSifreUretilir() {
+        Employee existing = new Employee();
+        existing.setId(7);
+        existing.setName("Mevcut Calisan");
+        existing.setEmail("mevcut@company.com");
+        existing.setPasswordHash("$2a$10$eskiHash");
+        when(employeeRepository.findById(7)).thenReturn(Optional.of(existing));
+
+        AdminEmployeeCreateResponse response = service.resetPassword(7);
+
+        ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
+        org.mockito.Mockito.verify(employeeRepository).save(captor.capture());
+        Employee saved = captor.getValue();
+
+        assertThat(response.generatedPassword()).isNotBlank();
+        assertThat(saved.isMustChangePassword()).isTrue();
+        assertThat(saved.getPasswordHash()).isNotEqualTo("$2a$10$eskiHash");
+        assertThat(passwordEncoder.matches(response.generatedPassword(), saved.getPasswordHash())).isTrue();
     }
 
     @Test
     void rolsuzCalisanOlusturulursa_totpSecretUretilmez() {
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Test Calisan", "test@company.com", null, null, null, null, "gizliSifre123");
+                "Test Calisan", "test@company.com", null, null, null, null);
 
         service.create(request);
 
@@ -107,7 +119,7 @@ class AdminEmployeeServiceTest {
         when(totpService.generateSecret()).thenReturn("ABCDEFGHIJKLMNOP");
 
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Yeni Admin", "admin2@company.com", null, null, null, 3, "gizliSifre123");
+                "Yeni Admin", "admin2@company.com", null, null, null, 3);
 
         service.create(request);
 
@@ -119,8 +131,9 @@ class AdminEmployeeServiceTest {
         assertThat(saved.isTotpEnabled()).isFalse();
     }
 
+    // Guncelleme akisi sifreye HIC dokunmaz; sifirlama ayri bir uc uzerinden yapiliyor.
     @Test
-    void guncellemedeSifreBosBirakilirsa_mevcutSifreKorunur() {
+    void guncellemede_mevcutSifreKorunur() {
         Employee existing = new Employee();
         existing.setId(5);
         existing.setName("Eski Isim");
@@ -129,13 +142,14 @@ class AdminEmployeeServiceTest {
         when(employeeRepository.findById(5)).thenReturn(Optional.of(existing));
 
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Yeni Isim", "eski@company.com", null, null, null, null, null);
+                "Yeni Isim", "eski@company.com", null, null, null, null);
 
         service.update(5, request);
 
         ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
         org.mockito.Mockito.verify(employeeRepository).save(captor.capture());
         assertThat(captor.getValue().getPasswordHash()).isEqualTo("$2a$10$mevcutHash");
+        assertThat(captor.getValue().isMustChangePassword()).isFalse();
         assertThat(captor.getValue().getName()).isEqualTo("Yeni Isim");
     }
 }
