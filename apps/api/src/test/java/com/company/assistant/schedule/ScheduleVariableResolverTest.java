@@ -224,6 +224,30 @@ class ScheduleVariableResolverTest {
         }
     }
 
+    // A-27 (#176): "haftaya bugün" ifadesindeki hafta bilgisi kayboluyordu ve BUGUNUN plani
+    // donuyordu. Artik hedef gelecek haftaya kayiyor; bu resolver yalnizca icinde bulunulan
+    // haftayi verebildigi icin sonuc kapsam disi mesaji — dogrusu da bu, sessizce yanlis gun
+    // gostermektense.
+    @Test
+    void haftayaBugunKapsamDisiMesajiDoner() {
+        seedFullWeek();
+
+        Map<String, String> vars =
+                resolver.resolve("calisma_duzeni", "haftaya bugün ofiste miyim", authentication);
+
+        assertThat(vars.get("calisma_duzenim")).contains("yalnızca içinde bulunduğumuz haftanın");
+    }
+
+    @Test
+    void gecenHaftaBugunDeKapsamDisi() {
+        seedFullWeek();
+
+        Map<String, String> vars =
+                resolver.resolve("calisma_duzeni", "geçen hafta bugün ofiste miydim", authentication);
+
+        assertThat(vars.get("calisma_duzenim")).contains("yalnızca içinde bulunduğumuz haftanın");
+    }
+
     // #124: "hangi gunler" tekil gun ipucu icermedigi icin BUGUNE dusuyordu.
     @Test
     void hangiGunlerSorusuTumHaftayiListeler() {
