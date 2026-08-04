@@ -132,7 +132,17 @@ export function EmployeeFormSheet({
 
           <div className="space-y-1.5">
             <Label htmlFor="employee-phone">Telefon</Label>
-            <Input id="employee-phone" value={phone ?? ""} onChange={(event) => setPhone(event.target.value)} />
+            {/* Harf girisi engellenir ama bicim KATI DEGIL: bu alan hem cep numarasi
+                (0532 111 22 33) hem 4 haneli dahili tutuyor. Sabit bir maske dahiliyi
+                girilemez yapardi. */}
+            <Input
+              id="employee-phone"
+              inputMode="tel"
+              maxLength={20}
+              placeholder="0532 111 22 33 veya 1005"
+              value={phone ?? ""}
+              onChange={(event) => setPhone(event.target.value.replace(/[^\d\s()+-]/g, ""))}
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -174,7 +184,16 @@ export function EmployeeFormSheet({
             <Label>Departman</Label>
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
-                <SelectValue placeholder="Atanmamış" />
+                {/* Base UI Select secili ogenin ETIKETINI kendiliginden bulmuyor; deger ile
+                    etiket farkli oldugunda (burada deger id, etiket ad) ham degeri basiyor
+                    ve ekranda "3" gorunuyordu. Ofis durumu acilirinda sorun cikmiyor cunku
+                    orada deger ve etiket ayni. Cozum admin-roles-page'de kullanilan desen. */}
+                <SelectValue placeholder="Atanmamış">
+                  {(value: string | null) =>
+                    departments.find((department) => String(department.id) === value)?.name ??
+                    "Atanmamış"
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={null}>Atanmamış</SelectItem>

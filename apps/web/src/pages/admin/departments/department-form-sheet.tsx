@@ -117,7 +117,13 @@ export function DepartmentFormSheet({
             <Label>Yönetici</Label>
             <Select value={managerId} onValueChange={setManagerId}>
               <SelectTrigger>
-                <SelectValue placeholder="Atanmamış" />
+                {/* Deger calisan id oldugu icin secim sonrasi ham id gorunuyordu. */}
+                <SelectValue placeholder="Atanmamış">
+                  {(value: string | null) =>
+                    employees.find((employee) => String(employee.id) === value)?.name ??
+                    "Atanmamış"
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={null}>Atanmamış</SelectItem>

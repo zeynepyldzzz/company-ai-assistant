@@ -98,14 +98,21 @@ export function LoginPage() {
 
           <div className="space-y-2">
             <Label htmlFor="code">Doğrulama kodu</Label>
+            {/* TOTP kodu her zaman 6 RAKAM. inputMode="numeric" yalnizca mobilde sayisal
+                klavye acar, masaustunde harf girisini engellemez — bu yuzden degeri
+                filtreliyoruz. Boylece kullanici hatali bir kod gonderip gereksiz yere
+                "gecersiz kod" hatasi almiyor. */}
             <Input
               id="code"
               inputMode="numeric"
               autoComplete="one-time-code"
               required
               autoFocus
+              maxLength={6}
+              placeholder="000000"
+              className="tracking-[0.4em]"
               value={code}
-              onChange={(event) => setCode(event.target.value)}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             />
           </div>
 
