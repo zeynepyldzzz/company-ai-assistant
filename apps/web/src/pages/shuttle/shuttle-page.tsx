@@ -156,8 +156,8 @@ export function ShuttlePage() {
               if (e.key === "Enter") handleFindRoute();
               if (e.key === "Escape") setIsAddressInputFocused(false);
             }}
-            placeholder="Konumunu yaz (örn. Kadıköy, Levent)…"
-            className="bg-background text-foreground w-full"
+            placeholder="Konumunu yaz (örn. Bornova, Karşıyaka)…"
+            className="bg-background text-foreground dark:bg-background dark:text-foreground w-full"
           />
           {showAddressSuggestions && (
             <ul className="bg-popover text-popover-foreground absolute z-[1100] mt-1 w-full overflow-hidden rounded-md border shadow-md">
