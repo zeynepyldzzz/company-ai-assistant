@@ -33,3 +33,5 @@ app:
   geocoding:
     base-url: https://nominatim.openstreetmap.org
     user-agent: ${GEOCODING_USER_AGENT:company-assistant-api/1.0}
+  routing:
+    base-url: ${OSRM_BASE_URL:http://localhost:5555}

@@ -26,6 +26,16 @@ public class DepartmentVariableResolver {
     private static final String VARIABLE = "departman_bilgisi";
 
     private static final String UNKNOWN_FIELD = "belirtilmemiş";
+
+    /**
+     * A-26 (#173): "ofiste değil" aslinda "uzaktan VEYA izinde" demek — tek bir durum
+     * filtresine karsilik gelmiyor ve veri erisim katmani tek status parametresi aliyor.
+     * Tam destek ayri bir is; bu mesaj yanlis cevap vermeyi durduruyor ve kullaniciyi
+     * calisan bir alternatife yonlendiriyor.
+     */
+    private static final String NEGATION_UNSUPPORTED =
+            "Olumsuz sorguları henüz desteklemiyorum. Bunun yerine \"muhasebede kimler uzaktan\" "
+                    + "ya da \"muhasebede kimler izinde\" gibi sorabilirsin.";
     private static final int MAX_DEPARTMENTS = 100;
 
     /** Tek departman listesi icin ust sinir; OfficeStatusVariableResolver ile ayni deger. */
@@ -92,13 +102,21 @@ public class DepartmentVariableResolver {
             return Map.of();
         }
 
+        String text = TurkishText.foldToAscii(message);
+        // A-26 (#173): olumsuz sorguda hicbir yanit uretilmez — ne liste ne kart. Kontrol
+        // EN BASTA, cunku olumsuzlama liste ipucu tasimayabiliyor ("ofiste olmayanlar"
+        // icinde "olanlar" alt-dizesi YOK) ve soru sessizce departman kartina duserdi.
+        // Erken cikis ayrica gereksiz DB sorgusunu da onler.
+        if (TurkishText.mentionsNegation(text)) {
+            return Map.of(VARIABLE, NEGATION_UNSUPPORTED);
+        }
+
         List<DepartmentResponse> departments =
                 departmentService.searchDepartments(null, 0, MAX_DEPARTMENTS).data();
         if (departments.isEmpty()) {
             return Map.of(VARIABLE, "Sistemde tanımlı departman bulunmuyor.");
         }
 
-        String text = TurkishText.foldToAscii(message);
         boolean wantsRoster = EMPLOYEE_LIST_CUES.stream().anyMatch(text::contains);
         return departments.stream()
                 .filter(department -> mentions(text, department.getName()))

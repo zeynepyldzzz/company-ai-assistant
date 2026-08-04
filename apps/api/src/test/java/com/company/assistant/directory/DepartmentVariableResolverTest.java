@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -220,6 +221,50 @@ class DepartmentVariableResolverTest {
 
         assertThat(resolver.resolve("rehber_departman", "muhasebede ofiste olmayıp izinli olanlar")
                 .get("departman_bilgisi")).contains("izinde olan 1 kişi");
+    }
+
+    // --- A-26 (#173): olumsuz sorgular ---
+
+    // Elle test: "kimler ofiste değil" sorusuna OFISTEKILER listeleniyordu — tam tersi.
+    // Artik liste hic uretilmiyor.
+    @Test
+    void olumsuzSorguListeUretmez() {
+        String reply = resolver.resolve("rehber_departman", "muhasebede kimler ofiste değil")
+                .get("departman_bilgisi");
+
+        assertThat(reply)
+                .contains("Olumsuz sorguları henüz desteklemiyorum")
+                .doesNotContain("kişi çalışıyor")
+                .doesNotContain("•");
+    }
+
+    // "ofiste olmayanlar" LISTE ipucu tasimiyor ("olmayanlar" icinde "olanlar" alt-dizesi
+    // yok), dolayisiyla kontrol yalnizca liste dalinda olsaydi bu soru sessizce departman
+    // KARTINA duserdi. Kontrol bu yuzden en basta.
+    @Test
+    void olumsuzlamaninFarkliBicimleriDeYakalanir() {
+        assertThat(resolver.resolve("rehber_departman", "muhasebede ofiste olmayanlar")
+                .get("departman_bilgisi")).contains("Olumsuz sorguları");
+        assertThat(resolver.resolve("rehber_departman", "muhasebede izinliler hariç kimler var")
+                .get("departman_bilgisi")).contains("Olumsuz sorguları");
+    }
+
+    // Erken cikis: olumsuz sorguda DB'ye hic gidilmiyor.
+    @Test
+    void olumsuzSorguVeriTabaninaGitmez() {
+        resolver.resolve("rehber_departman", "muhasebede ofiste olmayanlar");
+
+        verifyNoInteractions(departmentService, directoryService);
+    }
+
+    // NOBETCI: olumsuzlama TASIMAYAN sorular etkilenmemeli.
+    @Test
+    void olumsuzlamaYoksaListeNormalDoner() {
+        seedDepartments();
+        whenEmployeeSearch("Muhasebe ve Finans", "Ofiste", List.of(employee("Ayse Kaya", "Ofiste")), 1);
+
+        assertThat(resolver.resolve("rehber_departman", "muhasebede kimler ofiste")
+                .get("departman_bilgisi")).contains("ofiste görünen 1 kişi");
     }
 
     @Test
