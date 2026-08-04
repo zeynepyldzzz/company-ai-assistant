@@ -5,6 +5,7 @@ import {
   ShuttleRoutePlateSchema,
   ShuttleRouteDetailSchema,
   ShuttleRecommendationSchema,
+  AddressSuggestionListSchema,
   type ShuttleRoutePagedResponse,
   type ShuttleStopList,
   type ShuttleRouteGeometry,
@@ -12,6 +13,7 @@ import {
   type ShuttleRouteDetail,
   type ShuttleRecommendation,
   type AdminShuttleRouteRequest,
+  type AddressSuggestionList,
 } from "@company/shared";
 import { apiFetch } from "./client";
 
@@ -45,6 +47,13 @@ export async function getShuttleRouteGeometry(routeId: number, token: string): P
 export async function getShuttlePlate(routeId: number, token: string): Promise<ShuttleRoutePlate> {
   const data = await apiFetch<unknown>(`/shuttle-routes/${routeId}/plate`, { token });
   return ShuttleRoutePlateSchema.parse(data);
+}
+
+export async function getAddressSuggestions(query: string, token: string): Promise<AddressSuggestionList> {
+  const data = await apiFetch<unknown>(`/shuttle-routes/address-suggestions${buildQuery({ q: query })}`, {
+    token,
+  });
+  return AddressSuggestionListSchema.parse(data);
 }
 
 export async function getShuttleRecommendation(

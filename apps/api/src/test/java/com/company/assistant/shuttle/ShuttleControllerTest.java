@@ -133,6 +133,22 @@ class ShuttleControllerTest {
     }
 
     @Test
+    void getAddressSuggestions_dondurur() throws Exception {
+        when(shuttleService.getAddressSuggestions("Kadıköy")).thenReturn(List.of(
+                new com.company.assistant.geocoding.AddressSuggestion("Kadıköy, İstanbul", 40.9906, 29.0274),
+                new com.company.assistant.geocoding.AddressSuggestion("Kadıköy, İzmir", 38.4237, 27.1428)));
+
+        mockMvc.perform(get("/shuttle-routes/address-suggestions")
+                        .param("q", "Kadıköy")
+                        .with(user("calisan")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].label").value("Kadıköy, İstanbul"))
+                .andExpect(jsonPath("$[0].lat").value(40.9906))
+                .andExpect(jsonPath("$[0].lng").value(29.0274))
+                .andExpect(jsonPath("$[1].label").value("Kadıköy, İzmir"));
+    }
+
+    @Test
     void getRecommendation_enYakinDurakVeGuzergahDoner() throws Exception {
         ShuttleRoute route = new ShuttleRoute();
         route.setId(1);
