@@ -31,6 +31,15 @@ public class OfficeStatusVariableResolver {
 
     private static final Logger log = LoggerFactory.getLogger(OfficeStatusVariableResolver.class);
 
+    /**
+     * A-26 (#173): "ofiste değil" aslinda "uzaktan VEYA izinde" demek — tek bir durum
+     * filtresine karsilik gelmiyor. Tam destek ayri bir is; bu mesaj yanlis cevap vermeyi
+     * durduruyor ve kullaniciyi calisan bir alternatife yonlendiriyor.
+     */
+    private static final String NEGATION_UNSUPPORTED =
+            "Olumsuz sorguları henüz desteklemiyorum. Bunun yerine \"kimler uzaktan\" "
+                    + "ya da \"kimler izinde\" diye sorabilirsin.";
+
     /** office_status DB'de serbest metin; degerler packages/shared OfficeStatusSchema ile sabit. */
     private static final String STATUS_OFFICE = "Ofiste";
     private static final String STATUS_REMOTE = "Uzaktan";
@@ -72,6 +81,14 @@ public class OfficeStatusVariableResolver {
      * @param employeeId JWT'den gelen kimlik (FR-63)
      */
     public String resolve(String foldedText, Integer employeeId) {
+        // A-26 (#173): olumsuz sorguda liste URETILMEZ. resolveStatus() "degil" kelimesini
+        // gormezden gelir ve "kimler ofiste değil" sorusuna OFISTEKILERI listelerdi — tam
+        // tersi. Kontrol en basta, cunku hangi kapsamda (departman / sirket geneli)
+        // sorulduguna bakilmaksizin yanit yanlis olurdu.
+        if (TurkishText.mentionsNegation(foldedText)) {
+            return NEGATION_UNSUPPORTED;
+        }
+
         String status = resolveStatus(foldedText);
         String department = departmentFromMessage(foldedText);
 

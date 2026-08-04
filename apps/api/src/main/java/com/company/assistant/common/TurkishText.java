@@ -58,7 +58,26 @@ public final class TurkishText {
     private static final Pattern THIRD_PERSON_GROUP = Pattern.compile(
             "\\bkim(ler(in)?)?\\b|\\b(kisiler|calisanlar|personel|olanlar|herkes)");
 
+    /**
+     * A-26 (#173): olumsuzlama belirtecleri.
+     *
+     * <p>Bunlar bir soruyu TERSINE cevirir ve chatbot'un hicbir yerinde ele alinmiyor.
+     * Elle testte gorulen vaka: "kimler ofiste değil" sorusuna ofistekilerin listesi
+     * donuyordu — yani tam tersi. Projede en tehlikeli saydigimiz hata turu: dogru
+     * formatta yanlis bilgi. Kullanicinin bunu fark etme sansi yok.
+     *
+     * <p>Kelime siniri yalnizca BASTA: Turkce sondan eklemeli, "olmayanlar"/"disindaki"
+     * gibi cekimler de yakalanmali.
+     */
+    private static final Pattern NEGATION =
+            Pattern.compile("\\b(degil|olmayan|haric|disinda)");
+
     private TurkishText() {
+    }
+
+    /** @param foldedText {@link #foldToAscii} cikisi olmali; desen ASCII yazilmistir. */
+    public static boolean mentionsNegation(String foldedText) {
+        return foldedText != null && NEGATION.matcher(foldedText).find();
     }
 
     /** @param foldedText {@link #foldToAscii} cikisi olmali; desen ASCII yazilmistir. */
