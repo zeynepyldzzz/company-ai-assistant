@@ -3,24 +3,33 @@ package com.company.assistant.shuttle;
 import com.company.assistant.geocoding.AddressNotFoundException;
 import com.company.assistant.geocoding.GeocodingResult;
 import com.company.assistant.geocoding.GeocodingService;
+import com.company.assistant.routing.Coordinate;
+import com.company.assistant.routing.RouteResult;
+import com.company.assistant.routing.RoutingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 // B-6: /shuttle-routes/recommendation - en yakin durak/guzergah ve tahmini sure hesabi (FR-26, 27)
 // B-16: adres -> konum coz, ardindan ayni oneri mantigini calistir (FR-28)
+// B-23: en yakin durak haversine ile on-elenir, gercek mesafe/sure OSRM'den alinir;
+// OSRM erisilemezse haversine + sabit hiz fallback'ine dusulur (FR-27)
 class ShuttleServiceTest {
 
     private ShuttleRouteRepository shuttleRouteRepository;
     private ShuttleStopRepository shuttleStopRepository;
     private GeocodingService geocodingService;
+    private RoutingService routingService;
     private ShuttleService service;
 
     @BeforeEach
@@ -28,7 +37,10 @@ class ShuttleServiceTest {
         shuttleRouteRepository = mock(ShuttleRouteRepository.class);
         shuttleStopRepository = mock(ShuttleStopRepository.class);
         geocodingService = mock(GeocodingService.class);
-        service = new ShuttleService(shuttleRouteRepository, shuttleStopRepository, geocodingService);
+        routingService = mock(RoutingService.class);
+        when(routingService.route(anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+                .thenReturn(Optional.empty());
+        service = new ShuttleService(shuttleRouteRepository, shuttleStopRepository, geocodingService, routingService);
     }
 
     private ShuttleStop stop(ShuttleRoute route, Integer id, String name, double lat, double lng) {
@@ -71,7 +83,7 @@ class ShuttleServiceTest {
     }
 
     @Test
-    void tahminiSureBasitSabitHizIleHesaplanir() {
+    void osrmErisilemezseTahminiSureSabitHizIleHesaplanir() {
         ShuttleRoute route = new ShuttleRoute();
         route.setId(1);
         route.setName("Test Hatti");
@@ -80,12 +92,32 @@ class ShuttleServiceTest {
         ShuttleStop uzakDurak = stop(route, 9, "Uzak Durak", 41.0, 29.0);
         when(shuttleStopRepository.findByLatitudeIsNotNullAndLongitudeIsNotNull())
                 .thenReturn(List.of(uzakDurak));
+        // setUp() varsayilan olarak Optional.empty() donduruyor (OSRM erisilemedi).
 
         ShuttleRecommendationResponse response = service.getRecommendation(40.775, 29.0);
 
         assertThat(response.getDistanceKm()).isCloseTo(25.0, org.assertj.core.data.Offset.offset(0.5));
         // 25 km / 25 km/s ortalama hiz varsayimi = ~60 dakika
         assertThat(response.getEstimatedMinutes()).isCloseTo(60, org.assertj.core.data.Offset.offset(2));
+    }
+
+    @Test
+    void osrmBasariliysaGercekMesafeVeSureKullanilir() {
+        ShuttleRoute route = new ShuttleRoute();
+        route.setId(1);
+        route.setName("Test Hatti");
+
+        // Haversine ~25 km olcer, ama gercek yol mesafesi/suresi (OSRM) daha uzun olabilir.
+        ShuttleStop uzakDurak = stop(route, 9, "Uzak Durak", 41.0, 29.0);
+        when(shuttleStopRepository.findByLatitudeIsNotNullAndLongitudeIsNotNull())
+                .thenReturn(List.of(uzakDurak));
+        when(routingService.route(40.775, 29.0, 41.0, 29.0))
+                .thenReturn(Optional.of(new RouteResult(31.4, 42)));
+
+        ShuttleRecommendationResponse response = service.getRecommendation(40.775, 29.0);
+
+        assertThat(response.getDistanceKm()).isEqualTo(31.4);
+        assertThat(response.getEstimatedMinutes()).isEqualTo(42);
     }
 
     @Test
@@ -121,5 +153,48 @@ class ShuttleServiceTest {
 
         assertThatThrownBy(() -> service.getRecommendationByAddress("asdkjfhaskjdfh"))
                 .isInstanceOf(AddressNotFoundException.class);
+    }
+
+    @Test
+    void geometriOsrmBasariliysaGercekYolCizgisiKullanilir() {
+        ShuttleRoute route = new ShuttleRoute();
+        route.setId(1);
+        ShuttleStop stop1 = stop(route, 1, "Merkez", 40.98, 29.03);
+        ShuttleStop stop2 = stop(route, 2, "Sanayi", 40.99, 29.04);
+        when(shuttleRouteRepository.existsById(1)).thenReturn(true);
+        when(shuttleStopRepository.findByRouteIdOrderByOrderIndexAsc(1)).thenReturn(List.of(stop1, stop2));
+        List<Coordinate> osrmGeometri = List.of(
+                new Coordinate(40.98, 29.03), new Coordinate(40.985, 29.035), new Coordinate(40.99, 29.04));
+        when(routingService.routeGeometry(List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04))))
+                .thenReturn(Optional.of(osrmGeometri));
+
+        ShuttleRouteGeometryResponse response = service.getRouteGeometry(1);
+
+        assertThat(response.getRouteId()).isEqualTo(1);
+        assertThat(response.getCoordinates()).isEqualTo(osrmGeometri);
+    }
+
+    @Test
+    void geometriOsrmErisilemezseDurakDuzCizgisineFallbackYapar() {
+        ShuttleRoute route = new ShuttleRoute();
+        route.setId(1);
+        ShuttleStop stop1 = stop(route, 1, "Merkez", 40.98, 29.03);
+        ShuttleStop stop2 = stop(route, 2, "Sanayi", 40.99, 29.04);
+        when(shuttleRouteRepository.existsById(1)).thenReturn(true);
+        when(shuttleStopRepository.findByRouteIdOrderByOrderIndexAsc(1)).thenReturn(List.of(stop1, stop2));
+        when(routingService.routeGeometry(anyList())).thenReturn(Optional.empty());
+
+        ShuttleRouteGeometryResponse response = service.getRouteGeometry(1);
+
+        assertThat(response.getCoordinates()).containsExactly(
+                new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04));
+    }
+
+    @Test
+    void geometriBulunamayanRota404Firlatir() {
+        when(shuttleRouteRepository.existsById(999)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.getRouteGeometry(999))
+                .isInstanceOf(ShuttleRouteNotFoundException.class);
     }
 }

@@ -32,6 +32,13 @@ export const ShuttleRouteDetailSchema = ShuttleRouteSchema.extend({
 });
 export type ShuttleRouteDetail = z.infer<typeof ShuttleRouteDetailSchema>;
 
+// GET /shuttle-routes/{id}/geometry (B-28)
+export const ShuttleRouteGeometrySchema = z.object({
+  routeId: z.number(),
+  coordinates: z.array(z.object({ lat: z.number(), lng: z.number() })),
+});
+export type ShuttleRouteGeometry = z.infer<typeof ShuttleRouteGeometrySchema>;
+
 // GET /shuttle-routes/{id}/plate
 export const ShuttleRoutePlateSchema = z.object({
   id: z.number(),

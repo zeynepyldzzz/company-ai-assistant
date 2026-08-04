@@ -34,6 +34,11 @@ public class ShuttleController {
         return shuttleService.getStops(id);
     }
 
+    @GetMapping("/{id}/geometry")
+    public ShuttleRouteGeometryResponse getGeometry(@PathVariable Integer id) {
+        return shuttleService.getRouteGeometry(id);
+    }
+
     @GetMapping("/{id}/plate")
     public ShuttleRoutePlateResponse getPlate(@PathVariable Integer id) {
         return shuttleService.getPlate(id);

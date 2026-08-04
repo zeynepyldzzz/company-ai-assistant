@@ -3,6 +3,9 @@ package com.company.assistant.shuttle;
 import com.company.assistant.common.PagedResponse;
 import com.company.assistant.geocoding.GeocodingResult;
 import com.company.assistant.geocoding.GeocodingService;
+import com.company.assistant.routing.Coordinate;
+import com.company.assistant.routing.RouteResult;
+import com.company.assistant.routing.RoutingService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,13 +28,16 @@ public class ShuttleService {
     private final ShuttleRouteRepository shuttleRouteRepository;
     private final ShuttleStopRepository shuttleStopRepository;
     private final GeocodingService geocodingService;
+    private final RoutingService routingService;
 
     public ShuttleService(ShuttleRouteRepository shuttleRouteRepository,
             ShuttleStopRepository shuttleStopRepository,
-            GeocodingService geocodingService) {
+            GeocodingService geocodingService,
+            RoutingService routingService) {
         this.shuttleRouteRepository = shuttleRouteRepository;
         this.shuttleStopRepository = shuttleStopRepository;
         this.geocodingService = geocodingService;
+        this.routingService = routingService;
     }
 
     public PagedResponse<ShuttleRouteResponse> listRoutes(int page, int pageSize) {
@@ -74,6 +81,25 @@ public class ShuttleService {
                 .stream().map(ShuttleStopResponse::new).toList();
     }
 
+    /**
+     * B-28: bir guzergahin duraklari arasindaki gercek yol geometrisi (harita
+     * cizgisi icin). OSRM erisilemezse veya rota bulunamazsa duraklarin kendi
+     * konumlarina (duz cizgi) fallback yapilir.
+     */
+    public ShuttleRouteGeometryResponse getRouteGeometry(Integer routeId) {
+        if (!shuttleRouteRepository.existsById(routeId)) {
+            throw new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId);
+        }
+
+        List<Coordinate> waypoints = shuttleStopRepository.findByRouteIdOrderByOrderIndexAsc(routeId).stream()
+                .filter(stop -> stop.getLatitude() != null && stop.getLongitude() != null)
+                .map(stop -> new Coordinate(stop.getLatitude(), stop.getLongitude()))
+                .toList();
+
+        List<Coordinate> coordinates = routingService.routeGeometry(waypoints).orElse(waypoints);
+        return new ShuttleRouteGeometryResponse(routeId, coordinates);
+    }
+
     public ShuttleRoutePlateResponse getPlate(Integer routeId) {
         ShuttleRoute route = shuttleRouteRepository.findById(routeId)
                 .orElseThrow(() -> new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId));
@@ -102,8 +128,17 @@ public class ShuttleService {
             }
         }
 
+        double distanceKm = nearestDistanceKm;
         int estimatedMinutes = (int) Math.round(nearestDistanceKm / AVERAGE_SPEED_KMH * 60);
-        return new ShuttleRecommendationResponse(nearestStop, nearestDistanceKm, estimatedMinutes);
+
+        Optional<RouteResult> route = routingService.route(
+                lat, lng, nearestStop.getLatitude(), nearestStop.getLongitude());
+        if (route.isPresent()) {
+            distanceKm = route.get().distanceKm();
+            estimatedMinutes = route.get().durationMinutes();
+        }
+
+        return new ShuttleRecommendationResponse(nearestStop, distanceKm, estimatedMinutes);
     }
 
     private double haversineKm(double lat1, double lng1, double lat2, double lng2) {

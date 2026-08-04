@@ -11,7 +11,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
-import { listShuttleRoutes, getShuttleStops, getShuttleRecommendation } from "@/api/shuttle";
+import {
+  listShuttleRoutes,
+  getShuttleStops,
+  getShuttleRouteGeometry,
+  getShuttleRecommendation,
+} from "@/api/shuttle";
 
 const ALL_ROUTES_PAGE_SIZE = 100;
 
@@ -59,6 +64,14 @@ export function ShuttlePage() {
     enabled: Boolean(token) && selectedRouteId !== null,
   });
 
+  // B-28: harita cizgisi duraklar arasi duz cizgi yerine gercek yol
+  // geometrisini takip etsin (OSRM). Sunucu erisilemezse duz cizgiye fallback.
+  const geometryQuery = useQuery({
+    queryKey: ["shuttle-geometry", selectedRouteId],
+    queryFn: () => getShuttleRouteGeometry(selectedRouteId!, token!),
+    enabled: Boolean(token) && selectedRouteId !== null,
+  });
+
   const recommendationMutation = useMutation({
     mutationFn: (address: string) => getShuttleRecommendation({ address }, token!),
     onSuccess: (data) => {
@@ -79,7 +92,10 @@ export function ShuttlePage() {
     (stop): stop is typeof stop & { latitude: number; longitude: number } =>
       stop.latitude !== null && stop.longitude !== null
   );
-  const polylinePositions: LatLngTuple[] = stopsWithCoords.map((stop) => [stop.latitude, stop.longitude]);
+  const straightLinePositions: LatLngTuple[] = stopsWithCoords.map((stop) => [stop.latitude, stop.longitude]);
+  const routeGeometryPositions: LatLngTuple[] =
+    geometryQuery.data?.coordinates.map((c): LatLngTuple => [c.lat, c.lng]) ?? [];
+  const polylinePositions = routeGeometryPositions.length >= 2 ? routeGeometryPositions : straightLinePositions;
   const bounds: LatLngBoundsExpression | null = polylinePositions.length > 0 ? polylinePositions : null;
   const departureTime = stops[0]?.time ?? null;
 
