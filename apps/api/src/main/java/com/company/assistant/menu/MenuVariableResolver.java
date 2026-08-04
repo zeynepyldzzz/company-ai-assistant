@@ -151,23 +151,33 @@ public class MenuVariableResolver {
         return TurkishText.WEEKDAY_KEYWORDS.stream().anyMatch(e -> text.contains(e.getKey()));
     }
 
-    // Ham (ASCII'ye katlanmis) mesajdan hedef tarihi cikarir.
+    /**
+     * Ham (ASCII'ye katlanmis) mesajdan hedef tarihi cikarir.
+     *
+     * <p>A-27 (#176): hafta ofseti GORELI gun ipuclarina da uygulanir. Onceden yalnizca hafta
+     * gunu adlarinda uygulaniyordu, dolayisiyla "gelecek hafta çarşamba" dogru calisirken
+     * "haftaya bugün" cumlesindeki hafta bilgisi sessizce kayboluyor ve BUGUN donuyordu —
+     * ayni dosyada iki farkli davranis. Olculdu: "haftaya bugün yemekte ne var" 0.916 ile
+     * dogru kategoriye gidiyordu, yani hata siniflandirmada degil buradaydi.
+     */
     private LocalDate resolveTarget(String text, LocalDate today) {
+        long weekShift = weekOffset(text) * 7L;
+
         if (text.contains("bugun")) {
-            return today;
+            return today.plusDays(weekShift);
         }
         if (text.contains("yarin")) {
-            return today.plusDays(1);
+            return today.plusDays(1 + weekShift);
         }
         if (text.contains("obur gun")) {
-            return today.plusDays(2);
+            return today.plusDays(2 + weekShift);
         }
         // #124: gecmis yon. "dunki yemek" desteklenmiyordu ve bugune dusuyordu.
         if (text.contains("dun")) {
-            return today.minusDays(1);
+            return today.plusDays(-1 + weekShift);
         }
         if (text.contains("onceki gun") || text.contains("evvelki gun")) {
-            return today.minusDays(2);
+            return today.plusDays(-2 + weekShift);
         }
 
         // "N gun sonra" (rakam veya yazi) — obur gun (+2) ile ayni ailenin genellemesi.
@@ -180,17 +190,18 @@ public class MenuVariableResolver {
             return today.minusDays(daysAgo);
         }
 
-        boolean nextWeek = isNextWeek(text);
+        // A-27: burada eskiden yalnizca nextWeek vardi, gecmis yon desteklenmiyordu —
+        // "geçen hafta çarşamba" BU haftanin carsambasini donduruyordu.
         for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {
             if (text.contains(entry.getKey())) {
                 LocalDate day = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                         .plusDays(entry.getValue().getValue() - 1L);
-                return nextWeek ? day.plusDays(7) : day;
+                return day.plusDays(weekShift);
             }
         }
 
-        // Gun belirtilmemis/taninmamis -> bugun.
-        return today;
+        // Gun belirtilmemis/taninmamis -> bugun (hafta ofseti varsa ona kaydirilmis hali).
+        return today.plusDays(weekShift);
     }
 
     // Bu haftanin tum gunlerini tarihe gore siralayip her gunu baslikli bloklar halinde basar.

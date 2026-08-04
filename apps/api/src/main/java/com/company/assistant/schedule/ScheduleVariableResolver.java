@@ -152,16 +152,31 @@ public class ScheduleVariableResolver {
         return text.contains("gecen hafta") || text.contains("onceki hafta");
     }
 
+    /** A-27 (#176): hafta ofseti gun cinsinden — gecmis -7, bu hafta 0, gelecek +7. */
+    private long weekShift(String text) {
+        if (isLastWeek(text)) {
+            return -7L;
+        }
+        return isNextWeek(text) ? 7L : 0L;
+    }
+
     // Ham (ASCII'ye katlanmis) mesajdan hedef tarihi cikarir. Menudeki resolveTarget ile ayni
     // aile; "N gun sonra" burada yok, cunku plan zaten tek haftalik.
     private LocalDate resolveTarget(String text, LocalDate today) {
+        // A-27 (#176): hafta ofseti GORELI gun ipuclarina da uygulanir. Onceden yalnizca
+        // hafta gunu adlarinda uygulaniyordu ve "haftaya bugün ofiste miyim" sorusu BUGUNUN
+        // planini donduruyordu. Artik hedef gelecek/gecmis haftaya kayiyor; bu resolver
+        // yalnizca icinde bulunulan haftayi verebildigi icin sonuc "kapsam disi" mesaji
+        // olacak — dogrusu da budur, sessizce yanlis gun gostermektense.
+        long weekShift = weekShift(text);
+
         if (text.contains("yarin")) {
-            return today.plusDays(1);
+            return today.plusDays(1 + weekShift);
         }
         // #124: eskiden taninmiyordu ve varsayilan olarak BUGUNE dusuyordu — kullanici
         // yarindan sonrasini sorup bugunun cevabini aliyordu.
         if (text.contains("obur gun")) {
-            return today.plusDays(2);
+            return today.plusDays(2 + weekShift);
         }
         // A-20 (#139): gecmis yon. "Dün ofiste miydim" 0.763 ile DOGRU intent'e gidiyor
         // ama tarih cikarimi yoktu ve varsayilan olarak BUGUNE dusuyordu — kullanici dogru
@@ -169,20 +184,21 @@ public class ScheduleVariableResolver {
         // Hafta disina tasarsa (pazartesi -> dun = pazar) asagidaki sinir kontrolu
         // ONLY_CURRENT_WEEK dondurur; sessizce bu haftadan bir gun gostermek en kotusu olurdu.
         if (text.contains("dun")) {
-            return today.minusDays(1);
+            return today.plusDays(-1 + weekShift);
         }
         if (text.contains("onceki gun") || text.contains("evvelki gun")) {
-            return today.minusDays(2);
+            return today.plusDays(-2 + weekShift);
         }
-        boolean nextWeek = isNextWeek(text);
+        // A-27: burada eskiden yalnizca nextWeek vardi; "geçen hafta çarşamba" BU haftanin
+        // carsambasini donduruyordu.
         for (Map.Entry<String, DayOfWeek> entry : TurkishText.WEEKDAY_KEYWORDS) {
             if (text.contains(entry.getKey())) {
                 LocalDate day = today.with(DayOfWeek.MONDAY).plusDays(entry.getValue().getValue() - 1L);
-                return nextWeek ? day.plusDays(7) : day;
+                return day.plusDays(weekShift);
             }
         }
-        // "bugun" ve gun belirtilmemis durum -> bugun.
-        return today;
+        // "bugun" ve gun belirtilmemis durum -> bugun (hafta ofseti varsa kaydirilmis hali).
+        return today.plusDays(weekShift);
     }
 
     private String buildWeekBody(WeeklyScheduleDto schedule) {
