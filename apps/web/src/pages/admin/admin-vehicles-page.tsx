@@ -118,8 +118,9 @@ export function AdminVehiclesPage() {
           <Input
             id="new-plate"
             placeholder="34 ABC 123"
+            maxLength={12}
             value={newPlate}
-            onChange={(event) => setNewPlate(event.target.value)}
+            onChange={(event) => setNewPlate(event.target.value.toUpperCase().slice(0, 12))}
           />
         </div>
         <div className="flex-1 space-y-1.5">

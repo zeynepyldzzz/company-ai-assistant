@@ -113,7 +113,13 @@ export function DocumentCreateSheet() {
               onValueChange={(value) => setProcedureId(value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Prosedür seçin…" />
+                {/* Deger prosedur id oldugu icin secim sonrasi ham id gorunuyordu. */}
+                <SelectValue placeholder="Prosedür seçin…">
+                  {(value: number | null) => {
+                    const procedure = procedures?.find((p) => p.id === value);
+                    return procedure ? `${procedure.title} (${procedure.category})` : "Prosedür seçin…";
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {procedures?.map((p) => (
