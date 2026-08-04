@@ -32,9 +32,26 @@ public class AdminEmployeeController {
         this.adminEmployeeService = adminEmployeeService;
     }
 
+    /**
+     * A-29 (#178): sifre gonderilmezse sistem uretir ve yanitta BIR KEZ doner
+     * ({@link AdminEmployeeCreateResponse#generatedPassword}). Bu yuzden donus tipi
+     * EmployeeResponse degil — sifre alaninin listeleme/detay uclarindan sizmasi
+     * yapisal olarak engelleniyor.
+     */
     @PostMapping
-    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody AdminEmployeeRequest request) {
+    public ResponseEntity<AdminEmployeeCreateResponse> create(
+            @Valid @RequestBody AdminEmployeeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminEmployeeService.create(request));
+    }
+
+    /**
+     * A-29 (#178): sifre sifirlama. Yeni GECICI sifre uretilir ve yanitta bir kez doner;
+     * kullanici ilk girisinde kendi sifresini belirler. Admin hicbir asamada kalici sifreyi
+     * bilmez.
+     */
+    @PostMapping("/{id}/reset-password")
+    public AdminEmployeeCreateResponse resetPassword(@PathVariable Integer id) {
+        return adminEmployeeService.resetPassword(id);
     }
 
     @PutMapping("/{id}")
@@ -66,9 +83,4 @@ public class AdminEmployeeController {
                 .body(ErrorResponse.of("ROLE_NOT_FOUND", ex.getMessage()));
     }
 
-    @ExceptionHandler(EmployeePasswordRequiredException.class)
-    public ResponseEntity<ErrorResponse> handlePasswordRequired(EmployeePasswordRequiredException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.of("PASSWORD_REQUIRED", ex.getMessage()));
-    }
 }

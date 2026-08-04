@@ -28,6 +28,16 @@ export const EmployeeSchema = z.object({
   roleName: z.string().nullable().optional(),
 });
 export type Employee = z.infer<typeof EmployeeSchema>;
+
+// POST /admin/employees yaniti (A-29). generatedPassword YALNIZCA sistem sifre urettiginde
+// dolar ve YALNIZCA bu yanitta doner — sonrasinda hicbir uctan okunamaz, veritabaninda
+// yalnizca hash var. Bu yuzden ayri bir tip: sifre alani listeleme/detay semalarina hic
+// karismiyor.
+export const CreateEmployeeResponseSchema = z.object({
+  employee: EmployeeSchema,
+  generatedPassword: z.string().nullable(),
+});
+export type CreateEmployeeResponse = z.infer<typeof CreateEmployeeResponseSchema>;
 export const EmployeePagedResponseSchema = pagedResponseSchema(EmployeeSchema);
 export type EmployeePagedResponse = z.infer<typeof EmployeePagedResponseSchema>;
 
@@ -53,9 +63,8 @@ export const AdminEmployeeRequestSchema = z.object({
   officeStatus: z.string().nullable().optional(),
   departmentId: z.number().nullable().optional(),
   roleId: z.number().nullable().optional(),
-  // C-12 (#120): olusturmada zorunlu (backend PASSWORD_REQUIRED ile reddeder),
-  // guncellemede opsiyonel - bos/undefined ise mevcut sifre korunur.
-  password: z.string().nullable().optional(),
+  // A-29: password alani KALDIRILDI. Admin hicbir yolla sifre belirlemiyor; olusturmada
+  // sistem gecici sifre uretir, sifirlama icin POST /admin/employees/{id}/reset-password.
 });
 export type AdminEmployeeRequest = z.infer<typeof AdminEmployeeRequestSchema>;
 

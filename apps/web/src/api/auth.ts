@@ -1,8 +1,10 @@
 import {
+  ChangePasswordRequestSchema,
   LoginRequestSchema,
   LoginResponseSchema,
   TwoFactorChallengeSchema,
   UserSchema,
+  type ChangePasswordRequest,
   type LoginRequest,
   type LoginResponse,
   type TwoFactorChallenge,
@@ -40,5 +42,16 @@ export async function logout(refreshToken: string): Promise<void> {
   await apiFetch<void>("/auth/logout", {
     method: "POST",
     body: JSON.stringify({ refreshToken }),
+  });
+}
+
+// POST /auth/password (A-29): mevcut sifre dogrulanir, yeni sifre yazilir ve
+// mustChangePassword false olur. Basarida govde donmez (204).
+export async function changePassword(body: ChangePasswordRequest, token: string): Promise<void> {
+  const payload = ChangePasswordRequestSchema.parse(body);
+  await apiFetch<void>("/auth/password", {
+    method: "POST",
+    token,
+    body: JSON.stringify(payload),
   });
 }

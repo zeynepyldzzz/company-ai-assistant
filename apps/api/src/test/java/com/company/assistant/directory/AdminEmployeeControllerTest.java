@@ -101,15 +101,19 @@ class AdminEmployeeControllerTest {
         saved.setId(10);
         saved.setName("Ayşe Yılmaz");
         saved.setEmail("ayse@company.com");
-        when(adminEmployeeService.create(any())).thenReturn(new EmployeeResponse(saved));
+        // A-29 (#178): yanit artik EmployeeResponse degil; sifre alani listeleme/detay
+        // uclarindan sizmasin diye olusturma icin ayri bir tip kullaniliyor.
+        when(adminEmployeeService.create(any()))
+                .thenReturn(new AdminEmployeeCreateResponse(new EmployeeResponse(saved), "Gecici123!"));
 
         mockMvc.perform(post("/admin/employees")
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(GECERLI_GOVDE))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.name").value("Ayşe Yılmaz"));
+                .andExpect(jsonPath("$.employee.id").value(10))
+                .andExpect(jsonPath("$.employee.name").value("Ayşe Yılmaz"))
+                .andExpect(jsonPath("$.generatedPassword").value("Gecici123!"));
     }
 
     @Test

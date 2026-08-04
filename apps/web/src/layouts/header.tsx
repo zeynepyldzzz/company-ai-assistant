@@ -1,5 +1,5 @@
-import { useLocation } from "react-router";
-import { LogOut } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
+import { KeyRound, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -35,6 +35,7 @@ function pageTitleFor(pathname: string): string {
 
 export function Header() {
   const { user, clearAuth } = useAuth();
+  const navigate = useNavigate();
   const { pathname } = useLocation();
 
   async function handleLogout() {
@@ -87,6 +88,12 @@ export function Header() {
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {/* A-29: kullanicinin kendi istegiyle sifre degistirmesi. Zorunlu akista
+                  RequireAuth zaten buraya yonlendiriyor; bu, istege bagli giris noktasi. */}
+              <DropdownMenuItem onClick={() => navigate("/change-password")}>
+                <KeyRound className="size-4" />
+                Şifre değiştir
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="size-4" />
                 Çıkış yap
