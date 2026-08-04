@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -214,6 +215,37 @@ class OfficeStatusVariableResolverTest {
         String reply = resolver.resolve("tum sirkette kimler ofiste", EMPLOYEE_ID);
 
         assertThat(reply).contains("(30 kişi)").contains("ve 29 kişi daha");
+    }
+
+    // --- A-26 (#173): olumsuz sorgular ---
+
+    // resolveStatus() "degil" kelimesini gormezden gelir ve "kimler ofiste değil" sorusuna
+    // OFISTEKILERI listelerdi. Liste artik hic uretilmiyor.
+    @Test
+    void olumsuzSorguListeUretmez() {
+        String reply = resolver.resolve("kimler ofiste degil", EMPLOYEE_ID);
+
+        assertThat(reply)
+                .contains("Olumsuz sorguları henüz desteklemiyorum")
+                .doesNotContain("•");
+    }
+
+    @Test
+    void olumsuzSorguVeriTabaninaGitmez() {
+        resolver.resolve("ofiste olmayanlar kimler", EMPLOYEE_ID);
+
+        verifyNoInteractions(directoryService);
+    }
+
+    // NOBETCI: olumsuzlama tasimayan sorular eskisi gibi calisir.
+    @Test
+    void olumsuzlamaYoksaDavranisDegismez() {
+        whenOwnDepartment("Bilgi Teknolojileri");
+        whenSearch("Bilgi Teknolojileri", "Ofiste", List.of(employee("Ayse Kaya")), 1);
+        whenCompanyTotal("Ofiste", 5);
+
+        assertThat(resolver.resolve("kimler ofiste", EMPLOYEE_ID))
+                .contains("Bilgi Teknolojileri departmanında ofiste görünenler");
     }
 
     private void whenOwnDepartment(String departmentName) {
