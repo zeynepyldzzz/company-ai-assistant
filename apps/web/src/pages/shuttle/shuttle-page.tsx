@@ -95,12 +95,15 @@ export function ShuttlePage() {
     onSuccess: (data) => {
       setSelectedRouteId(data.routeId);
       setHighlightedStopId(data.stopId);
+      setAddressInput("");
+      setSelectedLocation(null);
     },
   });
 
   const handleAddressInputChange = (value: string) => {
     setAddressInput(value);
     setSelectedLocation(null);
+    setIsAddressInputFocused(true);
   };
 
   const handleSelectSuggestion = (suggestion: { label: string; lat: number; lng: number }) => {
@@ -111,6 +114,7 @@ export function ShuttlePage() {
   };
 
   const handleFindRoute = () => {
+    setIsAddressInputFocused(false);
     if (selectedLocation) {
       recommendationMutation.mutate(selectedLocation);
       return;
