@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Pencil } from "lucide-react";
-import type { AdminEmployeeRequest, Department, Employee } from "@company/shared";
+import type {
+  AdminEmployeeRequest,
+  CreateEmployeeResponse,
+  Department,
+  Employee,
+} from "@company/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,7 +48,8 @@ export function EmployeeFormSheet({
   );
   // C-12 (#120): olusturmada ilk sifre zorunlu; duzenlemede bos birakilirsa
   // mevcut sifre degismez (bkz. AdminEmployeeService.applyRequest).
-  const [password, setPassword] = useState("");
+  // A-29: sistem uretirse gecici sifre burada tutulur ve panelde BIR KEZ gosterilir.
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -52,24 +58,32 @@ export function EmployeeFormSheet({
     setPhone(employee?.phone ?? "");
     setOfficeStatus(employee?.officeStatus ?? null);
     setDepartmentId(employee?.departmentId ? String(employee.departmentId) : null);
-    setPassword("");
+    setGeneratedPassword(null);
   }, [open, employee]);
 
   const mutation = useMutation({
-    mutationFn: () => {
+    // A-29: olusturma ve guncelleme FARKLI tip donuyor (olusturmada uretilen sifre var).
+    // Donus tipi acikca yazilmazsa TypeScript union'i cikaramiyor.
+    mutationFn: (): Promise<Employee | CreateEmployeeResponse> => {
       const body: AdminEmployeeRequest = {
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim() || null,
         officeStatus: officeStatus,
         departmentId: departmentId ? Number(departmentId) : null,
-        password: password.trim() || null,
       };
       return isEdit ? updateEmployee(employee!.id, body, token!) : createEmployee(body, token!);
     },
-    onSuccess: () => {
-      toast.success(isEdit ? "Çalışan güncellendi." : "Çalışan oluşturuldu.");
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success(isEdit ? "Çalışan güncellendi." : "Çalışan oluşturuldu.");
+
+      // A-29: sistem sifre urettiyse panel ACIK kalir ve sifre bir kez gosterilir.
+      // Kapatirsak sifre kaybolur — veritabaninda yalnizca hash var, tekrar okunamaz.
+      if ("generatedPassword" in result && result.generatedPassword) {
+        setGeneratedPassword(result.generatedPassword);
+        return;
+      }
       setOpen(false);
     },
     onError: (error) => {
@@ -84,10 +98,13 @@ export function EmployeeFormSheet({
       toast.error("İsim ve e-posta boş olamaz.");
       return;
     }
-    if (!isEdit && !password.trim()) {
-      toast.error("Yeni çalışan için bir ilk şifre belirlemelisiniz.");
+    // A-30 (#185): departman zorunlu. Backend de @NotNull ile reddediyor; buradaki kontrol
+    // istegi bosa gondermemek icin.
+    if (!departmentId) {
+      toast.error("Departman seçilmelidir.");
       return;
     }
+    // A-29: sifre artik zorunlu degil — bos birakilirsa sistem gecici sifre uretir.
     mutation.mutate();
   }
 
@@ -114,6 +131,39 @@ export function EmployeeFormSheet({
           <SheetDescription>Yalnızca hr_admin / system_admin erişebilir (FR-68-71).</SheetDescription>
         </SheetHeader>
 
+        {/* A-29: sistem sifre urettiginde form yerine bu panel gosterilir. Sifre yalnizca
+            burada okunabilir; veritabaninda hash tutuldugu icin bir daha gorulemez. */}
+        {generatedPassword ? (
+          <div className="flex flex-1 flex-col gap-4 px-4">
+            <p className="text-sm">
+              Çalışan oluşturuldu. Aşağıdaki geçici şifreyi çalışana iletin — ilk girişinde kendi
+              şifresini belirlemesi istenecek.
+            </p>
+            <div className="bg-muted flex items-center justify-between gap-2 rounded-md px-3 py-2">
+              <code className="font-mono text-sm break-all">{generatedPassword}</code>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedPassword);
+                  toast.success("Şifre kopyalandı.");
+                }}
+              >
+                Kopyala
+              </Button>
+            </div>
+            <p className="text-warning text-xs">
+              Bu şifre bir daha gösterilmeyecek. Kaybederseniz çalışana yeni bir şifre
+              belirlemeniz gerekir.
+            </p>
+            <div className="mt-auto pb-4">
+              <Button type="button" onClick={() => setOpen(false)}>
+                Tamam
+              </Button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">
           <div className="space-y-1.5">
             <Label htmlFor="employee-name">İsim</Label>
@@ -145,25 +195,15 @@ export function EmployeeFormSheet({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="employee-password">
-              {isEdit ? "Yeni Şifre (opsiyonel)" : "İlk Şifre"}
-            </Label>
-            <Input
-              id="employee-password"
-              type="password"
-              autoComplete="new-password"
-              placeholder={isEdit ? "Değiştirmek istemiyorsan boş bırak" : ""}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-            {!isEdit && (
-              <p className="text-muted-foreground text-xs">
-                Çalışan admin türü bir role sahipse, girişte iki faktörlü doğrulama (QR kod ile)
-                istenecektir.
-              </p>
-            )}
-          </div>
+          {/* A-29: sifre alani KALDIRILDI — admin hicbir yolla sifre belirlemiyor.
+              Olusturmada sistem gecici sifre uretir, sifirlama listedeki aksiyondan yapilir. */}
+          {!isEdit && (
+            <p className="text-muted-foreground text-xs">
+              Kaydettiğinde sistem geçici bir şifre üretecek ve sana bir kez gösterecek. Çalışan
+              ilk girişinde kendi şifresini belirler. Admin türü bir rol verirsen girişte iki
+              faktörlü doğrulama (QR kod ile) da istenecektir.
+            </p>
+          )}
 
           <div className="space-y-1.5">
             <Label>Ofis Durumu</Label>
@@ -181,22 +221,25 @@ export function EmployeeFormSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Departman</Label>
+            <Label>Departman *</Label>
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
                 {/* Base UI Select secili ogenin ETIKETINI kendiliginden bulmuyor; deger ile
                     etiket farkli oldugunda (burada deger id, etiket ad) ham degeri basiyor
                     ve ekranda "3" gorunuyordu. Ofis durumu acilirinda sorun cikmiyor cunku
-                    orada deger ve etiket ayni. Cozum admin-roles-page'de kullanilan desen. */}
-                <SelectValue placeholder="Atanmamış">
+                    orada deger ve etiket ayni. Cozum admin-roles-page'de kullanilan desen.
+                    A-30: bos halin metni artik "Atanmamis" degil — departman zorunlu oldugu
+                    icin bos hal bir DURUM degil, yapilmamis bir SECIM. */}
+                <SelectValue placeholder="Departman seçin…">
                   {(value: string | null) =>
                     departments.find((department) => String(department.id) === value)?.name ??
-                    "Atanmamış"
+                    "Departman seçin…"
                   }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>Atanmamış</SelectItem>
+                {/* A-30: "Atanmamış" secenegi KALDIRILDI — departmansiz calisan uretmenin yolu
+                    kapandi. Mevcut departmansiz kayitlar duzenlenirken de secim zorunlu olur. */}
                 {departments.map((department) => (
                   <SelectItem key={department.id} value={String(department.id)}>
                     {department.name}
@@ -212,6 +255,7 @@ export function EmployeeFormSheet({
             </Button>
           </SheetFooter>
         </form>
+        )}
       </SheetContent>
     </Sheet>
   );

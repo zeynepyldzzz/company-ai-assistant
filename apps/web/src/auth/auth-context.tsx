@@ -11,6 +11,8 @@ import {
 interface AuthContextValue {
   token: string | null;
   user: User | null;
+  /** A-29: geçici şifreyle giriş yapıldıysa true; kullanıcı şifre değiştirmeye yönlendirilir. */
+  mustChangePassword: boolean;
   setAuth: (auth: StoredAuth) => void;
   clearAuth: () => void;
 }
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       token: auth?.accessToken ?? null,
       user: auth?.user ?? null,
+      mustChangePassword: auth?.mustChangePassword ?? false,
       setAuth: (next: StoredAuth) => writeAuth(next),
       clearAuth: () => clearStoredAuth(),
     }),

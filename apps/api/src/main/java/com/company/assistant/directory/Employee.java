@@ -40,6 +40,10 @@ public class Employee {
     @Column(name = "totp_enabled", nullable = false)
     private boolean totpEnabled = false;
 
+    /** A-29 (#178): sistem tarafindan uretilen gecici sifrede true; kullanici kendi sifresini belirleyince false. */
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword = false;
+
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -63,4 +67,6 @@ public class Employee {
     public void setTotpSecret(String totpSecret) { this.totpSecret = totpSecret; }
     public boolean isTotpEnabled() { return totpEnabled; }
     public void setTotpEnabled(boolean totpEnabled) { this.totpEnabled = totpEnabled; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
 }

@@ -11,12 +11,25 @@ import java.util.Optional;
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
   java.util.Optional<Employee> findByEmail(String email);
 
-    // #84: soft-delete edilen (active=false) calisanlar listelerde gorunmemeli.
+    /**
+     * #84: soft-delete edilen (active=false) calisanlar listelerde gorunmemeli.
+     *
+     * <p>A-30 (#185): <b>LEFT JOIN sart.</b> Onceden filtre {@code e.department.name} uzerinden
+     * yaziliyordu; JPQL'de bu yazim ORTUK INNER JOIN uretir ve departmani olmayan calisanlar
+     * — filtre uygulanmasa bile — sonuctan tamamen elenir. Olculdu: 13 aktif calisanin 3'u
+     * hicbir listede gorunmuyordu.
+     *
+     * <p>Etkisi rehber ekraniyla sinirli degildi: bu sorgu chatbot resolver'larinin da veri
+     * kaynagi, dolayisiyla "sirkette kimler ofiste" sayilari eksik donuyor ve departmansiz
+     * bir calisan isimle arandiginda bulunamiyordu. Ayrica o kisiler listede gorunmedigi icin
+     * arayuzden departman da atanamiyordu — kisir dongu.
+     */
     @Query("""
         SELECT e FROM Employee e
+        LEFT JOIN e.department d
         WHERE e.active = true
           AND (:search IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
-          AND (:department IS NULL OR LOWER(e.department.name) LIKE LOWER(CONCAT('%', CAST(:department AS string), '%')))
+          AND (:department IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', CAST(:department AS string), '%')))
           AND (:office IS NULL OR e.officeStatus = CAST(:office AS string))
         """)
     Page<Employee> search(

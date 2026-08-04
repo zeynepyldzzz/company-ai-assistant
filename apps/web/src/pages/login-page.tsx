@@ -46,7 +46,13 @@ export function LoginPage() {
         setEnrollmentRequired(data.enrollmentRequired);
         return;
       }
-      setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
+      setAuth({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        user: data.user,
+        mustChangePassword: data.mustChangePassword,
+      });
+      // A-29: gecici sifreyle girildiyse RequireAuth zorunlu degistirme ekranina yonlendirir.
       navigate("/", { replace: true });
     },
     onError: (error: unknown) => {
@@ -58,7 +64,13 @@ export function LoginPage() {
   const verifyMutation = useMutation({
     mutationFn: () => verifyTwoFactor(challengeToken!, code),
     onSuccess: (data) => {
-      setAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
+      setAuth({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        user: data.user,
+        mustChangePassword: data.mustChangePassword,
+      });
+      // A-29: gecici sifreyle girildiyse RequireAuth zorunlu degistirme ekranina yonlendirir.
       navigate("/", { replace: true });
     },
     onError: (error: unknown) => {

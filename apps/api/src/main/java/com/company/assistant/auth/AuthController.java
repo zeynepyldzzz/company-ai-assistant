@@ -20,6 +20,13 @@ import com.company.assistant.directory.EmployeeRepository;
 public class AuthController {
 
     private final EmployeeRepository employeeRepository;
+    /**
+     * A-29 (#178): sifre uzunluk alt siniri. TemporaryPasswordGenerator 12 karakter uretir,
+     * yani sistem sifreleri bu siniri rahatca asar; kural kullanicinin KENDI belirledigi
+     * sifre icin gecerli.
+     */
+    private static final int MIN_PASSWORD_LENGTH = 8;
+
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -66,7 +73,8 @@ public class AuthController {
 
         return ResponseEntity.ok(new AuthDtos.LoginResponse(accessToken, refreshToken,
                 new AuthDtos.UserDto(employee.getId(), employee.getName(),
-                        employee.getEmail(), roleInfo.role(), roleInfo.subRole())));
+                        employee.getEmail(), roleInfo.role(), roleInfo.subRole()),
+                employee.isMustChangePassword()));
     }
 
     @PostMapping("/refresh")
@@ -162,9 +170,55 @@ public class AuthController {
                 employee.getId(), roleInfo.role(), roleInfo.subRole());
         String refreshToken = refreshTokenService.issue(employee.getId());
 
+        // A-29 (#178): admin akisinda sifre degisimi 2FA'nin YERINE gecmez; once kimlik
+        // dogrulanir, sonra gecici sifre degistirilir.
         return new AuthDtos.LoginResponse(accessToken, refreshToken,
                 new AuthDtos.UserDto(employee.getId(), employee.getName(),
-                        employee.getEmail(), roleInfo.role(), roleInfo.subRole()));
+                        employee.getEmail(), roleInfo.role(), roleInfo.subRole()),
+                employee.isMustChangePassword());
+    }
+
+    /**
+     * A-29 (#178): sifre degistirme. Bu uc daha once HIC yoktu — calisan, admin'in
+     * belirledigi sifreyi degistiremiyordu.
+     *
+     * <p>Mevcut sifre dogrulanir: token'a sahip olmak yeterli degil, cunku acik kalmis bir
+     * oturumdan sifre degistirilebilmesi hesabin tamamen ele gecirilmesi demektir.
+     *
+     * <p>SecurityConfig'e satir eklenmedi; permitAll listesi tek tek uclari sayiyor ve bu uc
+     * anyRequest().authenticated() varsayilanina dusuyor.
+     */
+    @PostMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @RequestBody AuthDtos.ChangePasswordRequest request,
+            org.springframework.security.core.Authentication authentication) {
+
+        Employee employee = employeeRepository.findById(Integer.valueOf(authentication.getName()))
+                .filter(Employee::isActive)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Session invalid"));
+
+        if (employee.getPasswordHash() == null
+                || !passwordEncoder.matches(request.currentPassword(), employee.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mevcut şifre hatalı");
+        }
+
+        String newPassword = request.newPassword();
+        if (newPassword == null || newPassword.length() < MIN_PASSWORD_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Yeni şifre en az " + MIN_PASSWORD_LENGTH + " karakter olmalıdır");
+        }
+        // Gecici sifreyi "degistirdim" deyip aynisini yazmak akisi anlamsiz kilardi.
+        if (passwordEncoder.matches(newPassword, employee.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Yeni şifre mevcut şifreyle aynı olamaz");
+        }
+
+        employee.setPasswordHash(passwordEncoder.encode(newPassword));
+        employee.setMustChangePassword(false);
+        employeeRepository.save(employee);
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/session")

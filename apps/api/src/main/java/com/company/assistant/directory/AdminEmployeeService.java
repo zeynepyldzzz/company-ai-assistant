@@ -3,10 +3,10 @@ package com.company.assistant.directory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import com.company.assistant.auth.Role;
 import com.company.assistant.auth.RoleRepository;
+import com.company.assistant.auth.TemporaryPasswordGenerator;
 import com.company.assistant.auth.TotpService;
 
 /**
@@ -25,29 +25,69 @@ public class AdminEmployeeService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final TotpService totpService;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     public AdminEmployeeService(EmployeeRepository employeeRepository,
                                  DepartmentRepository departmentRepository,
                                  RoleRepository roleRepository,
                                  PasswordEncoder passwordEncoder,
-                                 TotpService totpService) {
+                                 TotpService totpService,
+                                 TemporaryPasswordGenerator temporaryPasswordGenerator) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.totpService = totpService;
+        this.temporaryPasswordGenerator = temporaryPasswordGenerator;
     }
 
+    /**
+     * A-29 (#178): sifre artik OPSIYONEL. Gonderilmezse sistem gecici bir sifre uretir ve
+     * kullaniciyi ilk giriste degistirmeye zorlar.
+     *
+     * <p>Gerekce: admin'in calisanin KALICI sifresini bilmesi, sifreyi bir kimlik dogrulama
+     * araci olmaktan cikarir — admin o hesapla islem yapabilir ve loglarda calisanin kendisi
+     * gorunur. Gecici sifre bu baglantiyi ilk giriste koparir.
+     *
+     * <p>Admin yine de sifre gonderebilir; o durumda eski davranis aynen korunur
+     * (mustChangePassword false kalir). Geriye donuk uyumluluk icin bilincli.
+     */
     @Transactional
-    public EmployeeResponse create(AdminEmployeeRequest request) {
-        if (!StringUtils.hasText(request.password())) {
-            throw new EmployeePasswordRequiredException(
-                    "Yeni çalışan oluşturulurken bir ilk şifre belirlenmelidir.");
-        }
+    public AdminEmployeeCreateResponse create(AdminEmployeeRequest request) {
         Employee employee = new Employee();
         applyRequest(employee, request);
         employee.setActive(true);
-        return new EmployeeResponse(employeeRepository.save(employee));
+
+        String generatedPassword = assignTemporaryPassword(employee);
+
+        EmployeeResponse saved = new EmployeeResponse(employeeRepository.save(employee));
+        return new AdminEmployeeCreateResponse(saved, generatedPassword);
+    }
+
+    /**
+     * A-29 (#178): sifre sifirlama. Calisan sifresini unuttugunda admin yeni bir GECICI sifre
+     * uretir; kullanici ilk girisinde kendi sifresini belirler.
+     *
+     * <p>Admin'in kalici sifreyi bilmesi burada da onlenmis oluyor — olusturma akisiyla ayni
+     * kural, yalnizca farkli kapi.
+     */
+    @Transactional
+    public AdminEmployeeCreateResponse resetPassword(Integer id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException("Çalışan bulunamadı: " + id));
+
+        String generatedPassword = assignTemporaryPassword(employee);
+
+        EmployeeResponse saved = new EmployeeResponse(employeeRepository.save(employee));
+        return new AdminEmployeeCreateResponse(saved, generatedPassword);
+    }
+
+    /** Uretilen sifre YALNIZCA doner; kayitta hash'i tutulur, duz metin hicbir yerde kalmaz. */
+    private String assignTemporaryPassword(Employee employee) {
+        String password = temporaryPasswordGenerator.generate();
+        employee.setPasswordHash(passwordEncoder.encode(password));
+        employee.setMustChangePassword(true);
+        return password;
     }
 
     @Transactional
@@ -92,11 +132,8 @@ public class AdminEmployeeService {
             employee.setRole(role);
         }
 
-        // C-12 (#120): sifre gonderildiyse (olusturmada zorunlu, guncellemede
-        // opsiyonel - bos birakilirsa mevcut sifre korunur) hashleyip yaz.
-        if (StringUtils.hasText(request.password())) {
-            employee.setPasswordHash(passwordEncoder.encode(request.password()));
-        }
+        // A-29 (#178): sifre burada YAZILMAZ. Olusturmada create() gecici sifre uretir,
+        // sifirlamada resetPassword(). Guncelleme akisi sifreye hic dokunmuyor.
 
         // Admin turu bir role atandiysa (employee disinda herhangi bir rol -
         // bkz. AuthDtos.RoleInfo.from) ve henuz bir TOTP secret'i yoksa, giris

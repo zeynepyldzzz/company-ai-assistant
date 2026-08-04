@@ -11,6 +11,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.company.assistant.common.ChatActions;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
@@ -26,6 +27,17 @@ public class ChatMessageService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatMessageService.class);
     private static final long NFR02_LIMIT_MS = 5000;
+
+    /**
+     * A-30 (#185): resolver'in yanit basina secebildigi butonlar. Etiketler normalde intents
+     * tablosunda tutuluyor (A-22); burada koda gomulu olmalarinin sebebi, bunlarin bir INTENT'e
+     * degil resolver'in IC DALINA karsilik gelmesi — tabloda karsiligi olan bir satir yok.
+     *
+     * <p>Haritada bulunmayan bir override degeri (orn. {@link ChatActions#NONE}) butonu
+     * tamamen bastirir.
+     */
+    private static final Map<String, ChatAction> OVERRIDE_ACTIONS = Map.of(
+            ChatActions.MY_SCHEDULE, new ChatAction(ChatActions.MY_SCHEDULE, "Çalışma düzenimi aç"));
 
     private final IntentClassificationService classificationService;
     private final TemplateResponseService templateResponseService;
@@ -97,6 +109,11 @@ public class ChatMessageService {
         variables.putAll(departmentVariableResolver.resolve(result.intent(), message));
         variables.putAll(announcementVariableResolver.resolve(result.intent()));
         variables.putAll(surveyVariableResolver.resolve(result.intent()));
+        // A-30: resolver farkli bir buton istediyse burada alinir ve haritadan cikarilir.
+        // Silme render'dan ONCE olmali; aksi halde bilinmeyen placeholder gibi degil ama
+        // gereksiz bir degisken olarak haritada dolasir.
+        String actionOverride = variables.remove(ChatActions.OVERRIDE_KEY);
+
         String reply = hr.fallbackRequired()
                 ? templateResponseService.buildFallbackResponse(variables)
                 : templateResponseService.buildResponse(result.intent(), variables);
@@ -113,7 +130,7 @@ public class ChatMessageService {
 
         return new ChatMessageResponse(
                 reply, result.intent(), Instant.now(),
-                actionsFor(result.intent()),
+                actionsFor(result.intent(), actionOverride),
                 suggestionsFor(result.intent()));
     }
 
@@ -122,8 +139,16 @@ public class ChatMessageService {
      * chatbot'un sinira dayandigi yerde anlamli (kesilen liste, dar kapsam, baska ekranda
      * yapilan islem). Cevabin zaten tam oldugu yerde buton kullaniciya "eksik cevap aldim"
      * izlenimi verirdi.
+     *
+     * <p>A-30 (#185): resolver override bildirdiyse intent'in varsayilan butonu KULLANILMAZ.
+     * Override edilmis ama tanimsiz bir hedef geldiginde bos liste donulur — yanlis yere
+     * goturen bir buton, butonsuz bir yanittan kotudur.
      */
-    private List<ChatAction> actionsFor(String intentName) {
+    private List<ChatAction> actionsFor(String intentName, String actionOverride) {
+        if (actionOverride != null) {
+            ChatAction action = OVERRIDE_ACTIONS.get(actionOverride);
+            return action == null ? List.of() : List.of(action);
+        }
         return suggestionRepository.findActionByIntentName(intentName)
                 .map(List::of)
                 .orElseGet(List::of);
