@@ -24,6 +24,10 @@ const ACTION_ROUTES: Record<string, string> = {
   // A-25: B-21 ile calisana acik duyuru ekrani geldi; A-22'de bos birakilan buton
   // artik bir yere goturebiliyor.
   announcements: "/announcements",
+  // A-30: "bu hafta icin kayitli bir calisma duzenin gorunmuyor" yanitinin butonu.
+  // Intent'in varsayilan butonu calisan listesine goturuyordu; hedefi resolver secince
+  // burada da karsiligi gerekti.
+  my_schedule: "/my-schedule",
   dashboard: "/",
 };
 

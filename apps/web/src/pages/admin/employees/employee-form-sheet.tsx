@@ -98,6 +98,12 @@ export function EmployeeFormSheet({
       toast.error("İsim ve e-posta boş olamaz.");
       return;
     }
+    // A-30 (#185): departman zorunlu. Backend de @NotNull ile reddediyor; buradaki kontrol
+    // istegi bosa gondermemek icin.
+    if (!departmentId) {
+      toast.error("Departman seçilmelidir.");
+      return;
+    }
     // A-29: sifre artik zorunlu degil — bos birakilirsa sistem gecici sifre uretir.
     mutation.mutate();
   }
@@ -205,13 +211,14 @@ export function EmployeeFormSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Departman</Label>
+            <Label>Departman *</Label>
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
-                <SelectValue placeholder="Atanmamış" />
+                <SelectValue placeholder="Departman seçin…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>Atanmamış</SelectItem>
+                {/* A-30: "Atanmamış" secenegi KALDIRILDI — departmansiz calisan uretmenin yolu
+                    kapandi. Mevcut departmansiz kayitlar duzenlenirken de secim zorunlu olur. */}
                 {departments.map((department) => (
                   <SelectItem key={department.id} value={String(department.id)}>
                     {department.name}

@@ -2,6 +2,7 @@ package com.company.assistant.directory;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * POST/PUT /admin/employees govdesi.
@@ -20,6 +21,20 @@ public record AdminEmployeeRequest(
         @NotBlank @Email String email,
         String phone,
         String officeStatus,
+
+        /**
+         * A-30 (#185): departman ZORUNLU.
+         *
+         * <p>Kisitlama uygulama katmaninda; {@code employee.department_id} kolonuna NOT NULL
+         * KONULAMAZ, cunku mevcut satirlarda NULL var ve migration ayaga kalkmazdi. Once
+         * o satirlara departman atanmali, NOT NULL ayri bir issue.
+         *
+         * <p>Not: bu kural, departmansiz calisanin gorunmemesinin CARESI DEGIL — o hata
+         * EmployeeRepository.search()'teki ortuk INNER JOIN'di ve ayrica duzeltildi. Buradaki
+         * amac yeni bos kayit uretilmesini durdurmak.
+         */
+        @NotNull(message = "Departman seçilmelidir.")
         Integer departmentId,
+
         Integer roleId) {
 }
