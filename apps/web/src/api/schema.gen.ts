@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/surveys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateSurvey"];
+        post?: never;
+        delete: operations["deleteSurvey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/surveys/{id}/publish": {
         parameters: {
             query?: never;
@@ -110,7 +126,7 @@ export interface paths {
         get?: never;
         put: operations["updateRoute"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteRoute"];
         options?: never;
         head?: never;
         patch?: never;
@@ -175,6 +191,22 @@ export interface paths {
         put: operations["update_1"];
         post?: never;
         delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/announcements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_2"];
+        post?: never;
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -286,6 +318,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["changePassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -476,6 +524,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["listVehicles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/surveys/{id}/response-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getResponseCount"];
         put?: never;
         post?: never;
         delete?: never;
@@ -932,6 +996,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/announcements/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getActiveAnnouncements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/surveys/{id}/results": {
         parameters: {
             query?: never;
@@ -1146,6 +1226,12 @@ export interface components {
             roleId?: number;
             roleName?: string;
         };
+        AdminSurveyUpdateRequest: {
+            title?: string;
+            /** Format: date-time */
+            deadline?: string;
+            options?: string[];
+        };
         AdminSurveyResponse: {
             /** Format: int32 */
             id?: number;
@@ -1153,6 +1239,14 @@ export interface components {
             published?: boolean;
             /** Format: date-time */
             createdAt?: string;
+            /** Format: date-time */
+            deadline?: string;
+            options?: components["schemas"]["SurveyOptionDto"][];
+        };
+        SurveyOptionDto: {
+            /** Format: int32 */
+            id?: number;
+            optionText?: string;
         };
         ShuttleRouteRequest: {
             name: string;
@@ -1273,6 +1367,12 @@ export interface components {
             managerEmail?: string;
             managerPhone?: string;
         };
+        AdminAnnouncementUpdateRequest: {
+            title?: string;
+            content?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
         AnnouncementDto: {
             /** Format: int32 */
             id?: number;
@@ -1281,11 +1381,13 @@ export interface components {
             pinned?: boolean;
             /** Format: date-time */
             publishedAt?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            active?: boolean;
         };
         SurveyResponseRequest: {
-            answers?: {
-                [key: string]: unknown;
-            };
+            /** Format: int32 */
+            optionId?: number;
         };
         ReservationRequest: {
             /** Format: int32 */
@@ -1345,6 +1447,10 @@ export interface components {
             accessToken?: string;
             refreshToken?: string;
         };
+        ChangePasswordRequest: {
+            currentPassword?: string;
+            newPassword?: string;
+        };
         LoginRequest: {
             email?: string;
             password?: string;
@@ -1357,6 +1463,7 @@ export interface components {
             accessToken?: string;
             refreshToken?: string;
             user?: components["schemas"]["UserDto"];
+            mustChangePassword?: boolean;
         };
         UserDto: {
             /** Format: int32 */
@@ -1368,6 +1475,9 @@ export interface components {
         };
         AdminSurveyCreateRequest: {
             title?: string;
+            /** Format: date-time */
+            deadline?: string;
+            options?: string[];
         };
         MenuImportResponse: {
             committed?: boolean;
@@ -1397,9 +1507,21 @@ export interface components {
             /** Format: date */
             effectiveDate: string;
         };
+        AdminEmployeeCreateResponse: {
+            employee?: components["schemas"]["EmployeeResponse"];
+            generatedPassword?: string;
+        };
         AdminAnnouncementCreateRequest: {
             title?: string;
             content?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        SurveyResponseCountResponse: {
+            /** Format: int32 */
+            surveyId?: number;
+            /** Format: int64 */
+            totalResponses?: number;
         };
         SurveyDto: {
             /** Format: int32 */
@@ -1407,6 +1529,9 @@ export interface components {
             title?: string;
             /** Format: date-time */
             createdAt?: string;
+            /** Format: date-time */
+            deadline?: string;
+            options?: components["schemas"]["SurveyOptionDto"][];
         };
         PagedResponseShuttleRouteResponse: {
             data?: components["schemas"]["ShuttleRouteResponse"][];
@@ -1548,9 +1673,7 @@ export interface components {
             /** Format: int32 */
             totalFeedback?: number;
             answerCounts?: {
-                [key: string]: {
-                    [key: string]: number;
-                };
+                [key: string]: number;
             };
             feedbackComments?: string[];
         };
@@ -1789,6 +1912,52 @@ export interface operations {
             };
         };
     };
+    updateSurvey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminSurveyUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminSurveyResponse"];
+                };
+            };
+        };
+    };
+    deleteSurvey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     publish: {
         parameters: {
             query?: never;
@@ -1834,6 +2003,26 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ShuttleRouteDetailResponse"];
                 };
+            };
+        };
+    };
+    deleteRoute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1982,6 +2171,52 @@ export interface operations {
         };
     };
     delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAnnouncementUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"];
+                };
+            };
+        };
+    };
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2160,6 +2395,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["RefreshResponse"];
                 };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2420,7 +2677,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EmployeeResponse"];
+                    "*/*": components["schemas"]["AdminEmployeeCreateResponse"];
                 };
             };
         };
@@ -2491,6 +2748,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleResponse"][];
+                };
+            };
+        };
+    };
+    getResponseCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyResponseCountResponse"];
                 };
             };
         };
@@ -3094,6 +3373,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    getActiveAnnouncements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnouncementDto"][];
                 };
             };
         };

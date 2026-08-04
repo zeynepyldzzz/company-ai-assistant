@@ -11,6 +11,7 @@ import { DepartmentsPage } from "@/pages/directory/departments-page";
 import { DepartmentDetailPage } from "@/pages/directory/department-detail-page";
 import { MenuPage } from "@/pages/menu/menu-page";
 import { ShuttlePage } from "@/pages/shuttle/shuttle-page";
+import { ChangePasswordPage } from "@/pages/change-password-page";
 import { SchedulePage } from "@/pages/schedule/schedule-page";
 import { VehicleReservationPage } from "@/pages/vehicle/vehicle-reservation-page";
 import { AnnouncementsPage } from "@/pages/announcements/announcements-page";
@@ -31,6 +32,9 @@ export const router = createBrowserRouter([
   {
     element: <RequireAuth />,
     children: [
+      // A-29: AppLayout DISINDA — gecici sifreyle giren kullanici kenar cubugundan
+      // baska sayfalara gidememeli, once kendi sifresini belirlemeli.
+      { path: "/change-password", element: <ChangePasswordPage /> },
       {
         element: <AppLayout />,
         children: [

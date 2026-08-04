@@ -30,12 +30,23 @@ export const LoginRequestSchema = z.object({
 });
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
+// A-29: mustChangePassword true ise sifre sistem tarafindan uretilmis gecici bir sifredir;
+// kullanici kendi sifresini belirlemeden once yonlendirilir. .default(false) ile: alan
+// A-29'da eklendi, eski bir yanit gelirse sema patlamasin.
 export const LoginResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
   user: UserSchema,
+  mustChangePassword: z.boolean().default(false),
 });
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+
+// POST /auth/password (A-29)
+export const ChangePasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, "Yeni şifre en az 8 karakter olmalıdır"),
+});
+export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
 
 // POST /auth/refresh
 export const RefreshResponseSchema = z.object({

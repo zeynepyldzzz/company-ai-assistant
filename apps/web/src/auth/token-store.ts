@@ -6,6 +6,9 @@ export interface StoredAuth {
   accessToken: string;
   refreshToken: string;
   user: User;
+  // A-29: sifre sistem tarafindan uretilmis gecici bir sifreyse true. Kullanici kendi
+  // sifresini belirleyene kadar uygulama onu zorunlu degistirme ekranina yonlendirir.
+  mustChangePassword?: boolean;
 }
 
 type Listener = (auth: StoredAuth | null) => void;
@@ -32,6 +35,13 @@ export function updateTokens(accessToken: string, refreshToken: string): void {
   const current = readAuth();
   if (!current) return;
   writeAuth({ ...current, accessToken, refreshToken });
+}
+
+/** A-29: sifre degistirildikten sonra zorunluluk kalkar; oturum acik kalir. */
+export function clearMustChangePassword(): void {
+  const current = readAuth();
+  if (!current) return;
+  writeAuth({ ...current, mustChangePassword: false });
 }
 
 export function clearAuth(): void {
