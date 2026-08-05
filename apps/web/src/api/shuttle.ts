@@ -6,6 +6,8 @@ import {
   ShuttleRouteDetailSchema,
   ShuttleRecommendationSchema,
   AddressSuggestionListSchema,
+  RouteMatchResponseSchema,
+  GeometryPointListSchema,
   type ShuttleRoutePagedResponse,
   type ShuttleStopList,
   type ShuttleRouteGeometry,
@@ -14,6 +16,9 @@ import {
   type ShuttleRecommendation,
   type AdminShuttleRouteRequest,
   type AddressSuggestionList,
+  type RoutePoint,
+  type RouteMatchResponse,
+  type GeometryPointList,
 } from "@company/shared";
 import { apiFetch } from "./client";
 
@@ -95,4 +100,24 @@ export async function updateShuttleRoute(
     body: JSON.stringify(body),
   });
   return ShuttleRouteDetailSchema.parse(data);
+}
+
+// B-31: haritada cizilen ham noktalari OSRM Match ile gercek yola oturtan
+// onizleme ucu - henuz kaydedilmemis (id'si olmayan) yeni bir guzergah
+// icin de calisir.
+export async function matchRouteGeometry(points: RoutePoint[], token: string): Promise<RouteMatchResponse> {
+  const data = await apiFetch<unknown>("/admin/shuttle-routes/match-geometry", {
+    method: "POST",
+    token,
+    body: JSON.stringify({ points }),
+  });
+  return RouteMatchResponseSchema.parse(data);
+}
+
+// B-31: duzenleme ekraninda kayitli manuel rota noktalarini geri yuklemek
+// icin - public /geometry ucunun aksine kayit yoksa fallback donmez, sadece
+// bos liste doner.
+export async function getShuttleRouteGeometryPoints(routeId: number, token: string): Promise<GeometryPointList> {
+  const data = await apiFetch<unknown>(`/admin/shuttle-routes/${routeId}/geometry-points`, { token });
+  return GeometryPointListSchema.parse(data);
 }

@@ -17,5 +17,10 @@ public record ShuttleRouteRequest(
         String driverPhone,
 
         @NotEmpty(message = "En az bir durak gereklidir")
-        List<@Valid ShuttleStopRequest> stops
+        List<@Valid ShuttleStopRequest> stops,
+
+        // B-31: haritada cizilip OSRM Match ile yola oturtulmus rota noktalari.
+        // Opsiyonel - girilmezse guzergah eski OSRM-route-arasi-duraklar
+        // fallback'ine duser (getRouteGeometry).
+        List<@Valid RoutePointRequest> geometryPoints
 ) {}

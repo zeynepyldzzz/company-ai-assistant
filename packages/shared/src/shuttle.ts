@@ -57,14 +57,36 @@ export const AdminShuttleStopRequestSchema = z.object({
 });
 export type AdminShuttleStopRequest = z.infer<typeof AdminShuttleStopRequestSchema>;
 
+// B-31: haritada cizilip OSRM Match ile yola oturtulmus rota noktasi.
+export const RoutePointSchema = z.object({ lat: z.number(), lng: z.number() });
+export type RoutePoint = z.infer<typeof RoutePointSchema>;
+
 export const AdminShuttleRouteRequestSchema = z.object({
   name: z.string().min(1),
   plateNumber: z.string().nullable().optional(),
   driverName: z.string().nullable().optional(),
   driverPhone: z.string().nullable().optional(),
   stops: z.array(AdminShuttleStopRequestSchema).min(1),
+  geometryPoints: z.array(RoutePointSchema).nullable().optional(),
 });
 export type AdminShuttleRouteRequest = z.infer<typeof AdminShuttleRouteRequestSchema>;
+
+// POST /admin/shuttle-routes/match-geometry govdesi
+export const RouteMatchRequestSchema = z.object({
+  points: z.array(RoutePointSchema).min(2),
+});
+export type RouteMatchRequest = z.infer<typeof RouteMatchRequestSchema>;
+
+// POST /admin/shuttle-routes/match-geometry yaniti
+export const RouteMatchResponseSchema = z.object({
+  coordinates: z.array(RoutePointSchema),
+});
+export type RouteMatchResponse = z.infer<typeof RouteMatchResponseSchema>;
+
+// GET /admin/shuttle-routes/{id}/geometry-points (duzenleme ekraninda kayitli
+// manuel rota noktalarini geri yuklemek icin - hicbir zaman fallback donmez)
+export const GeometryPointListSchema = z.array(RoutePointSchema);
+export type GeometryPointList = z.infer<typeof GeometryPointListSchema>;
 
 // GET /shuttle-routes/address-suggestions?q= (A-33)
 export const AddressSuggestionSchema = z.object({

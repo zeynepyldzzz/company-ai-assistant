@@ -31,15 +31,18 @@ public class ShuttleService {
 
     private final ShuttleRouteRepository shuttleRouteRepository;
     private final ShuttleStopRepository shuttleStopRepository;
+    private final ShuttleRoutePointRepository shuttleRoutePointRepository;
     private final GeocodingService geocodingService;
     private final RoutingService routingService;
 
     public ShuttleService(ShuttleRouteRepository shuttleRouteRepository,
             ShuttleStopRepository shuttleStopRepository,
+            ShuttleRoutePointRepository shuttleRoutePointRepository,
             GeocodingService geocodingService,
             RoutingService routingService) {
         this.shuttleRouteRepository = shuttleRouteRepository;
         this.shuttleStopRepository = shuttleStopRepository;
+        this.shuttleRoutePointRepository = shuttleRoutePointRepository;
         this.geocodingService = geocodingService;
         this.routingService = routingService;
     }
@@ -93,6 +96,17 @@ public class ShuttleService {
     public ShuttleRouteGeometryResponse getRouteGeometry(Integer routeId) {
         if (!shuttleRouteRepository.existsById(routeId)) {
             throw new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId);
+        }
+
+        // B-31: admin haritada cizip OSRM Match ile yola oturttuysa, o kayitli
+        // geometri dogrudan kullanilir - duraklar arasi OSRM route hesabina
+        // (asagidaki eski davranis) hic gerek kalmaz.
+        List<ShuttleRoutePoint> savedPoints = shuttleRoutePointRepository.findByRouteIdOrderByOrderIndexAsc(routeId);
+        if (!savedPoints.isEmpty()) {
+            List<Coordinate> savedCoordinates = savedPoints.stream()
+                    .map(p -> new Coordinate(p.getLatitude(), p.getLongitude()))
+                    .toList();
+            return new ShuttleRouteGeometryResponse(routeId, savedCoordinates);
         }
 
         List<Coordinate> waypoints = shuttleStopRepository.findByRouteIdOrderByOrderIndexAsc(routeId).stream()
