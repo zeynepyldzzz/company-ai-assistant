@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 
+import com.company.assistant.common.ChatActions;
 import com.company.assistant.directory.OfficeStatusVariableResolver;
 
 /**
@@ -65,6 +66,41 @@ class ScheduleVariableResolverTest {
         Map<String, String> vars = resolver.resolve("calisma_duzeni", "bu hafta ofiste miyim", authentication);
 
         assertThat(vars.get("calisma_duzenim")).contains("kayıtlı bir çalışma düzenin görünmüyor");
+    }
+
+    // A-30 (#185): "planini gir" diyen yanitin butonu cizelge ekranina gitmeli. Intent'in
+    // varsayilan butonu calisan listesine goturuyordu; metin ile buton celisiyordu.
+    @Test
+    void kayitYoksaButonCalismaDuzeniEkraninaGider() {
+        when(scheduleService.getMySchedule(anyInt()))
+                .thenReturn(new WeeklyScheduleDto(weekStart(), List.of()));
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "bu hafta ofiste miyim", authentication);
+
+        assertThat(vars.get(ChatActions.OVERRIDE_KEY)).isEqualTo(ChatActions.MY_SCHEDULE);
+    }
+
+    // A-30: cevabin tam oldugu dallarda buton hic cikmamali (A-22 ilkesi). Onemli olan
+    // override'in BILDIRILMESI: bildirilmezse intent'in calisan-listesi butonu miras alinir.
+    @Test
+    void kendiPlaniniDondurenYanitlardaButonBastirilir() {
+        seedFullWeek();
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "çarşamba ofiste miyim", authentication);
+
+        assertThat(vars.get(ChatActions.OVERRIDE_KEY)).isEqualTo(ChatActions.NONE);
+    }
+
+    // A-30: ucuncu sahis dali override BILDIRMEZ — "kimler ofiste" yanitinda calisan
+    // listesi butonu dogru hedeftir ve varsayilan olarak kalmalidir.
+    @Test
+    void ucuncuSahisDaliVarsayilanButonuKorur() {
+        when(officeStatusVariableResolver.isThirdPersonQuestion("kimler ofiste")).thenReturn(true);
+        when(officeStatusVariableResolver.resolve("kimler ofiste", 7)).thenReturn("Ayse Kaya");
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "kimler ofiste", authentication);
+
+        assertThat(vars).doesNotContainKey(ChatActions.OVERRIDE_KEY);
     }
 
     @Test

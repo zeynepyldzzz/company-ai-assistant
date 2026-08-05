@@ -98,6 +98,12 @@ export function EmployeeFormSheet({
       toast.error("İsim ve e-posta boş olamaz.");
       return;
     }
+    // A-30 (#185): departman zorunlu. Backend de @NotNull ile reddediyor; buradaki kontrol
+    // istegi bosa gondermemek icin.
+    if (!departmentId) {
+      toast.error("Departman seçilmelidir.");
+      return;
+    }
     // A-29: sifre artik zorunlu degil — bos birakilirsa sistem gecici sifre uretir.
     mutation.mutate();
   }
@@ -176,7 +182,17 @@ export function EmployeeFormSheet({
 
           <div className="space-y-1.5">
             <Label htmlFor="employee-phone">Telefon</Label>
-            <Input id="employee-phone" value={phone ?? ""} onChange={(event) => setPhone(event.target.value)} />
+            {/* Harf girisi engellenir ama bicim KATI DEGIL: bu alan hem cep numarasi
+                (0532 111 22 33) hem 4 haneli dahili tutuyor. Sabit bir maske dahiliyi
+                girilemez yapardi. */}
+            <Input
+              id="employee-phone"
+              inputMode="tel"
+              maxLength={20}
+              placeholder="0532 111 22 33 veya 1005"
+              value={phone ?? ""}
+              onChange={(event) => setPhone(event.target.value.replace(/[^\d\s()+-]/g, ""))}
+            />
           </div>
 
           {/* A-29: sifre alani KALDIRILDI — admin hicbir yolla sifre belirlemiyor.
@@ -205,13 +221,25 @@ export function EmployeeFormSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Departman</Label>
+            <Label>Departman *</Label>
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
-                <SelectValue placeholder="Atanmamış" />
+                {/* Base UI Select secili ogenin ETIKETINI kendiliginden bulmuyor; deger ile
+                    etiket farkli oldugunda (burada deger id, etiket ad) ham degeri basiyor
+                    ve ekranda "3" gorunuyordu. Ofis durumu acilirinda sorun cikmiyor cunku
+                    orada deger ve etiket ayni. Cozum admin-roles-page'de kullanilan desen.
+                    A-30: bos halin metni artik "Atanmamis" degil — departman zorunlu oldugu
+                    icin bos hal bir DURUM degil, yapilmamis bir SECIM. */}
+                <SelectValue placeholder="Departman seçin…">
+                  {(value: string | null) =>
+                    departments.find((department) => String(department.id) === value)?.name ??
+                    "Departman seçin…"
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>Atanmamış</SelectItem>
+                {/* A-30: "Atanmamış" secenegi KALDIRILDI — departmansiz calisan uretmenin yolu
+                    kapandi. Mevcut departmansiz kayitlar duzenlenirken de secim zorunlu olur. */}
                 {departments.map((department) => (
                   <SelectItem key={department.id} value={String(department.id)}>
                     {department.name}

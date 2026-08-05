@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import com.company.assistant.common.ChatActions;
 import com.company.assistant.common.TurkishText;
 import com.company.assistant.directory.OfficeStatusVariableResolver;
 
@@ -68,7 +69,7 @@ public class ScheduleVariableResolver {
         Integer employeeId = employeeId(authentication);
         if (employeeId == null) {
             // Degisken doldurulmadan birakilirsa ham {{calisma_duzenim}} kullaniciya gorunur.
-            return Map.of(VARIABLE, NO_IDENTITY);
+            return answer(NO_IDENTITY, ChatActions.NONE);
         }
 
         String text = TurkishText.foldToAscii(message);
@@ -85,7 +86,9 @@ public class ScheduleVariableResolver {
 
         WeeklyScheduleDto schedule = scheduleService.getMySchedule(employeeId);
         if (schedule.days().isEmpty()) {
-            return Map.of(VARIABLE, NO_RECORD);
+            // A-30 (#185): yanitin kendisi "planini gir" diyor; buton da oraya goturmeli.
+            // Varsayilan buton kullaniciyi calisan listesine goturuyordu — metinle celisiyordu.
+            return answer(NO_RECORD, ChatActions.MY_SCHEDULE);
         }
 
         // Hafta modu: "hafta" gecti ya da "hangi gunler" soruldu ve tekil gun ipucu yok.
@@ -93,18 +96,18 @@ public class ScheduleVariableResolver {
             // #127: gecmis hafta da kapsam disi. Eskiden yalnizca gelecek hafta kontrol
             // ediliyordu, "gecen hafta calisma duzenim" BU haftanin planini donduruyordu.
             if (isNextWeek(text) || isLastWeek(text)) {
-                return Map.of(VARIABLE, ONLY_CURRENT_WEEK);
+                return answer(ONLY_CURRENT_WEEK, ChatActions.NONE);
             }
-            return Map.of(VARIABLE, buildWeekBody(schedule));
+            return answer(buildWeekBody(schedule), ChatActions.NONE);
         }
 
         LocalDate target = resolveTarget(text, today);
         // Hedef bu haftanin disina tastiysa veri yok: sessizce bu haftayi dondurmek yanlis cevaptir.
         if (target.isBefore(weekStart) || target.isAfter(weekStart.plusDays(6))) {
-            return Map.of(VARIABLE, ONLY_CURRENT_WEEK);
+            return answer(ONLY_CURRENT_WEEK, ChatActions.NONE);
         }
         if (target.getDayOfWeek() == DayOfWeek.SATURDAY || target.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            return Map.of(VARIABLE, WEEKEND);
+            return answer(WEEKEND, ChatActions.NONE);
         }
 
         String dayKey = target.getDayOfWeek().name().toLowerCase(Locale.ROOT);
@@ -113,9 +116,23 @@ public class ScheduleVariableResolver {
                 .findFirst();
 
         String label = TurkishText.dayName(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ")";
-        return Map.of(VARIABLE, day
+        return answer(day
                 .map(d -> label + " günü " + sentenceFor(d.status()))
-                .orElse(label + " günü için kayıtlı bir durum yok."));
+                .orElse(label + " günü için kayıtlı bir durum yok."),
+                ChatActions.NONE);
+    }
+
+    /**
+     * A-30 (#185): yanit + o yanita ait buton hedefi.
+     *
+     * <p>Kullanicinin KENDI planini donduren her dal butonu acikca seciyor; hicbiri
+     * intent'in varsayilan butonunu (calisan listesi) miras almiyor. Sebep: o buton
+     * yalnizca ucuncu sahis dali ("kimler ofiste") icin tanimlanmisti ve kendi planini
+     * soran kullaniciyi alakasiz bir ekrana goturuyordu. Ucuncu sahis dali override
+     * BILDIRMEZ; varsayilani kullanmaya devam eder.
+     */
+    private Map<String, String> answer(String body, String actionTarget) {
+        return Map.of(VARIABLE, body, ChatActions.OVERRIDE_KEY, actionTarget);
     }
 
     private Integer employeeId(Authentication authentication) {
