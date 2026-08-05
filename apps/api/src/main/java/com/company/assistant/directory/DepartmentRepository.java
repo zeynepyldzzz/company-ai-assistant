@@ -10,9 +10,17 @@ import java.util.List;
 
 public interface DepartmentRepository extends JpaRepository<Department, Integer> {
 
+    /**
+     * A-34 (#194): kelime basi eslesmesi ve deterministik siralama — calisan aramasiyla ayni
+     * kural (bkz. {@link EmployeeRepository#search}). Birini duzeltip digerini birakmak, ayni
+     * ekran ailesinde iki farkli arama davranisi demek olurdu.
+     */
     @Query("""
         SELECT d FROM Department d
-        WHERE :search IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+        WHERE :search IS NULL
+           OR LOWER(d.name) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
+           OR LOWER(d.name) LIKE LOWER(CONCAT('% ', CAST(:search AS string), '%'))
+        ORDER BY d.name, d.id
         """)
     Page<Department> search(@Param("search") String search, Pageable pageable);
 
