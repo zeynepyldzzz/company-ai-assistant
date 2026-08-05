@@ -160,7 +160,7 @@ class ShuttleControllerTest {
         nearestStop.setLongitude(29.02);
 
         when(shuttleService.getRecommendation(40.98, 29.03))
-                .thenReturn(new ShuttleRecommendationResponse(nearestStop, 1.5, 4));
+                .thenReturn(new ShuttleRecommendationResponse(nearestStop, 1.5, 4, 40.98, 29.03));
 
         mockMvc.perform(get("/shuttle-routes/recommendation")
                         .param("lat", "40.98")
@@ -172,7 +172,9 @@ class ShuttleControllerTest {
                 .andExpect(jsonPath("$.stopId").value(5))
                 .andExpect(jsonPath("$.stopName").value("Merkez"))
                 .andExpect(jsonPath("$.distanceKm").value(1.5))
-                .andExpect(jsonPath("$.estimatedMinutes").value(4));
+                .andExpect(jsonPath("$.estimatedMinutes").value(4))
+                .andExpect(jsonPath("$.searchLat").value(40.98))
+                .andExpect(jsonPath("$.searchLng").value(29.03));
     }
 
     @Test
@@ -201,13 +203,15 @@ class ShuttleControllerTest {
         nearestStop.setLongitude(29.02);
 
         when(shuttleService.getRecommendationByAddress("Kadıköy"))
-                .thenReturn(new ShuttleRecommendationResponse(nearestStop, 1.5, 4));
+                .thenReturn(new ShuttleRecommendationResponse(nearestStop, 1.5, 4, 40.9906, 29.0274));
 
         mockMvc.perform(get("/shuttle-routes/recommendation")
                         .param("address", "Kadıköy")
                         .with(user("calisan")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.stopId").value(5));
+                .andExpect(jsonPath("$.stopId").value(5))
+                .andExpect(jsonPath("$.searchLat").value(40.9906))
+                .andExpect(jsonPath("$.searchLng").value(29.0274));
     }
 
     @Test

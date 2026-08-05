@@ -27,6 +27,19 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
+  # B-27: gercek yol mesafesi/rota geometrisi (RoutingService). Veri
+  # scripts/prepare-osrm-data.sh ile bir kere hazirlanir (osrm-data/,
+  # gitignore'da); OSRM erisilemezse backend haversine'a fallback yapar.
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    container_name: company-ai-assistant-osrm
+    restart: unless-stopped
+    command: osrm-routed --algorithm mld /data/izmir-manisa.osrm
+    ports:
+      - "5555:5000"
+    volumes:
+      - ./osrm-data:/data
+
 volumes:
   pgdata:
   ollama_data:

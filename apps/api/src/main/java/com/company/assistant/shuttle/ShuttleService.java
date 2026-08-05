@@ -149,7 +149,7 @@ public class ShuttleService {
             estimatedMinutes = route.get().durationMinutes();
         }
 
-        return new ShuttleRecommendationResponse(nearestStop, distanceKm, estimatedMinutes);
+        return new ShuttleRecommendationResponse(nearestStop, distanceKm, estimatedMinutes, lat, lng);
     }
 
     private double haversineKm(double lat1, double lng1, double lat2, double lng2) {

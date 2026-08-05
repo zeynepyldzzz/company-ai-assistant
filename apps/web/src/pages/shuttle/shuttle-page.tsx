@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, CircleMarker, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, useMap } from "react-leaflet";
+import { divIcon } from "leaflet";
 import type { LatLngBoundsExpression, LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Phone } from "lucide-react";
@@ -32,6 +33,18 @@ function driverInitials(name: string | null): string {
     .join("");
 }
 
+// B-27: leaflet'in varsayilan marker ikonu ek asset (png) yapilandirmasi
+// gerektirir; bunun yerine self-contained bir SVG pin kullanilir.
+const searchPinIcon = divIcon({
+  className: "",
+  html: `<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26c0-7.7-6.3-14-14-14z" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5" />
+    <circle cx="14" cy="14" r="5" fill="#fff" />
+  </svg>`,
+  iconSize: [28, 40],
+  iconAnchor: [14, 40],
+});
+
 function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
   const map = useMap();
   useEffect(() => {
@@ -47,6 +60,7 @@ export function ShuttlePage() {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isAddressInputFocused, setIsAddressInputFocused] = useState(false);
   const [highlightedStopId, setHighlightedStopId] = useState<number | null>(null);
+  const [searchedLocation, setSearchedLocation] = useState<LatLngTuple | null>(null);
 
   const debouncedAddressInput = useDebouncedValue(addressInput);
 
@@ -95,6 +109,7 @@ export function ShuttlePage() {
     onSuccess: (data) => {
       setSelectedRouteId(data.routeId);
       setHighlightedStopId(data.stopId);
+      setSearchedLocation([data.searchLat, data.searchLng]);
       setAddressInput("");
       setSelectedLocation(null);
     },
@@ -134,7 +149,14 @@ export function ShuttlePage() {
   const routeGeometryPositions: LatLngTuple[] =
     geometryQuery.data?.coordinates.map((c): LatLngTuple => [c.lat, c.lng]) ?? [];
   const polylinePositions = routeGeometryPositions.length >= 2 ? routeGeometryPositions : straightLinePositions;
-  const bounds: LatLngBoundsExpression | null = polylinePositions.length > 0 ? polylinePositions : null;
+  const isRecommendedRoute =
+    searchedLocation !== null && recommendationMutation.data?.routeId === selectedRouteId;
+  const bounds: LatLngBoundsExpression | null =
+    polylinePositions.length > 0
+      ? isRecommendedRoute && searchedLocation
+        ? [...polylinePositions, searchedLocation]
+        : polylinePositions
+      : null;
   const departureTime = stops[0]?.time ?? null;
 
   return (
@@ -215,6 +237,7 @@ export function ShuttlePage() {
               onClick={() => {
                 setSelectedRouteId(route.id);
                 setHighlightedStopId(null);
+                setSearchedLocation(null);
               }}
               className={cn(
                 "shrink-0 rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors",
@@ -258,7 +281,14 @@ export function ShuttlePage() {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <FitBounds bounds={bounds} />
-                <Polyline positions={polylinePositions} pathOptions={{ color: "#2563eb", weight: 4 }} />
+                <Polyline
+                  positions={polylinePositions}
+                  pathOptions={
+                    isRecommendedRoute
+                      ? { color: "#16a34a", weight: 6 }
+                      : { color: "#2563eb", weight: 4 }
+                  }
+                />
                 {stopsWithCoords.map((stop) => (
                   <CircleMarker
                     key={stop.id}
@@ -271,6 +301,9 @@ export function ShuttlePage() {
                     }}
                   />
                 ))}
+                {isRecommendedRoute && searchedLocation && (
+                  <Marker position={searchedLocation} icon={searchPinIcon} />
+                )}
               </MapContainer>
             )}
           </Card>
