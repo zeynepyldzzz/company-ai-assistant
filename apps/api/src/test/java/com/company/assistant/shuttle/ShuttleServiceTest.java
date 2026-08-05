@@ -29,6 +29,7 @@ class ShuttleServiceTest {
 
     private ShuttleRouteRepository shuttleRouteRepository;
     private ShuttleStopRepository shuttleStopRepository;
+    private ShuttleRoutePointRepository shuttleRoutePointRepository;
     private GeocodingService geocodingService;
     private RoutingService routingService;
     private ShuttleService service;
@@ -37,11 +38,13 @@ class ShuttleServiceTest {
     void setUp() {
         shuttleRouteRepository = mock(ShuttleRouteRepository.class);
         shuttleStopRepository = mock(ShuttleStopRepository.class);
+        shuttleRoutePointRepository = mock(ShuttleRoutePointRepository.class);
         geocodingService = mock(GeocodingService.class);
         routingService = mock(RoutingService.class);
         when(routingService.route(anyDouble(), anyDouble(), anyDouble(), anyDouble()))
                 .thenReturn(Optional.empty());
-        service = new ShuttleService(shuttleRouteRepository, shuttleStopRepository, geocodingService, routingService);
+        service = new ShuttleService(shuttleRouteRepository, shuttleStopRepository, shuttleRoutePointRepository,
+                geocodingService, routingService);
     }
 
     private ShuttleStop stop(ShuttleRoute route, Integer id, String name, double lat, double lng) {
@@ -210,6 +213,29 @@ class ShuttleServiceTest {
 
         assertThat(response.getCoordinates()).containsExactly(
                 new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04));
+    }
+
+    @Test
+    void geometriKayitliNoktalarVarsaDogrudanDonerOsrmSorulmaz() {
+        when(shuttleRouteRepository.existsById(1)).thenReturn(true);
+        ShuttleRoutePoint point1 = new ShuttleRoutePoint();
+        point1.setLatitude(40.98);
+        point1.setLongitude(29.03);
+        point1.setOrderIndex(1);
+        ShuttleRoutePoint point2 = new ShuttleRoutePoint();
+        point2.setLatitude(40.985);
+        point2.setLongitude(29.035);
+        point2.setOrderIndex(2);
+        when(shuttleRoutePointRepository.findByRouteIdOrderByOrderIndexAsc(1))
+                .thenReturn(List.of(point1, point2));
+
+        ShuttleRouteGeometryResponse response = service.getRouteGeometry(1);
+
+        assertThat(response.getCoordinates()).containsExactly(
+                new Coordinate(40.98, 29.03), new Coordinate(40.985, 29.035));
+        org.mockito.Mockito.verifyNoInteractions(shuttleStopRepository);
+        org.mockito.Mockito.verify(routingService, org.mockito.Mockito.never())
+                .routeGeometry(org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
