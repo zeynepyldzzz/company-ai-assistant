@@ -17,3 +17,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# OSRM: scripts/prepare-osrm-data.sh ile uretilir, commitlenmez
+osrm-data/
