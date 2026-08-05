@@ -30,10 +30,16 @@ public class SurveyController {
         return "survey module OK";
     }
 
-    /** FR-42: giris yapmis her calisan aktif anketleri gorebilir. */
+    /**
+     * FR-42: giris yapmis her calisan aktif anketleri gorebilir.
+     *
+     * <p>A-33 (#192): yanittaki {@code answered} alani ISTEGI YAPAN calisana gore doluyor,
+     * bu yuzden kimlik JWT'den okunuyor (submitResponse ile ayni kural).
+     */
     @GetMapping("/surveys/active")
-    public ResponseEntity<List<SurveyDto>> getActiveSurveys() {
-        return ResponseEntity.ok(surveyService.getActiveSurveys());
+    public ResponseEntity<List<SurveyDto>> getActiveSurveys(Authentication authentication) {
+        Integer employeeId = Integer.valueOf(authentication.getName());
+        return ResponseEntity.ok(surveyService.getActiveSurveys(employeeId));
     }
 
     /**

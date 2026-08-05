@@ -17,6 +17,10 @@ export const SurveySchema = z.object({
   createdAt: z.string(),
   deadline: z.string().nullable(),
   options: z.array(SurveyOptionSchema),
+  // A-33 (#192): istegi yapan calisan bu anketi yanitladi mi. Bu alan olmadan istemci
+  // "Yanitla" formunu tekrar aciyordu ve gonderimde 409 aliniyordu (mukerrer yanit
+  // DB'de (survey_id, employee_id) unique kisitiyla zaten engelli).
+  answered: z.boolean(),
 });
 export type Survey = z.infer<typeof SurveySchema>;
 

@@ -60,10 +60,25 @@ class SurveyControllerTest {
 
     @Test
     void active_girisYapmisCalisan_200DonerVeListeyiGosterir() throws Exception {
-        when(surveyService.getActiveSurveys()).thenReturn(List.of());
+        when(surveyService.getActiveSurveys(42)).thenReturn(List.of());
 
         mockMvc.perform(get("/surveys/active").with(user("42")))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * A-33 (#192): {@code answered} alani ISTEGI YAPAN calisana gore doluyor, dolayisiyla
+     * kimlik JWT'den okunmali. Govdeden/URL'den alinsaydi bir kullanici baskasinin hangi
+     * anketleri yanitladigini ogrenebilirdi (FR-63 deseni, postResponse ile ayni kural).
+     */
+    @Test
+    void active_kimlik42_servis42IleCagrilir() throws Exception {
+        when(surveyService.getActiveSurveys(42)).thenReturn(List.of());
+
+        mockMvc.perform(get("/surveys/active").with(user("42")))
+                .andExpect(status().isOk());
+
+        verify(surveyService).getActiveSurveys(42);
     }
 
     // FR-42/FR-63 pattern: kimlik HER ZAMAN JWT'den (authentication.getName())
