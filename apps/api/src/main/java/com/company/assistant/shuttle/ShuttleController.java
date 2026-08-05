@@ -3,6 +3,7 @@ package com.company.assistant.shuttle;
 import com.company.assistant.common.ErrorResponse;
 import com.company.assistant.common.PagedResponse;
 import com.company.assistant.geocoding.AddressNotFoundException;
+import com.company.assistant.geocoding.AddressSuggestion;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,12 @@ public class ShuttleController {
     @GetMapping("/{id}/plate")
     public ShuttleRoutePlateResponse getPlate(@PathVariable Integer id) {
         return shuttleService.getPlate(id);
+    }
+
+    // A-33: kullanici yazarken adres oneri dropdown'u icin coklu sonuc listesi.
+    @GetMapping("/address-suggestions")
+    public List<AddressSuggestion> getAddressSuggestions(@RequestParam(defaultValue = "") String q) {
+        return shuttleService.getAddressSuggestions(q);
     }
 
     @GetMapping("/recommendation")

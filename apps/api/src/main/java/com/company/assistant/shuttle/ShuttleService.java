@@ -1,6 +1,7 @@
 package com.company.assistant.shuttle;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.geocoding.AddressSuggestion;
 import com.company.assistant.geocoding.GeocodingResult;
 import com.company.assistant.geocoding.GeocodingService;
 import com.company.assistant.routing.Coordinate;
@@ -20,6 +21,9 @@ import java.util.stream.Collectors;
 public class ShuttleService {
 
     private static final double EARTH_RADIUS_KM = 6371.0;
+
+    // A-33: adres oneri dropdown'u icin kac sonuc dondurulecegi.
+    private static final int ADDRESS_SUGGESTION_LIMIT = 5;
 
     // MVP: gercek rota optimizasyonu yok (Faz 2). Sabit ortalama servis hizi
     // varsayimiyla kaba bir tahmini sure hesaplanir.
@@ -104,6 +108,13 @@ public class ShuttleService {
         ShuttleRoute route = shuttleRouteRepository.findById(routeId)
                 .orElseThrow(() -> new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId));
         return new ShuttleRoutePlateResponse(route.getId(), route.getName(), route.getPlateNumber());
+    }
+
+    public List<AddressSuggestion> getAddressSuggestions(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        return geocodingService.suggest(query, ADDRESS_SUGGESTION_LIMIT);
     }
 
     public ShuttleRecommendationResponse getRecommendationByAddress(String address) {

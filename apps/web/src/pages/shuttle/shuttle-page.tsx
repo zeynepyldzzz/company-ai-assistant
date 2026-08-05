@@ -11,11 +11,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   listShuttleRoutes,
   getShuttleStops,
   getShuttleRouteGeometry,
   getShuttleRecommendation,
+  getAddressSuggestions,
 } from "@/api/shuttle";
 
 const ALL_ROUTES_PAGE_SIZE = 100;
@@ -42,7 +44,22 @@ export function ShuttlePage() {
   const { token } = useAuth();
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
   const [addressInput, setAddressInput] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isAddressInputFocused, setIsAddressInputFocused] = useState(false);
   const [highlightedStopId, setHighlightedStopId] = useState<number | null>(null);
+
+  const debouncedAddressInput = useDebouncedValue(addressInput);
+
+  // A-33: kullanici yazarken oneri dropdown'u; belirsiz adreslerin tek tahminle
+  // yanlis geocode edilmesi yerine kullanici listeden dogru sonucu secer.
+  const addressSuggestionsQuery = useQuery({
+    queryKey: ["shuttle-address-suggestions", debouncedAddressInput],
+    queryFn: () => getAddressSuggestions(debouncedAddressInput.trim(), token!),
+    enabled: Boolean(token) && debouncedAddressInput.trim().length >= 2 && !selectedLocation,
+  });
+
+  const addressSuggestions = addressSuggestionsQuery.data ?? [];
+  const showAddressSuggestions = isAddressInputFocused && !selectedLocation && addressSuggestions.length > 0;
 
   const routesQuery = useQuery({
     queryKey: ["shuttle-routes-all"],
@@ -73,17 +90,38 @@ export function ShuttlePage() {
   });
 
   const recommendationMutation = useMutation({
-    mutationFn: (address: string) => getShuttleRecommendation({ address }, token!),
+    mutationFn: (params: { lat: number; lng: number } | { address: string }) =>
+      getShuttleRecommendation(params, token!),
     onSuccess: (data) => {
       setSelectedRouteId(data.routeId);
       setHighlightedStopId(data.stopId);
+      setAddressInput("");
+      setSelectedLocation(null);
     },
   });
 
+  const handleAddressInputChange = (value: string) => {
+    setAddressInput(value);
+    setSelectedLocation(null);
+    setIsAddressInputFocused(true);
+  };
+
+  const handleSelectSuggestion = (suggestion: { label: string; lat: number; lng: number }) => {
+    setAddressInput(suggestion.label);
+    setSelectedLocation({ lat: suggestion.lat, lng: suggestion.lng });
+    setIsAddressInputFocused(false);
+    recommendationMutation.mutate({ lat: suggestion.lat, lng: suggestion.lng });
+  };
+
   const handleFindRoute = () => {
+    setIsAddressInputFocused(false);
+    if (selectedLocation) {
+      recommendationMutation.mutate(selectedLocation);
+      return;
+    }
     const address = addressInput.trim();
     if (!address) return;
-    recommendationMutation.mutate(address);
+    recommendationMutation.mutate({ address });
   };
 
   const selectedRoute = routes.find((route) => route.id === selectedRouteId) ?? null;
@@ -108,15 +146,36 @@ export function ShuttlePage() {
           <MapPin className="size-4" />
           Konumunu Yaz
         </div>
-        <Input
-          value={addressInput}
-          onChange={(e) => setAddressInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleFindRoute();
-          }}
-          placeholder="Konumunu yaz (örn. Kadıköy, Levent)…"
-          className="bg-background text-foreground flex-1"
-        />
+        <div className="relative flex-1">
+          <Input
+            value={addressInput}
+            onChange={(e) => handleAddressInputChange(e.target.value)}
+            onFocus={() => setIsAddressInputFocused(true)}
+            onBlur={() => setIsAddressInputFocused(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleFindRoute();
+              if (e.key === "Escape") setIsAddressInputFocused(false);
+            }}
+            placeholder="Konumunu yaz (örn. Bornova, Karşıyaka)…"
+            className="bg-background text-foreground dark:bg-background dark:text-foreground w-full"
+          />
+          {showAddressSuggestions && (
+            <ul className="bg-popover text-popover-foreground absolute z-[1100] mt-1 w-full overflow-hidden rounded-md border shadow-md">
+              {addressSuggestions.map((suggestion, index) => (
+                <li key={`${suggestion.lat}-${suggestion.lng}-${index}`}>
+                  <button
+                    type="button"
+                    className="hover:bg-muted block w-full px-3 py-2 text-left text-sm"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                  >
+                    {suggestion.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <Button
           type="button"
           variant="secondary"
@@ -192,7 +251,7 @@ export function ShuttlePage() {
                 center={polylinePositions[0]}
                 zoom={12}
                 scrollWheelZoom={false}
-                className="h-[420px] w-full"
+                className="h-full min-h-[420px] w-full"
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıda bulunanlar'

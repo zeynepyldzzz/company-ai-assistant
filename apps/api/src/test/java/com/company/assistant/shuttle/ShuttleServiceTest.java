@@ -1,6 +1,7 @@
 package com.company.assistant.shuttle;
 
 import com.company.assistant.geocoding.AddressNotFoundException;
+import com.company.assistant.geocoding.AddressSuggestion;
 import com.company.assistant.geocoding.GeocodingResult;
 import com.company.assistant.geocoding.GeocodingService;
 import com.company.assistant.routing.Coordinate;
@@ -144,6 +145,23 @@ class ShuttleServiceTest {
 
         assertThat(response.getStopId()).isEqualTo(1);
         assertThat(response.getRouteId()).isEqualTo(1);
+    }
+
+    @Test
+    void adresOnerileriGeocodingServisindenIletilir() {
+        List<AddressSuggestion> suggestions = List.of(
+                new AddressSuggestion("Kadıköy, İstanbul", 40.9906, 29.0274),
+                new AddressSuggestion("Kadıköy, İzmir", 38.4237, 27.1428));
+        when(geocodingService.suggest("Kadıköy", 5)).thenReturn(suggestions);
+
+        assertThat(service.getAddressSuggestions("Kadıköy")).isEqualTo(suggestions);
+    }
+
+    @Test
+    void adresOnerileriBosSorguIcinGeocodingServisiCagrilmadanBosListeDoner() {
+        assertThat(service.getAddressSuggestions("")).isEmpty();
+        assertThat(service.getAddressSuggestions(null)).isEmpty();
+        org.mockito.Mockito.verifyNoInteractions(geocodingService);
     }
 
     @Test

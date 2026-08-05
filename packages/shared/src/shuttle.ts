@@ -66,6 +66,16 @@ export const AdminShuttleRouteRequestSchema = z.object({
 });
 export type AdminShuttleRouteRequest = z.infer<typeof AdminShuttleRouteRequestSchema>;
 
+// GET /shuttle-routes/address-suggestions?q= (A-33)
+export const AddressSuggestionSchema = z.object({
+  label: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+});
+export type AddressSuggestion = z.infer<typeof AddressSuggestionSchema>;
+export const AddressSuggestionListSchema = z.array(AddressSuggestionSchema);
+export type AddressSuggestionList = z.infer<typeof AddressSuggestionListSchema>;
+
 // GET /shuttle-routes/recommendation?lat=&lng= (B-6)
 export const ShuttleRecommendationSchema = z.object({
   routeId: z.number(),
