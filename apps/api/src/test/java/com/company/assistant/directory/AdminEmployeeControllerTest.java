@@ -65,8 +65,10 @@ class AdminEmployeeControllerTest {
                 new SimpleGrantedAuthority("ROLE_FLEET_ADMIN")};
     }
 
+    // A-30 (#185): departman artik zorunlu — gecerli govde onsuz olamaz. Bu sabitin adi
+    // "gecerli" oldugu icin eksik kalirsa RBAC testleri de 400 alip yanlis nedenle patliyordu.
     private static final String GECERLI_GOVDE =
-            "{ \"name\": \"Ayşe Yılmaz\", \"email\": \"ayse@company.com\" }";
+            "{ \"name\": \"Ayşe Yılmaz\", \"email\": \"ayse@company.com\", \"departmentId\": 3 }";
 
     @Test
     void authOlmadan_401() throws Exception {
@@ -101,15 +103,19 @@ class AdminEmployeeControllerTest {
         saved.setId(10);
         saved.setName("Ayşe Yılmaz");
         saved.setEmail("ayse@company.com");
-        when(adminEmployeeService.create(any())).thenReturn(new EmployeeResponse(saved));
+        // A-29 (#178): yanit artik EmployeeResponse degil; sifre alani listeleme/detay
+        // uclarindan sizmasin diye olusturma icin ayri bir tip kullaniliyor.
+        when(adminEmployeeService.create(any()))
+                .thenReturn(new AdminEmployeeCreateResponse(new EmployeeResponse(saved), "Gecici123!"));
 
         mockMvc.perform(post("/admin/employees")
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(GECERLI_GOVDE))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.name").value("Ayşe Yılmaz"));
+                .andExpect(jsonPath("$.employee.id").value(10))
+                .andExpect(jsonPath("$.employee.name").value("Ayşe Yılmaz"))
+                .andExpect(jsonPath("$.generatedPassword").value("Gecici123!"));
     }
 
     @Test
@@ -118,6 +124,18 @@ class AdminEmployeeControllerTest {
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"name\": \"\", \"email\": \"ayse@company.com\" }"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // A-30 (#185): departmansiz calisan olusturulamaz. Kisitlama yalnizca uygulama
+    // katmaninda (kolonda NOT NULL yok, mevcut satirlarda NULL var) — dolayisiyla bu
+    // testin kalkmasi kurali sessizce iptal eder.
+    @Test
+    void hrAdmin_departmansizCalisanOlusturamaz() throws Exception {
+        mockMvc.perform(post("/admin/employees")
+                        .with(user("hr").authorities(hrAdmin())).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"name\": \"Ayşe Yılmaz\", \"email\": \"ayse@company.com\" }"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -132,7 +150,7 @@ class AdminEmployeeControllerTest {
         mockMvc.perform(put("/admin/employees/10")
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"name\": \"Ayşe Yılmaz Güncel\", \"email\": \"ayse@company.com\" }"))
+                        .content("{ \"name\": \"Ayşe Yılmaz Güncel\", \"email\": \"ayse@company.com\", \"departmentId\": 3 }"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Ayşe Yılmaz Güncel"));
     }

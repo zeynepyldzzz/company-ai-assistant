@@ -141,7 +141,15 @@ export function VehicleReservationPage() {
               {vehiclesQuery.data && vehiclesQuery.data.length > 0 && (
                 <Select<number | null> value={vehicleId} onValueChange={setVehicleId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Araç seçin…" />
+                    {/* Deger arac id oldugu icin secim sonrasi ekranda ham id gorunuyordu.
+                        Etiket listedeki gorunumle ayni bicimde uretiliyor. */}
+                    <SelectValue placeholder="Araç seçin…">
+                      {(value: number | null) => {
+                        const vehicle = vehiclesQuery.data.find((v) => v.id === value);
+                        if (!vehicle) return "Araç seçin…";
+                        return vehicle.plate + (vehicle.model ? ` — ${vehicle.model}` : "");
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {vehiclesQuery.data.map((vehicle) => (

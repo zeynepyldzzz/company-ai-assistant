@@ -138,7 +138,10 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
             <Input
               id="route-plate"
               value={plateNumber}
-              onChange={(event) => setPlateNumber(event.target.value)}
+              // Plaka her zaman BUYUK harf; kullanici kucuk yazsa da duzeltiyoruz, cunku
+              // chatbot plaka eslestirmesi ve listeler bu degeri oldugu gibi gosteriyor.
+              onChange={(event) => setPlateNumber(event.target.value.toUpperCase().slice(0, 12))}
+              maxLength={12}
               placeholder="34 ABC 123"
             />
           </div>
@@ -156,8 +159,11 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
             <Label htmlFor="route-driver-phone">Şoför Telefonu</Label>
             <Input
               id="route-driver-phone"
+              inputMode="tel"
+              maxLength={20}
+              placeholder="0532 111 22 33"
               value={driverPhone}
-              onChange={(event) => setDriverPhone(event.target.value)}
+              onChange={(event) => setDriverPhone(event.target.value.replace(/[^\d\s()+-]/g, ""))}
             />
           </div>
 
