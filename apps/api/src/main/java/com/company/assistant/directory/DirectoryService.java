@@ -66,7 +66,7 @@ public class DirectoryService {
      * burada yalnizca "bu isimde aktif calisan var mi" sorusu var.
      */
     public boolean existsActiveEmployeeNamed(String nameToken) {
-        return employeeRepository.existsActiveByNameContaining(nameToken);
+        return employeeRepository.existsActiveByNameWordPrefix(nameToken);
     }
 
     public EmployeeResponse getEmployeeById(Integer id) {
