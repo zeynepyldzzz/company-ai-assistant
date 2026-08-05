@@ -1,6 +1,7 @@
 package com.company.assistant.survey;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -29,12 +30,38 @@ public class SurveyService {
         this.feedbackRepository = feedbackRepository;
     }
 
-    /** GET /surveys/active — FR-42. C-8 (#52): sadece published=true anketler doner. */
+    /**
+     * Kimliksiz cagri — {@code answered} her zaman false doner.
+     *
+     * <p>A-33 (#192): chatbot ({@code SurveyVariableResolver}) aktif anketleri listelerken
+     * kullanici kimligini tasimiyor. O yanitta "cevapladin mi" bilgisi zaten kullanilmadigi
+     * icin ayri bir imza birakildi; alternatif, kimligi chatbot zincirinin tamamindan
+     * gecirmekti ve bu issue'nun kapsamini asardi.
+     */
     @Transactional(readOnly = true)
     public List<SurveyDto> getActiveSurveys() {
+        return buildActiveSurveys(List.of());
+    }
+
+    /**
+     * GET /surveys/active — FR-42. C-8 (#52): sadece published=true anketler doner.
+     *
+     * <p>A-33 (#192): kimlik JWT'den gelir (FR-63 deseni, {@code submitResponse} ile ayni
+     * kural), istek govdesinden veya URL'den DEGIL — aksi halde bir kullanici baskasinin
+     * hangi anketleri yanitladigini ogrenebilirdi.
+     */
+    @Transactional(readOnly = true)
+    public List<SurveyDto> getActiveSurveys(Integer employeeId) {
+        return buildActiveSurveys(surveyResponseRepository.findAnsweredSurveyIds(employeeId));
+    }
+
+    private List<SurveyDto> buildActiveSurveys(List<Integer> answeredSurveyIds) {
+        Set<Integer> answered = Set.copyOf(answeredSurveyIds);
         return surveyRepository.findAllByPublishedTrueOrderByCreatedAtDesc().stream()
-                .map(survey -> SurveyDto.from(survey,
-                        surveyOptionRepository.findAllBySurveyIdOrderBySortOrderAsc(survey.getId())))
+                .map(survey -> SurveyDto.from(
+                        survey,
+                        surveyOptionRepository.findAllBySurveyIdOrderBySortOrderAsc(survey.getId()),
+                        answered.contains(survey.getId())))
                 .toList();
     }
 

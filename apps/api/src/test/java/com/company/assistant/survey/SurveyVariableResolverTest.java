@@ -45,8 +45,8 @@ class SurveyVariableResolverTest {
     @Test
     void aktifAnketlerBasliklariylaListelenir() {
         when(surveyService.getActiveSurveys()).thenReturn(List.of(
-                new SurveyDto(1, "Çalışan memnuniyeti", LocalDateTime.of(2026, 7, 20, 9, 0), null, List.of()),
-                new SurveyDto(2, "Kantin anketi", LocalDateTime.of(2026, 7, 22, 9, 0), null, List.of())));
+                new SurveyDto(1, "Çalışan memnuniyeti", LocalDateTime.of(2026, 7, 20, 9, 0), null, List.of(), false),
+                new SurveyDto(2, "Kantin anketi", LocalDateTime.of(2026, 7, 22, 9, 0), null, List.of(), false)));
 
         String reply = resolver.resolve("anket").get("aktif_anketler");
 
@@ -60,7 +60,7 @@ class SurveyVariableResolverTest {
     @Test
     void sonucVeyaKatilimSayisiYanittaYerAlmaz() {
         when(surveyService.getActiveSurveys())
-                .thenReturn(List.of(new SurveyDto(1, "Çalışan memnuniyeti", LocalDateTime.now(), null, List.of())));
+                .thenReturn(List.of(new SurveyDto(1, "Çalışan memnuniyeti", LocalDateTime.now(), null, List.of(), false)));
 
         String reply = resolver.resolve("anket").get("aktif_anketler");
 
@@ -69,7 +69,8 @@ class SurveyVariableResolverTest {
 
     @Test
     void tarihiOlmayanAnketNullBasmaz() {
-        when(surveyService.getActiveSurveys()).thenReturn(List.of(new SurveyDto(1, "Tarihsiz", null, null, List.of())));
+        when(surveyService.getActiveSurveys())
+                .thenReturn(List.of(new SurveyDto(1, "Tarihsiz", null, null, List.of(), false)));
 
         assertThat(resolver.resolve("anket").get("aktif_anketler")).doesNotContain("null");
     }

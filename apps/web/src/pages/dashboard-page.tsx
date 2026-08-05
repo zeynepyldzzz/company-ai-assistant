@@ -62,7 +62,7 @@ function SurveyRespondSheet({ survey }: { survey: Survey }) {
       }
     },
     onSuccess: () => {
-      toast.success("Yanıtınız kaydedildi.");
+      toast.success("Anketi cevapladığınız için teşekkür ederiz.");
       setOpen(false);
       setOptionId(null);
       setComment("");
@@ -232,7 +232,18 @@ export function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <SurveyRespondSheet survey={survey} />
+                  {/* A-33 (#192): yanitlanmis ankette form ACILMAZ. Onceden "Yanıtla"
+                      tekrar aciliyor, gonderimde 409 doniyordu — sistem dogru davraniyor
+                      ama kullaniciya bozuk gorunuyordu. Kart TAMAMEN gizlenmiyor: calisan
+                      tarafinda anket ekrani yok, gizlense anketin hicbir izi kalmaz ve
+                      "oyum kaydedildi mi" sorusu cevapsiz kalirdi. */}
+                  {survey.answered ? (
+                    <span className="text-success shrink-0 text-xs font-semibold">
+                      ✓ Cevapladınız
+                    </span>
+                  ) : (
+                    <SurveyRespondSheet survey={survey} />
+                  )}
                 </CardContent>
               </Card>
             ))}
