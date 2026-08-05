@@ -81,6 +81,8 @@ class ShuttleServiceTest {
         assertThat(response.getRouteId()).isEqualTo(1);
         assertThat(response.getRouteName()).isEqualTo("Kadikoy Hatti");
         assertThat(response.getPlateNumber()).isEqualTo("34 ABC 123");
+        assertThat(response.getSearchLat()).isEqualTo(40.9810);
+        assertThat(response.getSearchLng()).isEqualTo(29.0310);
     }
 
     @Test
@@ -145,6 +147,8 @@ class ShuttleServiceTest {
 
         assertThat(response.getStopId()).isEqualTo(1);
         assertThat(response.getRouteId()).isEqualTo(1);
+        assertThat(response.getSearchLat()).isEqualTo(40.9810);
+        assertThat(response.getSearchLng()).isEqualTo(29.0310);
     }
 
     @Test

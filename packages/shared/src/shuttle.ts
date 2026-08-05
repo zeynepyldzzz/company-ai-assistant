@@ -87,5 +87,7 @@ export const ShuttleRecommendationSchema = z.object({
   stopName: z.string(),
   distanceKm: z.number(),
   estimatedMinutes: z.number(),
+  searchLat: z.number(),
+  searchLng: z.number(),
 });
 export type ShuttleRecommendation = z.infer<typeof ShuttleRecommendationSchema>;
