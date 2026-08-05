@@ -115,7 +115,9 @@ public class AdminEmployeeService {
         employee.setName(request.name());
         employee.setEmail(request.email());
         employee.setPhone(request.phone());
-        employee.setOfficeStatus(request.officeStatus());
+        // A-32 (#188): office_status ARTIK YAZILMIYOR. Ofis durumu bugunun calisma
+        // duzeninden turetiliyor; buraya yazilan deger hicbir yerde okunmuyordu ama
+        // kolonda kalip bir sonraki gelistiriciyi yaniltirdi. Alan istekten de kaldirildi.
 
         if (request.departmentId() != null) {
             Department department = departmentRepository.findById(request.departmentId())

@@ -144,17 +144,22 @@ export function EmployeesPage() {
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-semibold">{employee.name}</p>
-                        {employee.officeStatus && (
-                          <span
-                            className={cn(
-                              "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                              statusStyles[employee.officeStatus as OfficeStatus] ??
-                                "bg-muted text-muted-foreground"
-                            )}
-                          >
-                            {employee.officeStatus}
-                          </span>
-                        )}
+                        {/* A-32 (#188): durum bugunun calisma duzeninden geliyor. Plan
+                            girilmemisse rozet GIZLENMIYOR — eskiden gizleniyordu ve kullanici
+                            "durumu yok" ile "durumu bilinmiyor" arasindaki farki goremiyordu.
+                            Bos birakmak, olmayan bilgiyi varmis gibi gostermekten daha az
+                            yaniltici degil; acikca soylemek gerekiyor. */}
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            employee.officeStatus
+                              ? statusStyles[employee.officeStatus as OfficeStatus] ??
+                                  "bg-muted text-muted-foreground"
+                              : "bg-muted text-muted-foreground italic"
+                          )}
+                        >
+                          {employee.officeStatus ?? "Plan girilmedi"}
+                        </span>
                       </div>
                       <p className="text-muted-foreground truncate text-xs">
                         {employee.departmentName ?? "Departman atanmamış"}
