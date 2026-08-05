@@ -24,6 +24,20 @@ const DAY_LABELS: Record<WorkDay, string> = {
   friday: "Cum",
 };
 
+// A-32 (#188): getDay() 0=Pazar. Gun adini locale'den turetmek yerine sabit dizi
+// kullaniyoruz; tarayici dili degistiginde anahtarlar bozulmasin.
+const DAY_KEYS = [
+  "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+] as const;
+
+const TODAY_FULL_LABELS: Record<WorkDay, string> = {
+  monday: "Pazartesi",
+  tuesday: "Salı",
+  wednesday: "Çarşamba",
+  thursday: "Perşembe",
+  friday: "Cuma",
+};
+
 const STATUS_LABELS: Record<ScheduleStatus, string> = {
   office: "Ofiste",
   remote: "Uzaktan",
@@ -45,10 +59,20 @@ export function AdminSchedulesPage() {
       emp.employeeName.toLowerCase().includes(search.trim().toLowerCase())
     ) ?? [];
 
+  // A-32 (#188): kartlar BUGUN her durumda kac KISI oldugunu gosterir.
+  // Onceden ic ice dongu ile kisi-gun sayiliyordu: tek calisanin dort uzaktan gunu
+  // "Uzaktan 4" olarak okunuyordu ve kart basligi bunu kisi sayisi gibi sunuyordu.
+  // 15 calisanla sayilar 75'e kadar cikacakti.
+  const todayKey = DAY_KEYS[new Date().getDay()];
+  const isWorkday = (WORK_DAYS as string[]).includes(todayKey);
+
   const summary = { office: 0, remote: 0, leave: 0 };
-  for (const emp of data?.employees ?? []) {
-    for (const day of emp.days) {
-      summary[day.status] += 1;
+  if (isWorkday) {
+    for (const emp of data?.employees ?? []) {
+      const today = emp.days.find((day) => day.day === todayKey);
+      if (today) {
+        summary[today.status] += 1;
+      }
     }
   }
 
@@ -57,7 +81,12 @@ export function AdminSchedulesPage() {
       <div>
         <h1 className="text-xl font-semibold">Çalışan Çalışma Düzeni</h1>
         <p className="text-muted-foreground text-sm">
-          Tüm çalışanların bu haftaki düzeni (salt-okunur).
+          Tüm çalışanların bu haftaki düzeni (salt-okunur).{" "}
+          {/* A-32: kartlarin neyi saydigi yazmiyordu; "Uzaktan 4" hem "4 kisi" hem
+              "4 gun" olarak okunabiliyordu. Hafta sonunda sifirlar sessiz kalmasin. */}
+          {isWorkday
+            ? `Yukarıdaki sayılar bugünü (${TODAY_FULL_LABELS[todayKey as WorkDay]}) gösterir.`
+            : "Bugün hafta sonu; çalışma düzeni yalnızca Pazartesi-Cuma için tutulduğundan sayılar boş."}
         </p>
       </div>
 

@@ -40,10 +40,14 @@ public class OfficeStatusVariableResolver {
             "Olumsuz sorguları henüz desteklemiyorum. Bunun yerine \"kimler uzaktan\" "
                     + "ya da \"kimler izinde\" diye sorabilirsin.";
 
-    /** office_status DB'de serbest metin; degerler packages/shared OfficeStatusSchema ile sabit. */
-    private static final String STATUS_OFFICE = "Ofiste";
-    private static final String STATUS_REMOTE = "Uzaktan";
-    private static final String STATUS_LEAVE = "Izinde";
+    /**
+     * A-32 (#188): etiketler artik {@link OfficeStatusLabels}'dan geliyor. Onceden burada
+     * kopyalari duruyordu; ayni degerin iki yerde yasamasi, biri degisip digeri unutuldugunda
+     * filtrenin sessizce hicbir seyle eslesmemesi demekti.
+     */
+    private static final String STATUS_OFFICE = OfficeStatusLabels.OFFICE;
+    private static final String STATUS_REMOTE = OfficeStatusLabels.REMOTE;
+    private static final String STATUS_LEAVE = OfficeStatusLabels.LEAVE;
 
     /**
      * Sirket geneli kapsam ipuclari. "genel" BILEREK yok: departman adlarindan biri

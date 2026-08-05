@@ -1,5 +1,7 @@
 package com.company.assistant.directory;
 
+import com.company.assistant.schedule.ScheduleStatus;
+
 public class EmployeeResponse {
 
     private Integer id;
@@ -12,12 +14,33 @@ public class EmployeeResponse {
     private Integer roleId;
     private String roleName;
 
+    /**
+     * A-32 (#188): ofis durumu BILINMEDEN kurulan yanit — {@code officeStatus} null kalir.
+     *
+     * <p>Kayit/guncelleme uclari bu kurucuyu kullanir: orada donen sey "kaydettigin calisan",
+     * "bugun nerede oldugu" degil. Durumun dolu gelmesi gereken yerler (rehber listesi ve
+     * tek calisan ucu) asagidaki iki argumanli kurucuyu kullanir.
+     *
+     * <p>Kolondan ({@code employee.office_status}) OKUNMUYOR. O kolon duragan ve elle set
+     * ediliyordu; plandan bagimsiz yasadigi icin celiskiye sebep oluyordu.
+     */
     public EmployeeResponse(Employee employee) {
+        this(employee, null);
+    }
+
+    /**
+     * A-32 (#188): ofis durumu BUGUNUN planindan gelir.
+     *
+     * @param todayStatus bugunun {@code schedule_day} kaydi; plan yoksa {@code null} —
+     *                    bu durumda {@code officeStatus} null doner ve istemci
+     *                    "Plan girilmedi" gosterir
+     */
+    public EmployeeResponse(Employee employee, ScheduleStatus todayStatus) {
         this.id = employee.getId();
         this.name = employee.getName();
         this.email = employee.getEmail();
         this.phone = employee.getPhone();
-        this.officeStatus = employee.getOfficeStatus();
+        this.officeStatus = OfficeStatusLabels.labelFor(todayStatus);
         if (employee.getDepartment() != null) {
             this.departmentId = employee.getDepartment().getId();
             this.departmentName = employee.getDepartment().getName();

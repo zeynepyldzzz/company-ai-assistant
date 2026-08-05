@@ -27,4 +27,23 @@ public interface WeeklyScheduleRepository extends JpaRepository<WeeklySchedule, 
         WHERE ws.weekStartDate = :weekStart
         """)
     List<WeeklySchedule> findAllByWeekWithDays(LocalDate weekStart);
+
+    /**
+     * A-32 (#188): belirli bir gunde kimin hangi durumda oldugu.
+     *
+     * <p>{@code findAllByWeekWithDays} bu is icin de kullanilabilirdi ama haftanin BES gununu
+     * birden getirir; cagiran taraf tek gun istiyorsa satirlarin %80'i atilir. Rehber her
+     * listeleme isteginde bu sorguyu calistiracagi icin dar tutuldu.
+     *
+     * <p>{@code day_of_week} kolonu serbest metin; karsilastirma {@code LOWER()} ile yapiliyor
+     * (ScheduleService kayitlari kucuk harf yaziyor, ama kolonda kisit yok).
+     */
+    @Query("""
+        SELECT new com.company.assistant.schedule.EmployeeDayStatus(ws.employeeId, d.status)
+        FROM WeeklySchedule ws
+        JOIN ws.days d
+        WHERE ws.weekStartDate = :weekStart
+          AND LOWER(d.dayOfWeek) = :dayOfWeek
+        """)
+    List<EmployeeDayStatus> findStatusesByDay(LocalDate weekStart, String dayOfWeek);
 }

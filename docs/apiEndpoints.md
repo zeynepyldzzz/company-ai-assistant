@@ -107,6 +107,17 @@
 | GET    | `/phonebook?search=`                     | Dahili telefon rehberi                            | Çalışan | FR-48, 49 |
 | POST   | `/phonebook/{extension}/call`            | Dahili numarayı arama tetikleme (click-to-call)   | Çalışan | FR-50     |
 
+**A-32 (#188) — `officeStatus` alanının kaynağı değişti.** Endpoint imzası aynı kaldı, veri
+kaynağı değişti: ofis durumu artık `employee.office_status` kolonundan değil, **bugünün**
+`schedule_day` kaydından türetiliyor.
+
+- `?office=Ofiste|Uzaktan|Izinde` filtresi de bugünün planına göre çalışır. Tanınmayan bir
+  değer boş sonuç döndürür (filtre sessizce düşürülmez).
+- Planı olmayan çalışanda `officeStatus` **null** döner; kolona geri düşülmez. İstemci bunu
+  "Plan girilmedi" olarak gösterir.
+- `POST/PUT /admin/employees` gövdesinden `officeStatus` **kaldırıldı** — durum artık
+  yazılabilir bir alan değil, türetilen bir değer.
+
 ---
 
 ## 6. BP-06 — Şirket Aracı Rezervasyonu ve Araç Yönetimi
