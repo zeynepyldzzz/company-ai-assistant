@@ -39,12 +39,29 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
      *
      * <p>Plani olmayan calisan hicbir durum filtresine dusmez; filtresiz listede ise gorunur
      * ve durumu "girilmedi" olarak doner.
+     *
+     * <p>A-34 (#194): isim aramasi KELIME BASI eslesmesi. Onceden iki taraf da joker'di
+     * ({@code %a%}) ve "a" yazildiginda isminin herhangi bir yerinde a gecen herkes
+     * doniyordu — 15 kisilik bir sirkette pratikte tum liste; arama kutusu filtrelemiyordu.
+     * Yalnizca bastan eslesme ({@code a%}) de yeterli degil, soyadiyla arama kirilirdi
+     * ("kay" -> Ayse Kaya bulunamazdi) ve rehberde en cok yapilan sey o.
+     *
+     * <p>{@code :department} filtresi BILEREK joker kaldi: degeri secim kutusundan tam ad
+     * olarak geliyor, kullanicinin yazdigi serbest metin degil.
+     *
+     * <p>A-34: <b>ORDER BY sart.</b> Onceden ne sorguda ne {@code PageRequest}'te siralama
+     * vardi. Postgres sirasiz bir sorguda satir sirasini garanti etmez; {@code LIMIT/OFFSET}
+     * ile birlikte ayni kisi iki sayfada birden cikabilir, baskasi hic gorunmeyebilir.
+     * Siralama cagiran tarafa birakilirsa biri {@code PageRequest.of(page, size)} yazip
+     * sessizce bozar, o yuzden sorguda.
      */
     @Query("""
         SELECT e FROM Employee e
         LEFT JOIN e.department d
         WHERE e.active = true
-          AND (:search IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+          AND (:search IS NULL
+               OR LOWER(e.name) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
+               OR LOWER(e.name) LIKE LOWER(CONCAT('% ', CAST(:search AS string), '%')))
           AND (:department IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', CAST(:department AS string), '%')))
           AND (:office IS NULL OR EXISTS (
                 SELECT 1 FROM WeeklySchedule ws
@@ -53,6 +70,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
                   AND ws.weekStartDate = :weekStart
                   AND LOWER(sd.dayOfWeek) = :dayOfWeek
                   AND sd.status = :office))
+        ORDER BY e.name, e.id
         """)
     Page<Employee> search(
             @Param("search") String search,
@@ -63,13 +81,21 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             Pageable pageable
     );
 
+    /**
+     * A-34 (#194): isim tarafi kelime basi eslesmesi (bkz. {@link #search}).
+     *
+     * <p>Telefon tarafi BILEREK substring kaldi: kullanici numaranin son hanelerinden arama
+     * yapabilmeli ve bir telefon numarasinda "kelime basi" diye bir sey yok.
+     */
     @Query("""
         SELECT e FROM Employee e
         WHERE e.active = true
           AND e.phone IS NOT NULL
           AND (:search IS NULL
-               OR LOWER(e.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+               OR LOWER(e.name) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
+               OR LOWER(e.name) LIKE LOWER(CONCAT('% ', CAST(:search AS string), '%'))
                OR e.phone LIKE CONCAT('%', CAST(:search AS string), '%'))
+        ORDER BY e.name, e.id
         """)
     Page<Employee> searchPhonebook(@Param("search") String search, Pageable pageable);
 
@@ -78,13 +104,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
      * EmployeeResponse kurarken lazy department/role proxy'lerini acar ve HTTP istegi
      * disinda (IT, zamanlanmis is, LLM arac cagrisi) LazyInitializationException verir.
      * Kural katmani nesneye degil varligin kendisine baktigi icin bu sayim yeterli.
+     *
+     * <p>A-34 (#194): kelime basi eslesmesi — metot adi da bu yuzden degisti. Substring
+     * eslesmesi burada yalnizca kozmetik degildi: mesajda gecen "ali" kelimesi, sirkette
+     * "Kemali" adinda biri varsa kural katmanini YANLIS tetikliyordu.
      */
     @Query("""
         SELECT COUNT(e) > 0 FROM Employee e
         WHERE e.active = true
-          AND LOWER(e.name) LIKE LOWER(CONCAT('%', CAST(:token AS string), '%'))
+          AND (LOWER(e.name) LIKE LOWER(CONCAT(CAST(:token AS string), '%'))
+               OR LOWER(e.name) LIKE LOWER(CONCAT('% ', CAST(:token AS string), '%')))
         """)
-    boolean existsActiveByNameContaining(@Param("token") String token);
+    boolean existsActiveByNameWordPrefix(@Param("token") String token);
 
     Optional<Employee> findByPhone(String phone);
 
