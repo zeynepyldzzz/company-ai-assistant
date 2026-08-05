@@ -63,6 +63,16 @@ class FeedbackAnonymityTest {
 
     @Test
     void feedbackGonderilir_kimlikBilgisiOlmadanKaydedilir() {
+        // A-32 (#188): test kendi on kosulunu kuruyor. Onceden dogrudan findAll().hasSize(1)
+        // yaziliyordu, yani "tablo bastan bos" varsayiliyordu. Bu test gercek Postgres'e
+        // baglaniyor (replace = NONE) ve tablo paylasimli: uygulama elle denenirken gonderilen
+        // her geri bildirim burada KALICI olarak duruyor. @DataJpaTest'in rollback'i yalnizca
+        // testin kendi ekledigini geri alir, onceden commit edilmis satirlari degil.
+        // Sonuc: CI'da (taze container) gecen test, gelistirici makinesinde patliyordu.
+        // Bu silme de transaction icinde oldugu icin test sonunda geri alinir.
+        feedbackRepository.deleteAll();
+        entityManager.flush();
+
         FeedbackRequest request = new FeedbackRequest(null, "harika bir anket, tesekkurler");
 
         surveyService.submitFeedback(request);

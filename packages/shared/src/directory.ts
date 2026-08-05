@@ -60,7 +60,9 @@ export const AdminEmployeeRequestSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   phone: z.string().nullable().optional(),
-  officeStatus: z.string().nullable().optional(),
+  // A-32 (#188): officeStatus KALDIRILDI. Ofis durumu bugunun calisma duzeninden
+  // turetiliyor; istekte tasinsa da hicbir yere yazilmayacakti. Yanit semasinda
+  // (EmployeeSchema) DURUYOR — orada plandan gelen deger var, plan yoksa null.
   departmentId: z.number().nullable().optional(),
   roleId: z.number().nullable().optional(),
   // A-29: password alani KALDIRILDI. Admin hicbir yolla sifre belirlemiyor; olusturmada

@@ -42,7 +42,6 @@ export function EmployeeFormSheet({
   const [name, setName] = useState(employee?.name ?? "");
   const [email, setEmail] = useState(employee?.email ?? "");
   const [phone, setPhone] = useState(employee?.phone ?? "");
-  const [officeStatus, setOfficeStatus] = useState<string | null>(employee?.officeStatus ?? null);
   const [departmentId, setDepartmentId] = useState<string | null>(
     employee?.departmentId ? String(employee.departmentId) : null
   );
@@ -56,7 +55,6 @@ export function EmployeeFormSheet({
     setName(employee?.name ?? "");
     setEmail(employee?.email ?? "");
     setPhone(employee?.phone ?? "");
-    setOfficeStatus(employee?.officeStatus ?? null);
     setDepartmentId(employee?.departmentId ? String(employee.departmentId) : null);
     setGeneratedPassword(null);
   }, [open, employee]);
@@ -69,7 +67,6 @@ export function EmployeeFormSheet({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim() || null,
-        officeStatus: officeStatus,
         departmentId: departmentId ? Number(departmentId) : null,
       };
       return isEdit ? updateEmployee(employee!.id, body, token!) : createEmployee(body, token!);
@@ -205,20 +202,9 @@ export function EmployeeFormSheet({
             </p>
           )}
 
-          <div className="space-y-1.5">
-            <Label>Ofis Durumu</Label>
-            <Select value={officeStatus} onValueChange={setOfficeStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Belirtilmemiş" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>Belirtilmemiş</SelectItem>
-                <SelectItem value="Ofiste">Ofiste</SelectItem>
-                <SelectItem value="Uzaktan">Uzaktan</SelectItem>
-                <SelectItem value="Izinde">İzinde</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* A-32 (#188): "Ofis Durumu" alani KALDIRILDI. Durum artik bugunun calisma
+              duzeninden turetiliyor, dolayisiyla buradan girilen deger hicbir yerde
+              gorunmezdi — admin veriyi girdigini sanir, sistem gormezden gelirdi. */}
 
           <div className="space-y-1.5">
             <Label>Departman *</Label>

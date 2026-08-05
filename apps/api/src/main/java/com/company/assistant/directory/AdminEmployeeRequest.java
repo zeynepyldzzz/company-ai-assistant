@@ -11,6 +11,11 @@ import jakarta.validation.constraints.NotNull;
  * belirlemiyor — olusturmada sistem gecici bir sifre uretiyor, sifirlama icin ayri bir uc
  * var (POST /admin/employees/{id}/reset-password).
  *
+ * <p>A-32 (#188): {@code officeStatus} alani KALDIRILDI. Ofis durumu bugunun calisma
+ * duzeninden turetiliyor; admin'in yazdigi deger hicbir yerde okunmuyor olacakti. Ekranda
+ * duran ama etkisi olmayan bir alan, admin'in veriyi girdigini sanmasina yol acar —
+ * bu issue'nun cozdugu celiskinin (kolon "Ofiste", plan "REMOTE") kaynagi da tam olarak oydu.
+ *
  * <p>Gerekce: admin'in bir calisanin sifresini bilmesi, sifreyi kimlik dogrulama araci
  * olmaktan cikarir. Iki yol (admin girer / sistem uretir) birakildiginda ikisinin de sonucu
  * gecici sifre oluyordu; ikinci yolu tutup birincisini kaldirmak hem kodu hem arayuzu
@@ -20,7 +25,6 @@ public record AdminEmployeeRequest(
         @NotBlank String name,
         @NotBlank @Email String email,
         String phone,
-        String officeStatus,
 
         /**
          * A-30 (#185): departman ZORUNLU.
