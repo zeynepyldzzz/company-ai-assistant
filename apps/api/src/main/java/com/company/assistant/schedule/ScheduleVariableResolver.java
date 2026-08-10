@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.company.assistant.common.ChatActions;
+import com.company.assistant.common.DateExpression;
 import com.company.assistant.common.TurkishText;
 import com.company.assistant.directory.OfficeStatusVariableResolver;
 
@@ -49,6 +50,10 @@ public class ScheduleVariableResolver {
             "Şu an yalnızca içinde bulunduğumuz haftanın çalışma düzenini görebiliyorum.";
     private static final String NO_RECORD =
             "Bu hafta için kayıtlı bir çalışma düzenin görünmüyor. Çalışma Düzeni bölümünden planını girebilirsin.";
+    /** A-37 (#203): tarih ifadesi var ama cozulemedi (or. yalniz "agustos", "32 agustos"). */
+    private static final String UNRESOLVED_DATE =
+            "Hangi tarihi sorduğunu tam anlayamadım. \"bugün\", \"yarın\" ya da \"çarşamba\" "
+                    + "gibi yazabilirsin.";
     private static final String WEEKEND =
             "Çalışma düzeni yalnızca Pazartesi-Cuma günleri için tanımlanıyor; sorduğun gün hafta sonuna denk geliyor.";
 
@@ -101,7 +106,21 @@ public class ScheduleVariableResolver {
             return answer(buildWeekBody(schedule), ChatActions.NONE);
         }
 
-        LocalDate target = resolveTarget(text, today);
+        // A-37 (#203): ACIK tarih ifadesi ("17 agustos", "17.08") once denenir. Cozulemezse
+        // BUGUNE DUSULMEZ — resolveTarget() taninmayan her ifadeyi bugune ceviriyor ve
+        // kullanici sordugu gunun degil bugunun planini aliyordu. Menu resolver'inda ayni
+        // duzeltme yapildi; iki resolver da ayni yapisal hatayi tasiyordu.
+        LocalDate target;
+        if (DateExpression.mentionsDate(text)) {
+            Optional<LocalDate> explicit = DateExpression.resolve(text, today);
+            if (explicit.isEmpty()) {
+                return answer(UNRESOLVED_DATE, ChatActions.NONE);
+            }
+            target = explicit.get();
+        } else {
+            target = resolveTarget(text, today);
+        }
+
         // Hedef bu haftanin disina tastiysa veri yok: sessizce bu haftayi dondurmek yanlis cevaptir.
         if (target.isBefore(weekStart) || target.isAfter(weekStart.plusDays(6))) {
             return answer(ONLY_CURRENT_WEEK, ChatActions.NONE);

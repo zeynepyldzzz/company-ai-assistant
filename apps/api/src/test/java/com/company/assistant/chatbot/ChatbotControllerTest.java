@@ -58,7 +58,8 @@ class ChatbotControllerTest {
 
     @Test
     void happyPath_soruGonderilir_yanitDoner() throws Exception {
-        when(chatMessageService.handleMessage(eq("bugün yemekte ne var"), any()))
+        // A-37 (#203): controller artik previousIntent'i de gecirir (istemciden gelen baglam).
+        when(chatMessageService.handleMessage(eq("bugün yemekte ne var"), any(), any()))
                 .thenReturn(new ChatMessageResponse(
                         "Bugünün menüsü: mercimek çorbası", "yemek_menusu", Instant.now(),
                         List.of(new ChatAction("menu", "Aylık menüyü gör")), List.of()));
@@ -79,7 +80,7 @@ class ChatbotControllerTest {
     // istemci ayni yaniti kullanamaz — sozlesmenin en kolay bozulacak yeri burasi.
     @Test
     void aksiyonHedefi_webUrlIcermez() throws Exception {
-        when(chatMessageService.handleMessage(any(), any()))
+        when(chatMessageService.handleMessage(any(), any(), any()))
                 .thenReturn(new ChatMessageResponse(
                         "Bilgi Teknolojileri departmanında ofiste görünenler: ...",
                         "calisma_duzeni", Instant.now(),

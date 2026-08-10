@@ -25,7 +25,8 @@ public class ChatbotController {
     @PostMapping("/messages")
     public ChatMessageResponse sendMessage(@Valid @RequestBody ChatMessageRequest request,
                                            Authentication authentication) {
-        return chatMessageService.handleMessage(request.message(), authentication);
+        return chatMessageService.handleMessage(
+                request.message(), request.previousIntent(), authentication);
     }
 
     /**

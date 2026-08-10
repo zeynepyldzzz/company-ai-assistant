@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.company.assistant.common.ChatActions;
+import com.company.assistant.common.TurkishText;
 import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
@@ -82,10 +83,26 @@ public class ChatMessageService {
     }
 
     public ChatMessageResponse handleMessage(String message, Authentication authentication) {
+        return handleMessage(message, null, authentication);
+    }
+
+    /**
+     * A-37 (#203): {@code previousIntent} istemciden gelir — sunucuda sohbet durumu
+     * TUTULMAZ. {@code chat_message_log}'da {@code employee_id} bilerek tutulmuyor (V13 ekip
+     * karari); sunucu tarafinda sohbet gecmisi tutmak o karari bozar ve saklama suresi /
+     * erisim yetkisi sorularini acar. Istemci gecmisi zaten bellekte tutuyor, tasimasi
+     * yeterli; sunucu durumsuz kalir.
+     *
+     * <p>Istemci bu degeri manipule edebilir ama zarari yok: en fazla yanlis intent secilir,
+     * veri sizmaz — o veriler zaten ayni kullaniciya acik.
+     */
+    public ChatMessageResponse handleMessage(String message, String previousIntent,
+                                             Authentication authentication) {
         long start = System.nanoTime();
 
         IntentClassificationService.IntentResult result =
                 classificationService.classify(message);
+        result = applyFollowUpContext(result, message, previousIntent);
 
         // A-5 (FR-54): prosedur intent'leri icin İK degiskenleri kullanici degiskenleriyle
         // merge edilir. Guncel versiyon yoksa fallback template'ine dusulur (dokuman §2).
@@ -132,6 +149,30 @@ public class ChatMessageService {
                 reply, result.intent(), Instant.now(),
                 actionsFor(result.intent(), actionOverride),
                 suggestionsFor(result.intent()));
+    }
+
+    /**
+     * A-37 (#203): "peki yarin?" tipi takip sorusunu onceki intent'e baglar.
+     *
+     * <p>Siniflandirma sonucu NE OLURSA OLSUN ezilir: mesaj yalnizca bir zaman ifadesinden
+     * ibaretse ("yarin", "cuma", "17 agustos") o mesaj tek basina hicbir kategoriyi guvenilir
+     * sekilde belirtmez — eslesse bile rastgele eslesmistir. Baglam varsa dogru cevap odur.
+     *
+     * <p>Log'a {@code [baglam]} etiketiyle yaziliyor; kural katmaninin {@code [kural]}
+     * etiketiyle ayni amac: kalibrasyon olcumlerinde bu satirlarin embedding basarisi
+     * sanilmasini onlemek.
+     */
+    private IntentClassificationService.IntentResult applyFollowUpContext(
+            IntentClassificationService.IntentResult result, String message, String previousIntent) {
+
+        if (!FollowUpDetector.isTimeAware(previousIntent)) {
+            return result;
+        }
+        if (!FollowUpDetector.isTimeOnly(TurkishText.foldToAscii(message))) {
+            return result;
+        }
+        return new IntentClassificationService.IntentResult(
+                previousIntent, 1.0, "[baglam] " + previousIntent, true);
     }
 
     /**

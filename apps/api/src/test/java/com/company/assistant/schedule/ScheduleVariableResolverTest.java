@@ -103,6 +103,32 @@ class ScheduleVariableResolverTest {
         assertThat(vars).doesNotContainKey(ChatActions.OVERRIDE_KEY);
     }
 
+    /**
+     * A-37 (#203): cozulemeyen tarih ifadesi BUGUNE DUSMEZ.
+     *
+     * <p>resolveTarget() taninmayan her ifadeyi bugune ceviriyordu; kullanici sordugu gunun
+     * degil bugunun planini aliyor ve cevabin basligindaki tarihi okumazsa fark etmiyordu.
+     * Menu resolver'i da ayni yapisal hatayi tasiyordu, ikisi birlikte duzeltildi.
+     */
+    @Test
+    void cozulemeyenTarihBugunuDondurmez() {
+        seedFullWeek();
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "ağustos ofiste miyim", authentication);
+
+        assertThat(vars.get("calisma_duzenim")).contains("Hangi tarihi sorduğunu tam anlayamadım");
+    }
+
+    // Gun BELIRTILMEMIS durum degismedi; calisan bir davranisi bozmadigimizi sabitler.
+    @Test
+    void gunBelirtilmemisseHalaBugunDoner() {
+        seedFullWeek();
+
+        Map<String, String> vars = resolver.resolve("calisma_duzeni", "ofiste miyim", authentication);
+
+        assertThat(vars.get("calisma_duzenim")).doesNotContain("anlayamadım");
+    }
+
     @Test
     void tekGunSorusuOGununDurumunuDoner() {
         seedFullWeek();
