@@ -48,7 +48,8 @@ class ReservationServiceTest {
     private Employee employee(Integer id) {
         Employee employee = new Employee();
         employee.setId(id);
-        employee.setName("Test Calisan");
+        employee.setFirstName("Test");
+        employee.setLastName("Calisan");
         return employee;
     }
 

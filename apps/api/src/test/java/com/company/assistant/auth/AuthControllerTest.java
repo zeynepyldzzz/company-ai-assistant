@@ -65,7 +65,8 @@ class AuthControllerTest {
     private static Employee yeniAdmin(boolean totpEnabled, String totpSecret) {
         Employee employee = new Employee();
         employee.setId(7);
-        employee.setName("Yeni Admin");
+        employee.setFirstName("Yeni");
+        employee.setLastName("Admin");
         employee.setEmail("yeniadmin@company.com");
         employee.setActive(true);
         employee.setPasswordHash("$2a$10$hash");

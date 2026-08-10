@@ -22,7 +22,14 @@ import jakarta.validation.constraints.NotNull;
  * sadelestiriyor. Kural tek cumleye indi: sifreyi yalnizca kullanicinin kendisi belirler.
  */
 public record AdminEmployeeRequest(
-        @NotBlank String name,
+        /**
+         * A-35 (#196): ad ve soyad ayri alanlar. Soyad YENI kayitlarda zorunlu; entity'de
+         * nullable olmasinin tek sebebi V50 oncesinde tek kelimeli kaydedilmis calisanlar
+         * (hepsi test hesabi). Eski veri esnek, yeni veri kati.
+         */
+        @NotBlank String firstName,
+        @NotBlank String lastName,
+
         @NotBlank @Email String email,
         String phone,
 

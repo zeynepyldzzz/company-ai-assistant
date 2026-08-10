@@ -46,6 +46,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
      * Yalnizca bastan eslesme ({@code a%}) de yeterli degil, soyadiyla arama kirilirdi
      * ("kay" -> Ayse Kaya bulunamazdi) ve rehberde en cok yapilan sey o.
      *
+     * <p>A-35 (#196): ad ve soyad ayri kolonlar oldugu icin "kelime basi" artik taklit
+     * edilmiyor. A-34'te tek {@code name} kolonu uzerinde {@code LIKE '% ' || :s || '%'}
+     * yazmak zorundaydik — bosluk karakteriyle kelime siniri aramak. Simdi iki alana ayri
+     * ayri prefix eslesmesi yetiyor: hem daha okunur hem de cift bosluk, tire gibi
+     * ayiricilarda sessizce kaymiyor.
+     *
      * <p>{@code :department} filtresi BILEREK joker kaldi: degeri secim kutusundan tam ad
      * olarak geliyor, kullanicinin yazdigi serbest metin degil.
      *
@@ -54,14 +60,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
      * ile birlikte ayni kisi iki sayfada birden cikabilir, baskasi hic gorunmeyebilir.
      * Siralama cagiran tarafa birakilirsa biri {@code PageRequest.of(page, size)} yazip
      * sessizce bozar, o yuzden sorguda.
+     *
+     * <p>A-35: siralama artik SOYADA gore — rehberlerin klasik davranisi. {@code lastName}
+     * NULL olan eski kayitlar (tek kelimeli test hesaplari) Postgres'in varsayilaniyla
+     * sona duser.
      */
     @Query("""
         SELECT e FROM Employee e
         LEFT JOIN e.department d
         WHERE e.active = true
           AND (:search IS NULL
-               OR LOWER(e.name) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
-               OR LOWER(e.name) LIKE LOWER(CONCAT('% ', CAST(:search AS string), '%')))
+               OR LOWER(e.firstName) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
+               OR LOWER(e.lastName) LIKE LOWER(CONCAT(CAST(:search AS string), '%')))
           AND (:department IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', CAST(:department AS string), '%')))
           AND (:office IS NULL OR EXISTS (
                 SELECT 1 FROM WeeklySchedule ws
@@ -70,7 +80,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
                   AND ws.weekStartDate = :weekStart
                   AND LOWER(sd.dayOfWeek) = :dayOfWeek
                   AND sd.status = :office))
-        ORDER BY e.name, e.id
+        ORDER BY e.lastName, e.firstName, e.id
         """)
     Page<Employee> search(
             @Param("search") String search,
@@ -92,10 +102,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
         WHERE e.active = true
           AND e.phone IS NOT NULL
           AND (:search IS NULL
-               OR LOWER(e.name) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
-               OR LOWER(e.name) LIKE LOWER(CONCAT('% ', CAST(:search AS string), '%'))
+               OR LOWER(e.firstName) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
+               OR LOWER(e.lastName) LIKE LOWER(CONCAT(CAST(:search AS string), '%'))
                OR e.phone LIKE CONCAT('%', CAST(:search AS string), '%'))
-        ORDER BY e.name, e.id
+        ORDER BY e.lastName, e.firstName, e.id
         """)
     Page<Employee> searchPhonebook(@Param("search") String search, Pageable pageable);
 
@@ -112,8 +122,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     @Query("""
         SELECT COUNT(e) > 0 FROM Employee e
         WHERE e.active = true
-          AND (LOWER(e.name) LIKE LOWER(CONCAT(CAST(:token AS string), '%'))
-               OR LOWER(e.name) LIKE LOWER(CONCAT('% ', CAST(:token AS string), '%')))
+          AND (LOWER(e.firstName) LIKE LOWER(CONCAT(CAST(:token AS string), '%'))
+               OR LOWER(e.lastName) LIKE LOWER(CONCAT(CAST(:token AS string), '%')))
         """)
     boolean existsActiveByNameWordPrefix(@Param("token") String token);
 

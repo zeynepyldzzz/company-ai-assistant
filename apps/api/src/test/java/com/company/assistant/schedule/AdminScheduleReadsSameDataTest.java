@@ -48,7 +48,8 @@ class AdminScheduleReadsSameDataTest {
     void calisaninKaydettigiHaftayi_adminAynenGorur() {
         // 1) Gercek bir calisan olustur (weekly_schedule.employee_id FK'si icin sart).
         Employee employee = new Employee();
-        employee.setName("Ayni Veri Testi");
+        employee.setFirstName("Ayni");
+        employee.setLastName("Veri Testi");
         employee.setEmail("admin-reads-same-data@example.com");
         entityManager.persistAndFlush(employee);
 

@@ -44,7 +44,8 @@ class PhonebookControllerCallTest {
         String extension = String.valueOf(System.nanoTime()).substring(0, 7);
 
         Employee employee = new Employee();
-        employee.setName("Cagla " + UUID.randomUUID().toString().substring(0, 6));
+        employee.setFirstName("Cagla");
+        employee.setLastName(UUID.randomUUID().toString().substring(0, 6));
         employee.setEmail(UUID.randomUUID() + "@test.company.com");
         employee.setPhone(extension);
         employeeRepository.saveAndFlush(employee);
