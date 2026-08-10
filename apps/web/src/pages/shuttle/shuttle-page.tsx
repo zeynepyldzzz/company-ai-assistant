@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, useMap } from "react-leaflet";
-import { divIcon } from "leaflet";
 import type { LatLngBoundsExpression, LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Phone } from "lucide-react";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { createPinIcon } from "@/lib/map-pin-icon";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -33,17 +33,8 @@ function driverInitials(name: string | null): string {
     .join("");
 }
 
-// B-27: leaflet'in varsayilan marker ikonu ek asset (png) yapilandirmasi
-// gerektirir; bunun yerine self-contained bir SVG pin kullanilir.
-const searchPinIcon = divIcon({
-  className: "",
-  html: `<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">
-    <path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26c0-7.7-6.3-14-14-14z" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5" />
-    <circle cx="14" cy="14" r="5" fill="#fff" />
-  </svg>`,
-  iconSize: [28, 40],
-  iconAnchor: [14, 40],
-});
+const searchPinIcon = createPinIcon("#dc2626", "#7f1d1d");
+const highlightedStopPinIcon = createPinIcon("#16a34a", "#14532d");
 
 function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
   const map = useMap();
@@ -273,7 +264,7 @@ export function ShuttlePage() {
                 key={selectedRoute.id}
                 center={polylinePositions[0]}
                 zoom={12}
-                scrollWheelZoom={false}
+                scrollWheelZoom
                 className="h-full min-h-[420px] w-full"
               >
                 <TileLayer
@@ -289,18 +280,18 @@ export function ShuttlePage() {
                       : { color: "#2563eb", weight: 4 }
                   }
                 />
-                {stopsWithCoords.map((stop) => (
-                  <CircleMarker
-                    key={stop.id}
-                    center={[stop.latitude, stop.longitude]}
-                    radius={stop.id === highlightedStopId ? 10 : 7}
-                    pathOptions={{
-                      color: stop.id === highlightedStopId ? "#16a34a" : "#2563eb",
-                      fillColor: stop.id === highlightedStopId ? "#16a34a" : "#2563eb",
-                      fillOpacity: 0.9,
-                    }}
-                  />
-                ))}
+                {stopsWithCoords.map((stop) =>
+                  stop.id === highlightedStopId ? (
+                    <Marker key={stop.id} position={[stop.latitude, stop.longitude]} icon={highlightedStopPinIcon} />
+                  ) : (
+                    <CircleMarker
+                      key={stop.id}
+                      center={[stop.latitude, stop.longitude]}
+                      radius={7}
+                      pathOptions={{ color: "#2563eb", fillColor: "#2563eb", fillOpacity: 0.9 }}
+                    />
+                  )
+                )}
                 {isRecommendedRoute && searchedLocation && (
                   <Marker position={searchedLocation} icon={searchPinIcon} />
                 )}
@@ -360,8 +351,11 @@ export function ShuttlePage() {
                     {stops.map((stop) => (
                       <li
                         key={stop.id}
+                        onClick={() =>
+                          setHighlightedStopId(stop.id === highlightedStopId ? null : stop.id)
+                        }
                         className={cn(
-                          "flex items-center justify-between gap-3 py-2",
+                          "hover:bg-muted/50 flex cursor-pointer items-center justify-between gap-3 rounded-md py-2 px-2 transition-colors",
                           stop.id === highlightedStopId && "text-primary font-medium"
                         )}
                       >
