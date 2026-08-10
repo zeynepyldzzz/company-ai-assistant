@@ -59,7 +59,7 @@ class AdminEmployeeServiceTest {
     @Test
     void olusturmada_sistemHerZamanGeciciSifreUretir() {
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Test Calisan", "test@company.com", null, null, null);
+                "Test", "Calisan", "test@company.com", null, null, null);
 
         AdminEmployeeCreateResponse response = service.create(request);
 
@@ -80,7 +80,8 @@ class AdminEmployeeServiceTest {
     void sifreSifirlamada_yeniGeciciSifreUretilir() {
         Employee existing = new Employee();
         existing.setId(7);
-        existing.setName("Mevcut Calisan");
+        existing.setFirstName("Mevcut");
+        existing.setLastName("Calisan");
         existing.setEmail("mevcut@company.com");
         existing.setPasswordHash("$2a$10$eskiHash");
         when(employeeRepository.findById(7)).thenReturn(Optional.of(existing));
@@ -100,7 +101,7 @@ class AdminEmployeeServiceTest {
     @Test
     void rolsuzCalisanOlusturulursa_totpSecretUretilmez() {
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Test Calisan", "test@company.com", null, null, null);
+                "Test", "Calisan", "test@company.com", null, null, null);
 
         service.create(request);
 
@@ -119,7 +120,7 @@ class AdminEmployeeServiceTest {
         when(totpService.generateSecret()).thenReturn("ABCDEFGHIJKLMNOP");
 
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Yeni Admin", "admin2@company.com", null, null, 3);
+                "Yeni", "Admin", "admin2@company.com", null, null, 3);
 
         service.create(request);
 
@@ -136,13 +137,14 @@ class AdminEmployeeServiceTest {
     void guncellemede_mevcutSifreKorunur() {
         Employee existing = new Employee();
         existing.setId(5);
-        existing.setName("Eski Isim");
+        existing.setFirstName("Eski");
+        existing.setLastName("Isim");
         existing.setEmail("eski@company.com");
         existing.setPasswordHash("$2a$10$mevcutHash");
         when(employeeRepository.findById(5)).thenReturn(Optional.of(existing));
 
         AdminEmployeeRequest request = new AdminEmployeeRequest(
-                "Yeni Isim", "eski@company.com", null, null, null);
+                "Yeni", "Isim", "eski@company.com", null, null, null);
 
         service.update(5, request);
 

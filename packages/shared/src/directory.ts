@@ -17,7 +17,12 @@ export type OfficeStatus = z.infer<typeof OfficeStatusSchema>;
 // GET /employees, GET /employees/{id}
 export const EmployeeSchema = z.object({
   id: z.number(),
+  // A-35 (#196): name TURETILMIS tam ad; sunucuda first+last birlestirilerek uretiliyor,
+  // artik bir kolon degil. Tek parca gosteren istemciler icin duruyor.
   name: z.string(),
+  firstName: z.string(),
+  // V50 oncesinde tek kelimeli kaydedilmis calisanlarda null (hepsi test hesabi).
+  lastName: z.string().nullable(),
   email: z.string().email(),
   phone: z.string().nullable(),
   officeStatus: z.string().nullable(),
@@ -57,7 +62,10 @@ export type DepartmentPagedResponse = z.infer<typeof DepartmentPagedResponseSche
 
 // POST/PUT /admin/employees govdesi (#84 Hafta 4).
 export const AdminEmployeeRequestSchema = z.object({
-  name: z.string().min(1),
+  // A-35 (#196): ad ve soyad ayri. Soyad YENI kayitlarda zorunlu; yanit semasinda
+  // nullable olmasinin sebebi yalnizca V50 oncesi eski kayitlar.
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
   email: z.string().email(),
   phone: z.string().nullable().optional(),
   // A-32 (#188): officeStatus KALDIRILDI. Ofis durumu bugunun calisma duzeninden

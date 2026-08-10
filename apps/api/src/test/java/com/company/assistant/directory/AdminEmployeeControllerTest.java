@@ -68,7 +68,7 @@ class AdminEmployeeControllerTest {
     // A-30 (#185): departman artik zorunlu — gecerli govde onsuz olamaz. Bu sabitin adi
     // "gecerli" oldugu icin eksik kalirsa RBAC testleri de 400 alip yanlis nedenle patliyordu.
     private static final String GECERLI_GOVDE =
-            "{ \"name\": \"Ayşe Yılmaz\", \"email\": \"ayse@company.com\", \"departmentId\": 3 }";
+            "{ \"firstName\": \"Ayşe\", \"lastName\": \"Yılmaz\", \"email\": \"ayse@company.com\", \"departmentId\": 3 }";
 
     @Test
     void authOlmadan_401() throws Exception {
@@ -101,7 +101,8 @@ class AdminEmployeeControllerTest {
     void hrAdmin_calisanOlusturabilir() throws Exception {
         Employee saved = new Employee();
         saved.setId(10);
-        saved.setName("Ayşe Yılmaz");
+        saved.setFirstName("Ayşe");
+        saved.setLastName("Yılmaz");
         saved.setEmail("ayse@company.com");
         // A-29 (#178): yanit artik EmployeeResponse degil; sifre alani listeleme/detay
         // uclarindan sizmasin diye olusturma icin ayri bir tip kullaniliyor.
@@ -123,7 +124,7 @@ class AdminEmployeeControllerTest {
         mockMvc.perform(post("/admin/employees")
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"name\": \"\", \"email\": \"ayse@company.com\" }"))
+                        .content("{ \"firstName\": \"\", \"lastName\": \"Yılmaz\", \"email\": \"ayse@company.com\" }"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -135,7 +136,7 @@ class AdminEmployeeControllerTest {
         mockMvc.perform(post("/admin/employees")
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"name\": \"Ayşe Yılmaz\", \"email\": \"ayse@company.com\" }"))
+                        .content("{ \"firstName\": \"Ayşe\", \"lastName\": \"Yılmaz\", \"email\": \"ayse@company.com\" }"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -143,14 +144,15 @@ class AdminEmployeeControllerTest {
     void hrAdmin_calisanGuncelleyebilir() throws Exception {
         Employee saved = new Employee();
         saved.setId(10);
-        saved.setName("Ayşe Yılmaz Güncel");
+        saved.setFirstName("Ayşe");
+        saved.setLastName("Yılmaz Güncel");
         saved.setEmail("ayse@company.com");
         when(adminEmployeeService.update(anyInt(), any())).thenReturn(new EmployeeResponse(saved));
 
         mockMvc.perform(put("/admin/employees/10")
                         .with(user("hr").authorities(hrAdmin())).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"name\": \"Ayşe Yılmaz Güncel\", \"email\": \"ayse@company.com\", \"departmentId\": 3 }"))
+                        .content("{ \"firstName\": \"Ayşe\", \"lastName\": \"Yılmaz Güncel\", \"email\": \"ayse@company.com\", \"departmentId\": 3 }"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Ayşe Yılmaz Güncel"));
     }

@@ -47,10 +47,11 @@ class DirectoryServiceOfficeStatusTest {
         service = new DirectoryService(employeeRepository, todayStatusService);
     }
 
-    private Employee employee(int id, String name) {
+    private Employee employee(int id, String firstName, String lastName) {
         Employee employee = new Employee();
         employee.setId(id);
-        employee.setName(name);
+        employee.setFirstName(firstName);
+        employee.setLastName(lastName);
         // Kolon bilerek DOLU birakiliyor: testin amaci, dolu olsa bile okunmadigini gostermek.
         employee.setOfficeStatus("Ofiste");
         return employee;
@@ -66,7 +67,7 @@ class DirectoryServiceOfficeStatusTest {
 
     @Test
     void durumPlandanGelir_kolondanDegil() {
-        stubSearch(employee(5, "Elif Sahin"));
+        stubSearch(employee(5, "Elif", "Sahin"));
         when(todayStatusService.statusesForToday()).thenReturn(Map.of(5, ScheduleStatus.REMOTE));
 
         PagedResponse<EmployeeResponse> result = service.searchEmployees(null, null, null, 0, 20);
@@ -79,7 +80,7 @@ class DirectoryServiceOfficeStatusTest {
     // yasatmaya devam ederdi ve celiskinin sebebi tam olarak oydu.
     @Test
     void planYoksaDurumBostur_kolonaGeriDusulmez() {
-        stubSearch(employee(7, "Can Ozturk"));
+        stubSearch(employee(7, "Can", "Ozturk"));
         when(todayStatusService.statusesForToday()).thenReturn(Map.of());
 
         PagedResponse<EmployeeResponse> result = service.searchEmployees(null, null, null, 0, 20);
@@ -91,7 +92,7 @@ class DirectoryServiceOfficeStatusTest {
     // sessizce hicbir seyle eslesmez.
     @Test
     void rehberEtiketiPlanDurumunaCevrilir() {
-        stubSearch(employee(5, "Elif Sahin"));
+        stubSearch(employee(5, "Elif", "Sahin"));
         when(todayStatusService.statusesForToday()).thenReturn(Map.of());
 
         service.searchEmployees(null, null, "Izinde", 0, 20);

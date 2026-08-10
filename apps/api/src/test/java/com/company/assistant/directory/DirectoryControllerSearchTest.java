@@ -48,7 +48,11 @@ class DirectoryControllerSearchTest {
         departmentRepository.saveAndFlush(department);
 
         employee = new Employee();
-        employee.setName("Aylin " + uniqueToken + " Yildirim");
+        // A-35 (#196): benzersiz token ADIN BASINDA. A-34'ten beri arama kelime basi
+        // eslesmesi yapiyor; token ortada bir kelime olsaydi (eski "Aylin <token> Yildirim"
+        // yazimi) ad/soyad ayriminda hicbir alanin basina denk gelmez ve test kirilirdi.
+        employee.setFirstName(uniqueToken);
+        employee.setLastName("Yildirim");
         employee.setEmail(uniqueToken + "@test.company.com");
         employee.setDepartment(department);
         employeeRepository.saveAndFlush(employee);

@@ -36,7 +36,8 @@ class WeeklyScheduleConstraintTest {
 
     private Employee calisan(String email) {
         Employee e = new Employee();
-        e.setName("Test Calisan");
+        e.setFirstName("Test");
+        e.setLastName("Calisan");
         e.setEmail(email);
         return e;
     }
