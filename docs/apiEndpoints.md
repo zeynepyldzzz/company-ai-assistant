@@ -119,7 +119,7 @@ kaynağı değişti: ofis durumu artık `employee.office_status` kolonundan değ
   yazılabilir bir alan değil, türetilen bir değer.
 
 **A-35 (#196) — çalışan adı ad/soyad olarak ayrıldı (kırıcı değişiklik).** `employee.name`
-kolonu V49 ile kaldırıldı; yerine `first_name` (NOT NULL) ve `last_name` (eski tek kelimeli
+kolonu V50 ile kaldırıldı; yerine `first_name` (NOT NULL) ve `last_name` (eski tek kelimeli
 kayıtlarda NULL) geldi.
 
 - `POST/PUT /admin/employees` gövdesinde `name` yerine **`firstName` + `lastName`**; ikisi de

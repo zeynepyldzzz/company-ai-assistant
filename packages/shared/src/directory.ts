@@ -21,7 +21,7 @@ export const EmployeeSchema = z.object({
   // artik bir kolon degil. Tek parca gosteren istemciler icin duruyor.
   name: z.string(),
   firstName: z.string(),
-  // V49 oncesinde tek kelimeli kaydedilmis calisanlarda null (hepsi test hesabi).
+  // V50 oncesinde tek kelimeli kaydedilmis calisanlarda null (hepsi test hesabi).
   lastName: z.string().nullable(),
   email: z.string().email(),
   phone: z.string().nullable(),
@@ -63,7 +63,7 @@ export type DepartmentPagedResponse = z.infer<typeof DepartmentPagedResponseSche
 // POST/PUT /admin/employees govdesi (#84 Hafta 4).
 export const AdminEmployeeRequestSchema = z.object({
   // A-35 (#196): ad ve soyad ayri. Soyad YENI kayitlarda zorunlu; yanit semasinda
-  // nullable olmasinin sebebi yalnizca V49 oncesi eski kayitlar.
+  // nullable olmasinin sebebi yalnizca V50 oncesi eski kayitlar.
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   email: z.string().email(),

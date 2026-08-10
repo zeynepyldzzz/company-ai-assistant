@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
  * A-35 (#196): {@code Employee.getName()} artik bir kolon degil, ad+soyaddan TURETILIYOR.
  *
  * <p>Bu metodun dogru calismasi genis bir yuzeyi tasiyor: rehber kartlari, chatbot
- * resolver'lari, DTO'lar ve PDF uretimi hepsi {@code getName()} okuyor. V49 ile kolon
+ * resolver'lari, DTO'lar ve PDF uretimi hepsi {@code getName()} okuyor. V50 ile kolon
  * kaldirildigi icin burada bir hata, tum bu noktalarda ayni anda gorunur.
  */
 class EmployeeFullNameTest {
@@ -26,7 +26,7 @@ class EmployeeFullNameTest {
     }
 
     /**
-     * V49 oncesinde tek kelimeli kaydedilmis calisanlar var (hepsi test hesabi) ve
+     * V50 oncesinde tek kelimeli kaydedilmis calisanlar var (hepsi test hesabi) ve
      * {@code last_name} onlarda NULL. Naif birlestirme "TestAdmin2 null" ya da sondaki
      * bosluguyla "TestAdmin2 " uretirdi; ikincisi arayuzde gorunmez ama esitlik
      * karsilastirmalarini sessizce kaydirir.

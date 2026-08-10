@@ -24,7 +24,7 @@ import jakarta.validation.constraints.NotNull;
 public record AdminEmployeeRequest(
         /**
          * A-35 (#196): ad ve soyad ayri alanlar. Soyad YENI kayitlarda zorunlu; entity'de
-         * nullable olmasinin tek sebebi V49 oncesinde tek kelimeli kaydedilmis calisanlar
+         * nullable olmasinin tek sebebi V50 oncesinde tek kelimeli kaydedilmis calisanlar
          * (hepsi test hesabi). Eski veri esnek, yeni veri kati.
          */
         @NotBlank String firstName,

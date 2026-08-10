@@ -20,7 +20,7 @@ public class Employee {
     private String firstName;
 
     /**
-     * NULL olabilir: V49 oncesinde tek kelimeli kaydedilmis calisanlar var (hepsi test
+     * NULL olabilir: V50 oncesinde tek kelimeli kaydedilmis calisanlar var (hepsi test
      * hesabi). YENI kayitlarda zorunlu — kural {@code AdminEmployeeRequest} tarafinda.
      */
     @Column(name = "last_name")
