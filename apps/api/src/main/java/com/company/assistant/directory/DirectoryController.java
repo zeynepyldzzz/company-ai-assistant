@@ -21,9 +21,10 @@ public class DirectoryController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String office,
+            @RequestParam(required = false) String day,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
-        return directoryService.searchEmployees(search, department, office, page, pageSize);
+        return directoryService.searchEmployees(search, department, office, day, page, pageSize);
     }
 
     @GetMapping("/{id}")
