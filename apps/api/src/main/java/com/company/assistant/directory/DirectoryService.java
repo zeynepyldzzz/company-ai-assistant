@@ -1,6 +1,7 @@
 package com.company.assistant.directory;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.company.assistant.common.PagedResponse;
@@ -34,6 +35,28 @@ public class DirectoryService {
      */
     public PagedResponse<EmployeeResponse> searchEmployees(
             String search, String department, String office, int page, int pageSize) {
+        return searchEmployees(search, department, office, null, page, pageSize);
+    }
+
+    /**
+     * B-32 (#204): rehber sayfasindaki gun secim bari icin {@code day} eklendi -
+     * ({@code monday}..{@code friday}, kucuk/buyuk harf duyarsiz). {@code null} ise
+     * eski davranis (bugun) korunur; gecersiz bir deger 400'e donusur (bkz.
+     * {@code GlobalExceptionHandler#handleBadRequest}), sessizce "bugun"e ya da bos
+     * sonuca dusulmez - cagiran taraf (frontend) sadece sabit 5 butondan biri gonderdigi
+     * icin bu yalnizca hatali/elle yapilmis bir istekte tetiklenir.
+     */
+    public PagedResponse<EmployeeResponse> searchEmployees(
+            String search, String department, String office, String day, int page, int pageSize) {
+
+        String dayKey;
+        if (day == null) {
+            dayKey = todayStatusService.todayKey();
+        } else if (todayStatusService.isValidDayKey(day)) {
+            dayKey = day.toLowerCase(Locale.ROOT);
+        } else {
+            throw new IllegalArgumentException("Geçersiz gün: " + day);
+        }
 
         ScheduleStatus officeFilter = OfficeStatusLabels.statusFor(office);
         // Taninmayan bir durum degeri (orn. elle yazilmis ?office=asdf) TUM listeyi
@@ -45,14 +68,14 @@ public class DirectoryService {
 
         Page<Employee> result = employeeRepository.search(
                 search, department, officeFilter,
-                todayStatusService.currentWeekStart(), todayStatusService.todayKey(),
+                todayStatusService.currentWeekStart(), dayKey,
                 PageRequest.of(page, pageSize));
 
-        Map<Integer, ScheduleStatus> todayStatuses = todayStatusService.statusesForToday();
+        Map<Integer, ScheduleStatus> dayStatuses = todayStatusService.statusesForDay(dayKey);
         return new PagedResponse<>(
                 result.getContent().stream()
                         .map(employee -> new EmployeeResponse(
-                                employee, todayStatuses.get(employee.getId())))
+                                employee, dayStatuses.get(employee.getId())))
                         .toList(),
                 page,
                 pageSize,

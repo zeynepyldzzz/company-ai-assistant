@@ -24,7 +24,14 @@ function buildQuery(params: Record<string, string | number | undefined>): string
 }
 
 export async function searchEmployees(
-  params: { search?: string; department?: string; office?: string; page?: number; pageSize?: number },
+  params: {
+    search?: string;
+    department?: string;
+    office?: string;
+    day?: string;
+    page?: number;
+    pageSize?: number;
+  },
   token: string
 ): Promise<EmployeePagedResponse> {
   const data = await apiFetch<unknown>(`/employees${buildQuery(params)}`, { token });
