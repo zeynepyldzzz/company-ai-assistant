@@ -1,6 +1,7 @@
 package com.company.assistant.directory;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -68,7 +69,7 @@ class DirectoryServiceOfficeStatusTest {
     @Test
     void durumPlandanGelir_kolondanDegil() {
         stubSearch(employee(5, "Elif", "Sahin"));
-        when(todayStatusService.statusesForToday()).thenReturn(Map.of(5, ScheduleStatus.REMOTE));
+        when(todayStatusService.statusesForDay("wednesday")).thenReturn(Map.of(5, ScheduleStatus.REMOTE));
 
         PagedResponse<EmployeeResponse> result = service.searchEmployees(null, null, null, 0, 20);
 
@@ -81,7 +82,7 @@ class DirectoryServiceOfficeStatusTest {
     @Test
     void planYoksaDurumBostur_kolonaGeriDusulmez() {
         stubSearch(employee(7, "Can", "Ozturk"));
-        when(todayStatusService.statusesForToday()).thenReturn(Map.of());
+        when(todayStatusService.statusesForDay("wednesday")).thenReturn(Map.of());
 
         PagedResponse<EmployeeResponse> result = service.searchEmployees(null, null, null, 0, 20);
 
@@ -93,7 +94,7 @@ class DirectoryServiceOfficeStatusTest {
     @Test
     void rehberEtiketiPlanDurumunaCevrilir() {
         stubSearch(employee(5, "Elif", "Sahin"));
-        when(todayStatusService.statusesForToday()).thenReturn(Map.of());
+        when(todayStatusService.statusesForDay("wednesday")).thenReturn(Map.of());
 
         service.searchEmployees(null, null, "Izinde", 0, 20);
 
@@ -112,6 +113,56 @@ class DirectoryServiceOfficeStatusTest {
 
         assertThat(result.data()).isEmpty();
         assertThat(result.total()).isZero();
+        verify(employeeRepository, never())
+                .search(any(), any(), any(), any(), any(), any(Pageable.class));
+    }
+
+    // B-32 (#204): rehber sayfasindaki gun secim bari - "day" verildiginde bugun yerine o
+    // gunun plani kullanilmali (hem rozetler hem "office" filtresinin sorgusu).
+    @Test
+    void gunParametresiVerilirse_oGununDurumuKullanilir() {
+        Page<Employee> page = new PageImpl<>(List.of(employee(9, "Ayse", "Demir")));
+        when(employeeRepository.search(any(), any(), any(), any(), eq("monday"), any(Pageable.class)))
+                .thenReturn(page);
+        when(todayStatusService.currentWeekStart()).thenReturn(LocalDate.of(2026, 8, 3));
+        when(todayStatusService.isValidDayKey("monday")).thenReturn(true);
+        when(todayStatusService.statusesForDay("monday")).thenReturn(Map.of(9, ScheduleStatus.OFFICE));
+
+        PagedResponse<EmployeeResponse> result = service.searchEmployees(null, null, null, "monday", 0, 20);
+
+        assertThat(result.data().get(0).getOfficeStatus()).isEqualTo("Ofiste");
+        // todayKey() bugunun gunu icin cagrilmamali - "day" verilmisken bugune bakilmiyor.
+        verify(todayStatusService, never()).todayKey();
+    }
+
+    // Gun secim bari + "Ofis Durumu" filtresi BIRLIKTE calismali: "Pazartesi" + "Ofiste"
+    // secilirse sorgu PAZARTESI gununde ofiste olanlari filtrelemeli, bugunu degil.
+    @Test
+    void gunVeOfisDurumuBirlikteFiltrelenir() {
+        Page<Employee> page = new PageImpl<>(List.of());
+        when(employeeRepository.search(any(), any(), eq(ScheduleStatus.OFFICE), any(), eq("monday"), any(Pageable.class)))
+                .thenReturn(page);
+        when(todayStatusService.currentWeekStart()).thenReturn(LocalDate.of(2026, 8, 3));
+        when(todayStatusService.isValidDayKey("monday")).thenReturn(true);
+        when(todayStatusService.statusesForDay("monday")).thenReturn(Map.of());
+
+        service.searchEmployees(null, null, "Ofiste", "monday", 0, 20);
+
+        // Sorgu gercekten "monday" + OFFICE ile calisti mi (yukaridaki stub esleseydi bunu
+        // dogrulamis oluruz), ayrica "bugun" (todayKey) hic devreye girmedi mi:
+        verify(employeeRepository).search(
+                isNull(), isNull(), eq(ScheduleStatus.OFFICE), any(), eq("monday"), any(Pageable.class));
+        verify(todayStatusService, never()).todayKey();
+    }
+
+    // Sabit 5 butondan biri disinda bir deger (elle yapilmis istek) sessizce "bugun"e ya da
+    // bos sonuca dusmemeli - hatali oldugu acikca belli olsun diye 400'e cevrilir.
+    @Test
+    void gecersizGunParametresi_IllegalArgumentExceptionFirlatir() {
+        when(todayStatusService.isValidDayKey("funday")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.searchEmployees(null, null, null, "funday", 0, 20))
+                .isInstanceOf(IllegalArgumentException.class);
         verify(employeeRepository, never())
                 .search(any(), any(), any(), any(), any(), any(Pageable.class));
     }

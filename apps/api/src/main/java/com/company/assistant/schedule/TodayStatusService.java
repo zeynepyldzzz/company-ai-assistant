@@ -29,6 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TodayStatusService {
 
+    private static final java.util.Set<String> VALID_DAY_KEYS =
+            java.util.Set.of("monday", "tuesday", "wednesday", "thursday", "friday");
+
     private final WeeklyScheduleRepository repository;
 
     public TodayStatusService(WeeklyScheduleRepository repository) {
@@ -47,8 +50,23 @@ public class TodayStatusService {
         if (!isWorkday()) {
             return Map.of();
         }
+        return statusesForDay(todayKey());
+    }
+
+    /**
+     * B-32 (#204): {@link #statusesForToday()}'nin genellenmisi - rehber sayfasindaki gun
+     * secim bari icin, icinde bulunulan haftanin VERILEN gununun durumu. Geçersiz/hafta
+     * sonu bir anahtar icin (weekend/typo) BOS map doner - {@link #statusesForToday()}'nin
+     * hafta sonu davranisiyla ayni sozlesme, cagiran taraf ayrica dogrulama yapmak
+     * zorunda kalmasin.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, ScheduleStatus> statusesForDay(String dayKey) {
+        if (!isValidDayKey(dayKey)) {
+            return Map.of();
+        }
         List<EmployeeDayStatus> rows = repository.findStatusesByDay(
-                ScheduleService.currentWeekStart(), todayKey());
+                ScheduleService.currentWeekStart(), dayKey.toLowerCase(Locale.ROOT));
 
         // Ayni (schedule, gun) icin unique kisit var (V16), dolayisiyla anahtar cakismasi
         // beklenmiyor; yine de merge fonksiyonu veriliyor ki bozuk veri exception yerine
@@ -57,6 +75,11 @@ public class TodayStatusService {
                 EmployeeDayStatus::employeeId,
                 EmployeeDayStatus::status,
                 (first, duplicate) -> first));
+    }
+
+    /** {@code schedule_day.day_of_week} icin gecerli bir anahtar mi (Pazartesi-Cuma, kucuk harf Ingilizce). */
+    public boolean isValidDayKey(String dayKey) {
+        return dayKey != null && VALID_DAY_KEYS.contains(dayKey.toLowerCase(Locale.ROOT));
     }
 
     /** Bugun plan tutulan bir gun mu (Pazartesi-Cuma). */

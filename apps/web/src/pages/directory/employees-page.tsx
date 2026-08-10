@@ -19,6 +19,23 @@ const statusStyles: Record<OfficeStatus, string> = {
   Izinde: "bg-danger-soft text-danger",
 };
 
+// B-32 (#204): gun secim barı - backend'in bekledigi kucuk harf Ingilizce anahtar (bkz.
+// TodayStatusService) ile ekranda gosterilecek Turkce kisaltma.
+const WEEKDAYS: { key: string; label: string }[] = [
+  { key: "monday", label: "Pzt" },
+  { key: "tuesday", label: "Sal" },
+  { key: "wednesday", label: "Çar" },
+  { key: "thursday", label: "Per" },
+  { key: "friday", label: "Cum" },
+];
+
+function todayDayKey(): string | null {
+  const key = new Date()
+    .toLocaleDateString("en-US", { weekday: "long" })
+    .toLowerCase();
+  return WEEKDAYS.some((w) => w.key === key) ? key : null;
+}
+
 function initialsOf(name: string): string {
   return name
     .split(" ")
@@ -34,18 +51,21 @@ export function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState<string | null>(null);
   const [office, setOffice] = useState<string | null>(null);
+  const [day, setDay] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
   const debouncedSearch = useDebouncedValue(search);
+  const todayKey = todayDayKey();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["employees", debouncedSearch, department, office, page],
+    queryKey: ["employees", debouncedSearch, department, office, day, page],
     queryFn: () =>
       searchEmployees(
         {
           search: debouncedSearch || undefined,
           department: department ?? undefined,
           office: office ?? undefined,
+          day: day ?? undefined,
           page,
           pageSize: PAGE_SIZE,
         },
@@ -68,6 +88,31 @@ export function EmployeesPage() {
   return (
     <div className="space-y-5">
       <h1 className="text-[22px] font-extrabold">Çalışanlar</h1>
+
+      {/* B-32 (#204): gun secim barı - bir gune tiklayinca liste/rozetler o gunun planina gore hesaplanir. */}
+      <div className="inline-flex rounded-lg border p-1">
+        {WEEKDAYS.map(({ key, label }) => {
+          const isSelected = day === key;
+          const isToday = key === todayKey;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setDay((current) => (current === key ? null : key));
+                setPage(0);
+              }}
+              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                isSelected
+                  ? "bg-muted font-medium"
+                  : `text-muted-foreground hover:bg-muted/50 ${isToday ? "ring-primary/40 ring-1" : ""}`
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
       <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
         <div className="mb-1.5 space-y-1.5">
