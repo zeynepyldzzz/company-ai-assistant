@@ -24,6 +24,11 @@ public class RoutingService {
 
     private static final Logger log = LoggerFactory.getLogger(RoutingService.class);
 
+    // B-31: elle tiklanan noktalar piksel-hassasiyetinde olmayacagi icin
+    // OSRM'in varsayilan 5m yaricapi cok siki - tum noktalara tek tip,
+    // comert bir tolerans uygulanir.
+    private static final int MATCH_RADIUS_METERS = 30;
+
     private final RestClient restClient;
 
     public RoutingService(@Value("${app.routing.base-url}") String baseUrl) {
@@ -98,6 +103,49 @@ public class RoutingService {
         }
     }
 
+    /**
+     * B-31: admin haritada tikladigi ham noktalari OSRM'in Match servisine
+     * (GPS/tiklama gurultusune tolerans gosteren, en yakin gercek yola
+     * "snap" eden servis) gonderir. Noktalar yola makul sekilde oturmazsa
+     * OSRM "NoMatch" donebilir - bu da basarisizlik sayilir.
+     */
+    public Optional<List<Coordinate>> matchGeometry(List<Coordinate> points) {
+        if (points.size() < 2) {
+            return Optional.empty();
+        }
+        try {
+            String coordinatesPath = points.stream()
+                    .map(c -> c.lng() + "," + c.lat())
+                    .collect(Collectors.joining(";"));
+            String radiuses = points.stream()
+                    .map(c -> String.valueOf(MATCH_RADIUS_METERS))
+                    .collect(Collectors.joining(";"));
+
+            OsrmMatchResponse response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/match/v1/driving/" + coordinatesPath)
+                            .queryParam("geometries", "geojson")
+                            .queryParam("overview", "full")
+                            .queryParam("radiuses", radiuses)
+                            .build())
+                    .retrieve()
+                    .body(OsrmMatchResponse.class);
+
+            if (response == null || !"Ok".equals(response.code())
+                    || response.matchings() == null || response.matchings().isEmpty()) {
+                return Optional.empty();
+            }
+
+            List<List<Double>> rawCoordinates = response.matchings().get(0).geometry().coordinates();
+            return Optional.of(rawCoordinates.stream()
+                    .map(pair -> new Coordinate(pair.get(1), pair.get(0)))
+                    .toList());
+        } catch (RuntimeException e) {
+            log.warn("OSRM rota eslestirme (match) sorgusu basarisiz: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     record OsrmResponse(List<OsrmRoute> routes) {}
 
     record OsrmRoute(double distance, double duration) {}
@@ -107,4 +155,8 @@ public class RoutingService {
     record OsrmGeometryRoute(OsrmGeometry geometry) {}
 
     record OsrmGeometry(List<List<Double>> coordinates) {}
+
+    record OsrmMatchResponse(String code, List<OsrmMatching> matchings) {}
+
+    record OsrmMatching(OsrmGeometry geometry) {}
 }

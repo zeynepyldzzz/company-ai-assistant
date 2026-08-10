@@ -125,4 +125,88 @@ class RoutingServiceTest {
 
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void matchYanitindanKoordinatlarCozulur() throws IOException {
+        java.util.concurrent.atomic.AtomicReference<String> capturedQuery = new java.util.concurrent.atomic.AtomicReference<>();
+        stubServer.createContext("/match/v1/driving/29.03,40.98;29.04,40.99", exchange -> {
+            capturedQuery.set(exchange.getRequestURI().getQuery());
+            byte[] body = ("{\"code\":\"Ok\",\"matchings\":[{\"geometry\":{\"coordinates\":"
+                    + "[[29.03,40.98],[29.035,40.985],[29.04,40.99]]}}]}").getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+
+        Optional<List<Coordinate>> result = service.matchGeometry(
+                List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04)));
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).containsExactly(
+                new Coordinate(40.98, 29.03), new Coordinate(40.985, 29.035), new Coordinate(40.99, 29.04));
+        assertThat(capturedQuery.get()).contains("radiuses=30;30");
+    }
+
+    @Test
+    void matchEslesemezseBosDoner() throws IOException {
+        stubServer.createContext("/match/v1/driving/", exchange -> {
+            byte[] body = "{\"code\":\"NoMatch\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+
+        Optional<List<Coordinate>> result = service.matchGeometry(
+                List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04)));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void matchBosEslesmeListesiVarsaBosDoner() throws IOException {
+        stubServer.createContext("/match/v1/driving/", exchange -> {
+            byte[] body = "{\"code\":\"Ok\",\"matchings\":[]}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+
+        Optional<List<Coordinate>> result = service.matchGeometry(
+                List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04)));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void matchSunucuHataDonerseBosDoner() throws IOException {
+        stubServer.createContext("/match/v1/driving/", exchange -> {
+            exchange.sendResponseHeaders(500, -1);
+            exchange.close();
+        });
+
+        Optional<List<Coordinate>> result = service.matchGeometry(
+                List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04)));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void matchSunucuErisilemezseBosDoner() {
+        stubServer.stop(0);
+
+        Optional<List<Coordinate>> result = service.matchGeometry(
+                List.of(new Coordinate(40.98, 29.03), new Coordinate(40.99, 29.04)));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void matchTekNoktaIcinBosDonerAgSorgusuYapilmaz() {
+        Optional<List<Coordinate>> result = service.matchGeometry(List.of(new Coordinate(40.98, 29.03)));
+
+        assertThat(result).isEmpty();
+    }
 }

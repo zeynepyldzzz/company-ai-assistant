@@ -1,5 +1,7 @@
 package com.company.assistant.shuttle;
 
+import com.company.assistant.routing.Coordinate;
+import com.company.assistant.routing.RoutingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,11 +13,17 @@ public class AdminShuttleService {
 
     private final ShuttleRouteRepository shuttleRouteRepository;
     private final ShuttleStopRepository shuttleStopRepository;
+    private final ShuttleRoutePointRepository shuttleRoutePointRepository;
+    private final RoutingService routingService;
 
     public AdminShuttleService(ShuttleRouteRepository shuttleRouteRepository,
-            ShuttleStopRepository shuttleStopRepository) {
+            ShuttleStopRepository shuttleStopRepository,
+            ShuttleRoutePointRepository shuttleRoutePointRepository,
+            RoutingService routingService) {
         this.shuttleRouteRepository = shuttleRouteRepository;
         this.shuttleStopRepository = shuttleStopRepository;
+        this.shuttleRoutePointRepository = shuttleRoutePointRepository;
+        this.routingService = routingService;
     }
 
     @Transactional
@@ -28,6 +36,7 @@ public class AdminShuttleService {
         shuttleRouteRepository.save(route);
 
         List<ShuttleStop> stops = shuttleStopRepository.saveAll(toStops(request.stops(), route));
+        saveGeometryPoints(route, request.geometryPoints());
         return toDetailResponse(route, stops);
     }
 
@@ -50,7 +59,47 @@ public class AdminShuttleService {
 
         shuttleStopRepository.deleteByRouteId(routeId);
         List<ShuttleStop> stops = shuttleStopRepository.saveAll(toStops(request.stops(), route));
+
+        shuttleRoutePointRepository.deleteByRouteId(routeId);
+        saveGeometryPoints(route, request.geometryPoints());
+
         return toDetailResponse(route, stops);
+    }
+
+    public RouteMatchResponse matchRouteGeometry(RouteMatchRequest request) {
+        List<Coordinate> points = request.points().stream()
+                .map(p -> new Coordinate(p.lat(), p.lng()))
+                .toList();
+        List<Coordinate> matched = routingService.matchGeometry(points)
+                .orElseThrow(() -> new RouteMatchFailedException(
+                        "Rota eşleştirilemedi, noktaları kontrol edip tekrar deneyin"));
+        return new RouteMatchResponse(matched);
+    }
+
+    public List<Coordinate> getGeometryPoints(Integer routeId) {
+        if (!shuttleRouteRepository.existsById(routeId)) {
+            throw new ShuttleRouteNotFoundException("Servis guzergahi bulunamadi, id: " + routeId);
+        }
+        return shuttleRoutePointRepository.findByRouteIdOrderByOrderIndexAsc(routeId).stream()
+                .map(p -> new Coordinate(p.getLatitude(), p.getLongitude()))
+                .toList();
+    }
+
+    private void saveGeometryPoints(ShuttleRoute route, List<RoutePointRequest> points) {
+        if (points == null || points.isEmpty()) {
+            return;
+        }
+        List<ShuttleRoutePoint> entities = points.stream().map(p -> {
+            ShuttleRoutePoint point = new ShuttleRoutePoint();
+            point.setRoute(route);
+            point.setLatitude(p.lat());
+            point.setLongitude(p.lng());
+            return point;
+        }).toList();
+        for (int i = 0; i < entities.size(); i++) {
+            entities.get(i).setOrderIndex(i + 1);
+        }
+        shuttleRoutePointRepository.saveAll(entities);
     }
 
     @Transactional

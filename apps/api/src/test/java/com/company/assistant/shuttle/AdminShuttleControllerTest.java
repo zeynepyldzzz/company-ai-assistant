@@ -19,6 +19,7 @@ import com.company.assistant.config.SecurityConfig;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -235,6 +237,112 @@ class AdminShuttleControllerTest {
     void authOlmadan_rotaSilme401Doner() throws Exception {
         mockMvc.perform(delete("/admin/shuttle-routes/1"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shuttleAdmin_rotayiGeometriNoktalariylaOlusturabilir() throws Exception {
+        when(adminShuttleService.createRoute(any())).thenReturn(
+                new ShuttleRouteDetailResponse(1, "Kadikoy Hatti", "34 ABC 123", null, null, List.of()));
+
+        mockMvc.perform(post("/admin/shuttle-routes")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Kadikoy Hatti",
+                                  "stops": [{"name": "Merkez", "time": "08:00:00", "orderIndex": 1}],
+                                  "geometryPoints": [
+                                    {"lat": 40.98, "lng": 29.03},
+                                    {"lat": 40.99, "lng": 29.04}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        org.mockito.ArgumentCaptor<ShuttleRouteRequest> captor =
+                org.mockito.ArgumentCaptor.forClass(ShuttleRouteRequest.class);
+        verify(adminShuttleService).createRoute(captor.capture());
+        assertThat(captor.getValue().geometryPoints()).hasSize(2);
+    }
+
+    @Test
+    void matchGeometry_basariliEslestirmeKoordinatlariDoner() throws Exception {
+        when(adminShuttleService.matchRouteGeometry(any()))
+                .thenReturn(new RouteMatchResponse(List.of(
+                        new com.company.assistant.routing.Coordinate(40.98, 29.03),
+                        new com.company.assistant.routing.Coordinate(40.99, 29.04))));
+
+        mockMvc.perform(post("/admin/shuttle-routes/match-geometry")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"points": [{"lat": 40.98, "lng": 29.03}, {"lat": 40.99, "lng": 29.04}]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coordinates.length()").value(2))
+                .andExpect(jsonPath("$.coordinates[0].lat").value(40.98));
+    }
+
+    @Test
+    void matchGeometry_eslesemezseKotuIstekDoner() throws Exception {
+        when(adminShuttleService.matchRouteGeometry(any()))
+                .thenThrow(new RouteMatchFailedException("Rota eşleştirilemedi, noktaları kontrol edip tekrar deneyin"));
+
+        mockMvc.perform(post("/admin/shuttle-routes/match-geometry")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"points": [{"lat": 40.98, "lng": 29.03}, {"lat": 0.0, "lng": 0.0}]}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("ROUTE_MATCH_FAILED"));
+    }
+
+    @Test
+    void matchGeometry_tekNoktaValidationHatasiDoner() throws Exception {
+        mockMvc.perform(post("/admin/shuttle-routes/match-geometry")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"points": [{"lat": 40.98, "lng": 29.03}]}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HR_ADMIN", "FLEET_ADMIN", "CANTEEN_ADMIN"})
+    void digerAdminAltRolleri_matchGeometryya403Alir(String subRole) throws Exception {
+        mockMvc.perform(post("/admin/shuttle-routes/match-geometry")
+                        .with(user("test").roles("ADMIN", subRole))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"points": [{"lat": 40.98, "lng": 29.03}, {"lat": 40.99, "lng": 29.04}]}
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void getGeometryPoints_kayitliNoktalariDoner() throws Exception {
+        when(adminShuttleService.getGeometryPoints(1)).thenReturn(List.of(
+                new com.company.assistant.routing.Coordinate(40.98, 29.03),
+                new com.company.assistant.routing.Coordinate(40.99, 29.04)));
+
+        mockMvc.perform(get("/admin/shuttle-routes/1/geometry-points")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void getGeometryPoints_cizilmemisRotaicinBosListeDoner() throws Exception {
+        when(adminShuttleService.getGeometryPoints(1)).thenReturn(List.of());
+
+        mockMvc.perform(get("/admin/shuttle-routes/1/geometry-points")
+                        .with(user("koordinator").roles("ADMIN", "SHUTTLE_ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     private ShuttleStop stop(String name, int orderIndex) {
