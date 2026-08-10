@@ -19,6 +19,17 @@ pnpm install
 pnpm --filter web dev   # Web uygulaması (localhost:5173)
 ```
 
+### Servisler (Docker)
+```bash
+docker compose up -d
+```
+`db` (Postgres) ve `ollama` servisleri direkt ayağa kalkar. `osrm` servisi (gerçek yol mesafesi/rota geometrisi) farklıdır: verisi git'e commit'lenmez, her geliştiricinin bir kere kendi makinesinde üretmesi gerekir:
+```bash
+./scripts/prepare-osrm-data.sh   # osrm-data/ klasorunu uretir (birkac dakika surer, docker gerektirir)
+docker compose up -d osrm
+```
+Bu adım atlanırsa `osrm` container'ı veri bulamaz ve backend sessizce haversine (kuş uçuşu düz çizgi) hesabına döner — rota/harita gerçek yolu takip etmeyip yanlış görünür.
+
 ### Lint & Format
 ```bash
 pnpm lint     # ESLint ile kod denetimi
