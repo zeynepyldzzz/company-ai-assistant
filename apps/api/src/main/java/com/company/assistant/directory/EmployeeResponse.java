@@ -6,6 +6,10 @@ public class EmployeeResponse {
 
     private Integer id;
     private String name;
+    // A-35 (#196): tam ad (name) DA donmeye devam ediyor — istemcilerin cogu tek parca
+    // gosteriyor ve ikisini de vermek her cagiranin ayri birlestirme yapmasini onluyor.
+    private String firstName;
+    private String lastName;
     private String email;
     private String phone;
     private String officeStatus;
@@ -38,6 +42,8 @@ public class EmployeeResponse {
     public EmployeeResponse(Employee employee, ScheduleStatus todayStatus) {
         this.id = employee.getId();
         this.name = employee.getName();
+        this.firstName = employee.getFirstName();
+        this.lastName = employee.getLastName();
         this.email = employee.getEmail();
         this.phone = employee.getPhone();
         this.officeStatus = OfficeStatusLabels.labelFor(todayStatus);
@@ -54,6 +60,8 @@ public class EmployeeResponse {
 
     public Integer getId() { return id; }
     public String getName() { return name; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
     public String getOfficeStatus() { return officeStatus; }

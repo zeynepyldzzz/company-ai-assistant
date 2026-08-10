@@ -80,7 +80,8 @@ class AdminUserRoleControllerTest {
     void systemAdmin_rolAtayabilir() throws Exception {
         Employee employee = new Employee();
         employee.setId(1);
-        employee.setName("Test Calisan");
+        employee.setFirstName("Test");
+        employee.setLastName("Calisan");
         when(employeeRepository.findById(1)).thenReturn(Optional.of(employee));
 
         Role role = new Role();

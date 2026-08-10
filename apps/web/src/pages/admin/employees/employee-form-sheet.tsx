@@ -39,7 +39,8 @@ export function EmployeeFormSheet({
   const isEdit = Boolean(employee);
 
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(employee?.name ?? "");
+  const [firstName, setFirstName] = useState(employee?.firstName ?? "");
+  const [lastName, setLastName] = useState(employee?.lastName ?? "");
   const [email, setEmail] = useState(employee?.email ?? "");
   const [phone, setPhone] = useState(employee?.phone ?? "");
   const [departmentId, setDepartmentId] = useState<string | null>(
@@ -52,7 +53,8 @@ export function EmployeeFormSheet({
 
   useEffect(() => {
     if (!open) return;
-    setName(employee?.name ?? "");
+    setFirstName(employee?.firstName ?? "");
+    setLastName(employee?.lastName ?? "");
     setEmail(employee?.email ?? "");
     setPhone(employee?.phone ?? "");
     setDepartmentId(employee?.departmentId ? String(employee.departmentId) : null);
@@ -64,7 +66,8 @@ export function EmployeeFormSheet({
     // Donus tipi acikca yazilmazsa TypeScript union'i cikaramiyor.
     mutationFn: (): Promise<Employee | CreateEmployeeResponse> => {
       const body: AdminEmployeeRequest = {
-        name: name.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: email.trim(),
         phone: phone.trim() || null,
         departmentId: departmentId ? Number(departmentId) : null,
@@ -91,8 +94,11 @@ export function EmployeeFormSheet({
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      toast.error("İsim ve e-posta boş olamaz.");
+    // A-35 (#196): soyad da zorunlu. Backend @NotBlank ile reddediyor; buradaki kontrol
+    // istegi bosa gondermemek icin. Eski kayitlarda soyad NULL olabilir, o yuzden
+    // duzenleme akisinda bos gelen bir soyadin doldurulmasi gerekir.
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      toast.error("Ad, soyad ve e-posta boş olamaz.");
       return;
     }
     // A-30 (#185): departman zorunlu. Backend de @NotNull ile reddediyor; buradaki kontrol
@@ -162,9 +168,26 @@ export function EmployeeFormSheet({
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="employee-name">İsim</Label>
-            <Input id="employee-name" value={name} onChange={(event) => setName(event.target.value)} />
+          {/* A-35 (#196): ad ve soyad ayri alanlar. Tek "İsim" alani oldugu icin rehber ada
+              gore siralaniyordu ve arama "kelime basi"ni bosluk karakteriyle taklit etmek
+              zorundaydi. */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="employee-first-name">Ad</Label>
+              <Input
+                id="employee-first-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="employee-last-name">Soyad</Label>
+              <Input
+                id="employee-last-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">

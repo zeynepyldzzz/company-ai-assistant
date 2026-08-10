@@ -34,7 +34,8 @@ class AdminSurveyFlowIntegrationTest {
 
     private Employee calisanOlustur(String email) {
         Employee e = new Employee();
-        e.setName("Test Calisan");
+        e.setFirstName("Test");
+        e.setLastName("Calisan");
         e.setEmail(email);
         entityManager.persistAndFlush(e);
         return e;

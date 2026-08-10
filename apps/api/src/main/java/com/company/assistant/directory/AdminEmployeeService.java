@@ -112,7 +112,8 @@ public class AdminEmployeeService {
     }
 
     private void applyRequest(Employee employee, AdminEmployeeRequest request) {
-        employee.setName(request.name());
+        employee.setFirstName(request.firstName().trim());
+        employee.setLastName(request.lastName().trim());
         employee.setEmail(request.email());
         employee.setPhone(request.phone());
         // A-32 (#188): office_status ARTIK YAZILMIYOR. Ofis durumu bugunun calisma

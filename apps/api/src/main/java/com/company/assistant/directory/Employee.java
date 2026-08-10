@@ -11,7 +11,20 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String name;
+    /**
+     * A-35 (#196): ad ve soyad ayri kolonlar. Tek {@code name} kolonu, rehberin ada gore
+     * siralanmasina ve A-34'un "kelime basi" aramasinin bosluk karakteriyle taklit
+     * edilmesine sebep oluyordu.
+     */
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    /**
+     * NULL olabilir: V49 oncesinde tek kelimeli kaydedilmis calisanlar var (hepsi test
+     * hesabi). YENI kayitlarda zorunlu — kural {@code AdminEmployeeRequest} tarafinda.
+     */
+    @Column(name = "last_name")
+    private String lastName;
 
     private String email;
 
@@ -47,8 +60,25 @@ public class Employee {
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    /**
+     * A-35 (#196): tam ad TURETILIR, saklanmaz. Boylece rehber, chatbot resolver'lari,
+     * DTO'lar ve PDF uretimi dahil butun {@code getName()} cagiranlari degismeden calisir.
+     *
+     * <p>Soyadi olmayan kayitta sondaki bosluk BIRAKILMAZ; aksi halde adlar arayuzde
+     * gorunmeyen bir bosluk tasir ve esitlik karsilastirmalari sessizce kayar.
+     *
+     * <p>Bu bir JPA alani DEGIL: {@code @Transient} olarak isaretli, JPQL'den erisilemez.
+     * Sorgular {@code firstName}/{@code lastName} uzerinden yazilir.
+     */
+    @Transient
+    public String getName() {
+        return lastName == null || lastName.isBlank() ? firstName : firstName + " " + lastName;
+    }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }

@@ -39,14 +39,15 @@ class EmployeeSearchMatchingIntegrationTest {
 
     @BeforeEach
     void seed() {
-        persist(ADI + " " + SOYADI);
-        persist(SOYADI + " " + ADI);
+        persist(ADI, SOYADI);
+        persist(SOYADI, ADI);
     }
 
-    private void persist(String name) {
+    private void persist(String firstName, String lastName) {
         Employee employee = new Employee();
-        employee.setName(name);
-        employee.setEmail(name.replace(" ", ".").toLowerCase() + "@test.local");
+        employee.setFirstName(firstName);
+        employee.setLastName(lastName);
+        employee.setEmail((firstName + "." + lastName).toLowerCase() + "@test.local");
         employee.setPasswordHash("$2a$10$testhashtesthashtesthashtesthashtesthashtes");
         employee.setActive(true);
         entityManager.persist(employee);
@@ -88,11 +89,19 @@ class EmployeeSearchMatchingIntegrationTest {
      * Siralama sorguda tanimli olmali. Onceden ne sorguda ne PageRequest'te siralama vardi;
      * Postgres sirasiz sorguda satir sirasini garanti etmedigi icin LIMIT/OFFSET ile ayni
      * kisi iki sayfada birden cikabilirdi.
+     *
+     * <p>A-35 (#196): siralama artik SOYADA gore — rehberlerin klasik davranisi. Iki kayit
+     * ayni iki kelimenin yer degistirmis hali oldugu icin bu test, siralamanin gercekten
+     * soyadi okudugunu gosterir: tam ada gore sirali olsalardi sonuc ters cikardi.
      */
     @Test
-    void sonuclarAdaGoreSirali() {
-        List<String> names = searchNames("zyxw");
+    void sonuclarSoyadaGoreSirali() {
+        List<String> lastNames = employeeRepository
+                .search("zyxw", null, null, LocalDate.now(), "monday", PageRequest.of(0, 50))
+                .getContent().stream()
+                .map(Employee::getLastName)
+                .toList();
 
-        assertThat(names).isSorted();
+        assertThat(lastNames).isSorted();
     }
 }

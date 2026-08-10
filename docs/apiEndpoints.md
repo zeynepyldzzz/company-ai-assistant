@@ -118,6 +118,20 @@ kaynağı değişti: ofis durumu artık `employee.office_status` kolonundan değ
 - `POST/PUT /admin/employees` gövdesinden `officeStatus` **kaldırıldı** — durum artık
   yazılabilir bir alan değil, türetilen bir değer.
 
+**A-35 (#196) — çalışan adı ad/soyad olarak ayrıldı (kırıcı değişiklik).** `employee.name`
+kolonu V49 ile kaldırıldı; yerine `first_name` (NOT NULL) ve `last_name` (eski tek kelimeli
+kayıtlarda NULL) geldi.
+
+- `POST/PUT /admin/employees` gövdesinde `name` yerine **`firstName` + `lastName`**; ikisi de
+  zorunlu. Eski `name` alanı artık kabul edilmiyor.
+- Yanıtlarda `firstName` ve `lastName` eklendi. `name` **dönmeye devam ediyor** ama artık bir
+  kolon değil, sunucuda birleştirilerek türetiliyor — istemcilerin çoğu tam adı tek parça
+  gösterdiği için korundu.
+- Arama (`?search=`) ad ve soyada ayrı ayrı kelime başı eşleşmesi yapar. A-34'teki boşluk
+  numarası (`LIKE '% ' || :s || '%'`) gereksizleşti.
+- Liste sıralaması artık **soyada** göre (rehberlerin klasik davranışı); `last_name` NULL olan
+  eski kayıtlar sona düşer.
+
 ---
 
 ## 6. BP-06 — Şirket Aracı Rezervasyonu ve Araç Yönetimi
