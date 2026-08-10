@@ -4,6 +4,10 @@ import { z } from "zod";
 // Tek atimlik soru-cevap; conversation/gecmis kavrami yok.
 export const ChatMessageRequestSchema = z.object({
   message: z.string().trim().min(1).max(1000),
+  // A-37 (#203): onceki yanitin intent'i — "peki yarin?" tipi takip sorulari icin.
+  // Sunucu sohbet durumu TUTMAZ (chat_message_log'da kimlik yok, V13 ekip karari),
+  // bu yuzden baglami istemci tasir. Opsiyonel: gonderilmezse davranis degismez.
+  previousIntent: z.string().max(64).optional(),
 });
 export type ChatMessageRequest = z.infer<typeof ChatMessageRequestSchema>;
 

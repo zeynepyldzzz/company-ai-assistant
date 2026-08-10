@@ -46,6 +46,66 @@ class RuleBasedIntentMatcherTest {
         matcher = new RuleBasedIntentMatcher(shuttleService, directoryService, departmentService);
     }
 
+    // --- A-37 (#203): acik tarih + alan kelimesi ---
+
+    /**
+     * Kuralin var olma sebebi: embedding SAYININ KENDISINI eslestiriyordu.
+     *
+     * <p>Olculdu — ayni cumle, yalnizca gun degisiyor: "17 ağustos menü" 0.752 ile geciyor
+     * (ornekte "17 temmuz ..." var), "18 ağustos menü" 0.649 ve "19 ağustos menü" 0.660 ile
+     * kaciriyordu. Bu test uc gunu birden dogruluyor; kural silinirse ikisi kirilir.
+     */
+    @Test
+    void tarihliMenuSorgusu_gunden_bagimsiz_calisir() {
+        for (String gun : List.of("17", "18", "19", "3", "30")) {
+            assertThat(matcher.match(gun + " ağustos menü"))
+                    .as("gün %s", gun)
+                    .isPresent()
+                    .get()
+                    .extracting(IntentClassificationService.IntentResult::intent)
+                    .isEqualTo("yemek_menusu");
+        }
+    }
+
+    @Test
+    void tarihliCalismaDuzeniSorgusu() {
+        assertThat(matcher.match("18 ağustos ofiste miyim"))
+                .isPresent()
+                .get()
+                .extracting(IntentClassificationService.IntentResult::intent)
+                .isEqualTo("calisma_duzeni");
+    }
+
+    @Test
+    void sayisalTarihBicimiDeCalisir() {
+        assertThat(matcher.match("18.08 menü"))
+                .isPresent()
+                .get()
+                .extracting(IntentClassificationService.IntentResult::intent)
+                .isEqualTo("yemek_menusu");
+    }
+
+    /**
+     * Alan kelimesi yoksa tarih kurali devreye GIRMEZ — tarih tek basina hangi konuyu
+     * kastettigini soylemez. O durum takip sorusu mekanizmasina ait (FollowUpDetector),
+     * kurala degil.
+     *
+     * <p>Not: burada {@code verifyNoInteractions} KULLANILAMAZ. Tarih kurali eslesmese de
+     * asagidaki isim dali devreye giriyor ve "agustos" kelimesini olasi bir calisan adi
+     * sanip DB'ye soruyor ({@code nameTokens} dort harften uzun her kelimeyi aday sayar).
+     * Sonuc bos donuyor, yani davranis dogru; yalnizca gereksiz bir sorgu atiliyor.
+     */
+    @Test
+    void tarihTekBasina_kuralDevreyeGirmez() {
+        assertThat(matcher.match("18 ağustos")).isEmpty();
+    }
+
+    /** Tarih yoksa menu kelimesi tek basina bu kurali tetiklemez; embedding'e kalir. */
+    @Test
+    void tarihsizMenuSorgusu_kuralDevreyeGirmez() {
+        assertThat(matcher.match("bugün menüde ne var")).isEmpty();
+    }
+
     @Test
     void plakaGuzergahIntentineGider() {
         var result = matcher.match("34 SR 101");

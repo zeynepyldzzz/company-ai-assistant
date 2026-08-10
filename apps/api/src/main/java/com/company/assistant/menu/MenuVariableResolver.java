@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.company.assistant.common.DateExpression;
 import com.company.assistant.common.TurkishText;
 
 /**
@@ -37,6 +38,15 @@ public class MenuVariableResolver {
 
     private static final String MENU_INTENT = "yemek_menusu";
     private static final String NO_MENU = "Bu tarih için menü girilmemiş görünüyor.";
+
+    /**
+     * A-37 (#203): tarih ifadesi var ama cozulemedi (or. yalniz "agustos", "32 agustos").
+     * Kullaniciya calisan bir alternatif gosteriliyor — A-26'daki olumsuz sorgu mesajiyla
+     * ayni yaklasim: neyi yapamadigimizi soyle, ne yapabilecegini goster.
+     */
+    private static final String UNRESOLVED_DATE =
+            "Hangi tarihi sorduğunu tam anlayamadım. \"bugün\", \"yarın\", \"çarşamba\" "
+                    + "ya da \"17 Ağustos\" gibi yazabilirsin.";
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd.MM.yyyy", new Locale("tr"));
 
@@ -86,7 +96,25 @@ public class MenuVariableResolver {
             return variables;
         }
 
-        LocalDate target = resolveTarget(text, LocalDate.now());
+        // A-37 (#203): ACIK tarih ifadesi ("17 agustos", "17.08") varsa once o denenir.
+        // Cozulemezse BUGUNE DUSULMEZ — asagidaki resolveTarget() taninmayan her ifadeyi
+        // bugune cevirdigi icin kullanici 17 Agustos'u sorup bugunun menusunu aliyordu ve
+        // baslikta tarih yazsa bile fark etmeyebiliyordu. Sessizce yanlis gun gostermektense
+        // anlamadigimizi soylemek dogru (A-26'da olumsuz sorgular icin verdigimiz kararla ayni).
+        if (DateExpression.mentionsDate(text)) {
+            Optional<LocalDate> explicit = DateExpression.resolve(text, LocalDate.now());
+            if (explicit.isEmpty()) {
+                variables.put("menu_gunu", UNRESOLVED_DATE);
+                variables.put("gunun_menusu", "");
+                return variables;
+            }
+            return dayMenu(explicit.get(), variables);
+        }
+
+        return dayMenu(resolveTarget(text, LocalDate.now()), variables);
+    }
+
+    private Map<String, String> dayMenu(LocalDate target, Map<String, String> variables) {
         String dayLabel = TurkishText.dayName(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ")";
         Optional<MenuResponse> menu = menuService.getMenuByDate(target);
         if (menu.isPresent() && menu.get().getItems() != null && !menu.get().getItems().isEmpty()) {

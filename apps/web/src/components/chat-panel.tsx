@@ -169,6 +169,17 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // A-37 (#203): son yanitin intent'i. "peki yarın?" gibi tek basina anlamsiz bir mesaj
+  // geldiginde sunucu bunu kullanarak onceki konuyu surdurur.
+  //
+  // Sunucuda TUTULMUYOR: chat_message_log'da kimlik yok (V13 ekip karari) ve sunucu
+  // tarafinda sohbet gecmisi tutmak o karari bozardi. Istemci zaten gecmisi bellekte
+  // tuttugu icin tasimasi bedava.
+  //
+  // state yerine ref: degeri yalnizca bir sonraki istekte okuyoruz, degismesi yeniden
+  // render gerektirmiyor.
+  const lastIntentRef = useRef<string | null>(null);
+
   const welcomeQuery = useQuery({
     queryKey: ["chat", "welcome"],
     queryFn: () => fetchChatWelcome(token!),
@@ -178,8 +189,10 @@ export function ChatPanel({
   });
 
   const mutation = useMutation({
-    mutationFn: (message: string) => sendChatMessage({ message }, token!),
+    mutationFn: (message: string) =>
+      sendChatMessage({ message, previousIntent: lastIntentRef.current ?? undefined }, token!),
     onSuccess: (data) => {
+      lastIntentRef.current = data.intent;
       setMessages((prev) => [
         ...prev,
         {
@@ -192,6 +205,9 @@ export function ChatPanel({
       ]);
     },
     onError: (err) => {
+      // Hata durumunda baglam TEMIZLENIR: kullanicinin bir sonraki mesaji, cevabini hic
+      // alamadigi bir konuya baglanmamali.
+      lastIntentRef.current = null;
       const text =
         err instanceof ApiError ? err.message : "Yanıt alınamadı, lütfen tekrar deneyin.";
       setMessages((prev) => [...prev, { id: makeId(), role: "assistant", text, error: true }]);

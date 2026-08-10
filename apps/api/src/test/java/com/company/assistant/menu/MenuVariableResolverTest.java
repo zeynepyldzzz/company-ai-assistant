@@ -58,6 +58,54 @@ class MenuVariableResolverTest {
         assertThat(capturedDate()).isEqualTo(LocalDate.now().plusDays(1));
     }
 
+    // --- A-37 (#203): acik tarih ifadeleri ---
+
+    @Test
+    void acikTarihOGununMenusunuCeker() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "17 Ağustos yemek menüsü");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.of(LocalDate.now().getYear(), 8, 17));
+    }
+
+    /**
+     * A-37'nin asil koydugu kural: cozulemeyen tarih BUGUNE DUSMEZ.
+     *
+     * <p>Onceden resolveTarget() taninmayan her ifadeyi bugune ceviriyordu; kullanici
+     * "agustos menusu" yazip bugunun menusunu aliyor ve basligi okumazsa fark etmiyordu.
+     * Menu servisine hic gidilmemesi, varsayilan tarihle sorgu atilmadiginin kaniti.
+     */
+    @Test
+    void cozulemeyenTarihBugunuDondurmez() {
+        Map<String, String> vars = resolver.resolve("yemek_menusu", "ağustos menüsü");
+
+        assertThat(vars.get("menu_gunu")).contains("Hangi tarihi sorduğunu tam anlayamadım");
+        verify(menuService, never()).getMenuByDate(any());
+    }
+
+    @Test
+    void gecersizGunBugunuDondurmez() {
+        Map<String, String> vars = resolver.resolve("yemek_menusu", "32 ağustos menüsü");
+
+        assertThat(vars.get("menu_gunu")).contains("anlayamadım");
+        verify(menuService, never()).getMenuByDate(any());
+    }
+
+    /**
+     * Gun BELIRTILMEMIS durum degismedi: "yemekte ne var" bugunu dondurmeye devam ediyor.
+     * Duzeltmenin yanlis anlasilip bu dalin da fallback'e cekilmesi, calisan bir davranisi
+     * bozardi.
+     */
+    @Test
+    void gunBelirtilmemisseHalaBugunDoner() {
+        when(menuService.getMenuByDate(any())).thenReturn(Optional.empty());
+
+        resolver.resolve("yemek_menusu", "yemekte ne var");
+
+        assertThat(capturedDate()).isEqualTo(LocalDate.now());
+    }
+
     // --- A-27 (#176): hafta ofseti goreli gun ipuclarina da uygulanir ---
 
     // Olculdu (chat_message_log): "haftaya bugün yemekte ne var" 0.916 ile dogru kategoriye

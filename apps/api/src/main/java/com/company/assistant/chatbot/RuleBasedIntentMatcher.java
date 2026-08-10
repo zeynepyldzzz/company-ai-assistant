@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
+import com.company.assistant.common.DateExpression;
 import com.company.assistant.common.TurkishText;
 import com.company.assistant.directory.DepartmentService;
 import com.company.assistant.directory.DirectoryService;
@@ -48,6 +49,28 @@ public class RuleBasedIntentMatcher {
     private static final String INTENT_SHUTTLE_NEAREST = "servis_en_yakin";
     private static final String INTENT_PERSON = "rehber_kisi";
     private static final String INTENT_DEPARTMENT = "rehber_departman";
+    private static final String INTENT_MENU = "yemek_menusu";
+    private static final String INTENT_SCHEDULE = "calisma_duzeni";
+
+    /**
+     * A-37 (#203): ACIK TARIH + alan kelimesi. Bu kalip embedding'e birakilamaz.
+     *
+     * <p>Olculdu — ayni cumle, yalnizca gun degisiyor:
+     * <pre>
+     *   "17 ağustos menü"  0.752 GECTI   (ornekte "17 temmuz ..." var)
+     *   "18 ağustos menü"  0.649 KACIRDI
+     *   "19 ağustos menü"  0.660 KACIRDI
+     * </pre>
+     *
+     * Model ay adini degil SAYININ KENDISINI eslestiriyor: 17 ornekte gectigi icin
+     * calisiyor, 18 ve 19 calismiyor. Ornek eklemek bu sorunu cozmez — 31 gun x 12 ay icin
+     * ornek yazilamaz. Yapisal kaliplar kural katmanina aittir; plaka, durak adi ve departman
+     * adi da ayni sebeple burada.
+     */
+    private static final List<String> MENU_WORDS =
+            List.of("menu", "yemek", "yemekte", "ogle yemegi", "kahvalti");
+    private static final List<String> SCHEDULE_WORDS =
+            List.of("calisma duzeni", "calisma duzenim", "ofiste", "uzaktan", "izinli", "planim");
 
     /**
      * Turk plaka bicimi: 2 haneli il kodu + 1-3 harf + 1-5 rakam. Aradaki bosluk opsiyonel,
@@ -152,6 +175,18 @@ public class RuleBasedIntentMatcher {
 
         if (PLATE.matcher(text).find()) {
             return rule(INTENT_SHUTTLE_ROUTE, "plaka");
+        }
+        // A-37 (#203): acik tarih + alan kelimesi. Menu kontrolu once: "17 agustos menu"
+        // ifadesinde alan kelimesi tek basina ayirt edici, calisma duzeni kelimeleriyle
+        // cakismiyor. Iki alan kelimesi birden gecerse ("17 agustos ofiste yemek") menu
+        // kazanir — nadir ve zararsiz.
+        if (DateExpression.mentionsDate(text)) {
+            if (containsAny(text, MENU_WORDS)) {
+                return rule(INTENT_MENU, "tarih + menü");
+            }
+            if (containsAny(text, SCHEDULE_WORDS)) {
+                return rule(INTENT_SCHEDULE, "tarih + çalışma düzeni");
+            }
         }
         // A-21: yakinlik + servis alani -> yonlendirme intent'i. Durak adi kuralindan ONCE.
         if (containsAny(text, NEAREST_WORDS) && containsAny(text, SHUTTLE_WORDS)) {
