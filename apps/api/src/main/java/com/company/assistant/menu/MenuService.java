@@ -3,6 +3,7 @@ package com.company.assistant.menu;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +49,19 @@ public class MenuService {
     public List<MenuResponse> getWeeklyMenu(LocalDate anyDayOfWeek) {
         int week = anyDayOfWeek.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
         List<MealMenu> menus = mealMenuRepository.findByWeekNumber(week);
+        return menus.stream().map(MenuResponse::new).toList();
+    }
+
+    public List<MenuResponse> getMonthlyMenu() {
+        return getMonthlyMenu(LocalDate.now());
+    }
+
+    /**
+     * Verilen tarihin ait oldugu ayin menusu (#194: Bugun/Bu Hafta yaninda Bu Ay sekmesi).
+     */
+    public List<MenuResponse> getMonthlyMenu(LocalDate anyDayOfMonth) {
+        YearMonth yearMonth = YearMonth.from(anyDayOfMonth);
+        List<MealMenu> menus = mealMenuRepository.findByDateBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth());
         return menus.stream().map(MenuResponse::new).toList();
     }
 

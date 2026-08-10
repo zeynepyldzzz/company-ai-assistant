@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/auth/auth-context";
-import { getTodayMenu, getWeeklyMenu } from "@/api/menu";
+import { getTodayMenu, getWeeklyMenu, getMonthlyMenu } from "@/api/menu";
 import type { Menu, MealItem } from "@company/shared";
 
-type Tab = "today" | "weekly";
+type Tab = "today" | "weekly" | "monthly";
 
 function formatDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("tr-TR", {
@@ -109,6 +109,95 @@ function WeeklyCalendar({ menus }: { menus: Menu[] }) {
   );
 }
 
+const WEEKDAY_LABELS = ["Pzt", "Sal", "Çar", "Per", "Cum"];
+
+function toISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Ayin haftalara bolunmus Pzt-Cum izgarasi (hafta sonlari gosterilmiyor - yemekhane
+// yalnizca is gunlerinde menu giriyor, WeeklyCalendar ile ayni varsayim). Ayin ilk
+// haftasindaki ay-disi gunler ile son haftasindaki ay-disi gunler bos hucre olarak
+// birakilir, boylece gercek bir takvim gorunumu olusur.
+function getMonthWeeks(year: number, month: number): Date[][] {
+  const firstOfMonth = new Date(year, month, 1);
+  const lastOfMonth = new Date(year, month + 1, 0);
+  const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
+  const cursor = new Date(firstOfMonth);
+  cursor.setDate(cursor.getDate() - mondayOffset);
+
+  const weeks: Date[][] = [];
+  while (cursor <= lastOfMonth) {
+    const week: Date[] = [];
+    for (let i = 0; i < 5; i++) {
+      week.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    cursor.setDate(cursor.getDate() + 2);
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+function MonthlyCalendar({ menus }: { menus: Menu[] }) {
+  const now = new Date();
+  const menuByDate = new Map(menus.map((menu) => [menu.date, menu]));
+  const weeks = getMonthWeeks(now.getFullYear(), now.getMonth());
+  const monthLabel = now.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium capitalize">{monthLabel}</p>
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[640px] grid-cols-5 gap-2">
+          {WEEKDAY_LABELS.map((label) => (
+            <div key={label} className="text-muted-foreground px-1 text-xs font-medium">
+              {label}
+            </div>
+          ))}
+          {weeks.map((week) =>
+            week.map((date) => {
+              const iso = toISODate(date);
+              if (date.getMonth() !== now.getMonth()) {
+                return <div key={iso} />;
+              }
+              const menu = menuByDate.get(iso);
+              return (
+                <Card
+                  key={iso}
+                  className={`gap-0 p-0 ${isToday(iso) ? "border-primary ring-primary/20 ring-1" : ""}`}
+                >
+                  <CardHeader
+                    className={`border-b px-2 py-1 ${isToday(iso) ? "bg-primary/5" : "bg-muted/30"}`}
+                  >
+                    <CardTitle className="text-xs font-normal">{date.getDate()}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {menu && menu.items.length > 0 ? (
+                      <ul className="divide-y">
+                        {menu.items.map((item) => (
+                          <li key={item.id} className="px-2 py-1">
+                            <span className="text-xs leading-snug font-medium">{item.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground px-2 py-2 text-xs">—</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MenuPage() {
   const { token } = useAuth();
   const [tab, setTab] = useState<Tab>("today");
@@ -125,7 +214,13 @@ export function MenuPage() {
     enabled: Boolean(token) && tab === "weekly",
   });
 
-  const active = tab === "today" ? todayQuery : weeklyQuery;
+  const monthlyQuery = useQuery({
+    queryKey: ["menu", "monthly"],
+    queryFn: () => getMonthlyMenu(token!),
+    enabled: Boolean(token) && tab === "monthly",
+  });
+
+  const active = tab === "today" ? todayQuery : tab === "weekly" ? weeklyQuery : monthlyQuery;
 
   return (
     <div className="space-y-4">
@@ -150,6 +245,15 @@ export function MenuPage() {
         >
           Bu Hafta
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("monthly")}
+          className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+            tab === "monthly" ? "bg-muted font-medium" : "text-muted-foreground hover:bg-muted/50"
+          }`}
+        >
+          Bu Ay
+        </button>
       </div>
 
       {active.isLoading && <p className="text-muted-foreground text-sm">Yükleniyor…</p>}
@@ -166,6 +270,8 @@ export function MenuPage() {
           )}
         </>
       )}
+
+      {tab === "monthly" && monthlyQuery.data && <MonthlyCalendar menus={monthlyQuery.data} />}
     </div>
   );
 }

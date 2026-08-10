@@ -6,20 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/auth-context";
 import { ApiError } from "@/api/client";
-import { importMenuExcel, deleteMenu, getWeeklyMenu } from "@/api/menu";
-
-// Excel'deki kategori kodlari (backend enum adiyla ayni) -> ekranda gosterilecek Turkce ad.
-const CATEGORY_LABELS: Record<string, string> = {
-  CORBA: "Çorba",
-  ANA_YEMEK: "Ana Yemek",
-  PILAV_MAKARNA: "Pilav / Makarna",
-  TATLI_ICECEK: "Tatlı / İçecek",
-  MEYVE: "Meyve",
-  SALATA: "Salata",
-  ZEYTINYAGLI_SEBZE: "Zeytinyağlı Sebze",
-  YARDIMCI_SALATA: "Yardımcı Salata / Turşu",
-  YOGURT_CACIK: "Yoğurt / Cacık",
-};
+import { importMenuExcel, deleteMenu, getMonthlyMenu } from "@/api/menu";
+import { MonthlyMenuEditDialog } from "./menu-edit-dialog";
+import { CATEGORY_LABELS } from "./category-labels";
 
 function formatDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("tr-TR", {
@@ -38,9 +27,9 @@ export function AdminMenuPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const { data: weeklyMenu, isLoading: weeklyLoading } = useQuery({
-    queryKey: ["menu", "weekly"],
-    queryFn: () => getWeeklyMenu(token!),
+  const { data: monthlyMenu, isLoading: monthlyLoading } = useQuery({
+    queryKey: ["menu", "monthly"],
+    queryFn: () => getMonthlyMenu(token!),
     enabled: Boolean(token),
   });
 
@@ -181,15 +170,16 @@ export function AdminMenuPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Bu Haftaki Menüler</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Bu Ayki Menüler</CardTitle>
+          {monthlyMenu && monthlyMenu.length > 0 && <MonthlyMenuEditDialog monthlyMenu={monthlyMenu} />}
         </CardHeader>
         <CardContent className="space-y-2">
-          {weeklyLoading && <p className="text-muted-foreground text-sm">Yükleniyor…</p>}
-          {weeklyMenu && weeklyMenu.length === 0 && (
-            <p className="text-muted-foreground text-sm">Bu hafta için menü yok.</p>
+          {monthlyLoading && <p className="text-muted-foreground text-sm">Yükleniyor…</p>}
+          {monthlyMenu && monthlyMenu.length === 0 && (
+            <p className="text-muted-foreground text-sm">Bu ay için menü yok.</p>
           )}
-          {weeklyMenu?.map((menu) => (
+          {monthlyMenu?.map((menu) => (
             <div key={menu.id} className="flex items-center justify-between rounded-lg border p-3">
               <span className="text-sm font-medium">{formatDate(menu.date)}</span>
               <Button
