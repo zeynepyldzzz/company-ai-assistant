@@ -11,6 +11,7 @@ import java.util.List;
  *   GET /menus/today
  *   GET /menus/weekly
  *   GET /meals/{id}
+ * #194: GET /menus/monthly eklendi (Bugün/Bu Hafta yanına Bu Ay sekmesi).
  */
 @RestController
 public class MenuController {
@@ -29,6 +30,11 @@ public class MenuController {
     @GetMapping("/menus/weekly")
     public List<MenuResponse> getWeeklyMenu() {
         return menuService.getWeeklyMenu();
+    }
+
+    @GetMapping("/menus/monthly")
+    public List<MenuResponse> getMonthlyMenu() {
+        return menuService.getMonthlyMenu();
     }
 
     @GetMapping("/meals/{id}")

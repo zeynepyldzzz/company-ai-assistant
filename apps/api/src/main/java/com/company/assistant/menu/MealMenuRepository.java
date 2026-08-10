@@ -11,4 +11,6 @@ public interface MealMenuRepository extends JpaRepository<MealMenu, Integer> {
     Optional<MealMenu> findByDate(LocalDate date);
 
     List<MealMenu> findByWeekNumber(Integer weekNumber);
+
+    List<MealMenu> findByDateBetween(LocalDate start, LocalDate end);
 }

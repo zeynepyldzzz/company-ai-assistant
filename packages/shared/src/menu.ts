@@ -6,6 +6,7 @@ export const MealItemSchema = z.object({
   name: z.string(),
   calories: z.number().nullable(),
   allergens: z.string().nullable(),
+  category: z.string().nullable(),
 });
 export type MealItem = z.infer<typeof MealItemSchema>;
 
@@ -19,6 +20,18 @@ export type Menu = z.infer<typeof MenuSchema>;
 
 export const WeeklyMenuSchema = z.array(MenuSchema);
 export type WeeklyMenu = z.infer<typeof WeeklyMenuSchema>;
+
+// PUT /admin/menus/{id} govdesi (#194).
+export const MealItemRequestSchema = z.object({
+  category: z.string(),
+  name: z.string(),
+});
+export type MealItemRequest = z.infer<typeof MealItemRequestSchema>;
+
+export const UpdateMenuRequestSchema = z.object({
+  items: z.array(MealItemRequestSchema),
+});
+export type UpdateMenuRequest = z.infer<typeof UpdateMenuRequestSchema>;
 
 // POST /admin/menus/import yaniti (C-2).
 export const ParsedMealItemSchema = z.object({

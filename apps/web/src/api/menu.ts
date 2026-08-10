@@ -5,6 +5,7 @@ import {
   type Menu,
   type WeeklyMenu,
   type MenuImportResponse,
+  type UpdateMenuRequest,
 } from "@company/shared";
 import { apiFetch, ApiError } from "./client";
 
@@ -15,6 +16,12 @@ export async function getTodayMenu(token: string): Promise<Menu> {
 
 export async function getWeeklyMenu(token: string): Promise<WeeklyMenu> {
   const data = await apiFetch<unknown>("/menus/weekly", { token });
+  return WeeklyMenuSchema.parse(data);
+}
+
+// #194: GET /menus/monthly - Bugün/Bu Hafta yanına Bu Ay sekmesi.
+export async function getMonthlyMenu(token: string): Promise<WeeklyMenu> {
+  const data = await apiFetch<unknown>("/menus/monthly", { token });
   return WeeklyMenuSchema.parse(data);
 }
 
@@ -46,4 +53,14 @@ export async function importMenuExcel(
 // C-2: DELETE /admin/menus/{id}
 export async function deleteMenu(id: number, token: string): Promise<void> {
   await apiFetch<void>(`/admin/menus/${id}`, { method: "DELETE", token });
+}
+
+// #194: PUT /admin/menus/{id} - gunun kalemlerini elle duzenleme
+export async function updateMenu(id: number, body: UpdateMenuRequest, token: string): Promise<Menu> {
+  const data = await apiFetch<unknown>(`/admin/menus/${id}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(body),
+  });
+  return MenuSchema.parse(data);
 }
