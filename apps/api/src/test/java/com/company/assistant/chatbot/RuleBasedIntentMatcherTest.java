@@ -441,6 +441,54 @@ class RuleBasedIntentMatcherTest {
         verifyNoInteractions(directoryService);
     }
 
+    // --- A-40 (#209): selamlama kisaltmalari ve "hatlar" ---
+
+    /**
+     * Olculdu: "sa" log'da 7 kez, 0.547 ile intent_bulunamadi. Ornek eklemek cozmez —
+     * V39'un bulgusu, iki harflik dizgede embedding'in tutunacagi anlamsal sinyal yok.
+     *
+     * <p>Noktalama temizleniyor: "s.a." Turkce'de yaygin yazim.
+     */
+    @Test
+    void selamlamaKisaltmalariSelamlamayaGider() {
+        for (String kisaltma : List.of("sa", "SA", "slm", "mrb", "s.a.", "sa!")) {
+            assertThat(matcher.match(kisaltma))
+                    .as("kısaltma '%s'", kisaltma)
+                    .isPresent()
+                    .get()
+                    .extracting(IntentClassificationService.IntentResult::intent)
+                    .isEqualTo("selamlama");
+        }
+
+        verifyNoInteractions(directoryService, shuttleService, departmentService);
+    }
+
+    /**
+     * KRITIK NOBETCI: kural TAM eslesme yapiyor. Kural katmanindaki diger her sey alt-dize
+     * eslesmesiyle calisiyor; bu kural da oyle yazilsaydi "sa" asagidaki kelimelerin
+     * hepsinde eslesir ve selamlama intent'ini sessizce calardi.
+     */
+    @Test
+    void icindeKisaltmaGecenKelimelerSelamlamaSayilmaz() {
+        assertThat(matcher.match("sabah kaçta geliyor")).isEmpty();
+        assertThat(matcher.match("sağol")).isEmpty();
+        assertThat(matcher.match("mrb nasılsın")).isEmpty();
+    }
+
+    /**
+     * "hatlar" eklendi — listede "hatti" vardi, cogulu gozden kacmisti.
+     *
+     * <p>Bu ekleme tek basina "Hatlar" sorgusunu servis_guzergah'a GONDERMEZ (o liste bir
+     * siniflandirici degil, varlik aramasinin kapisi); faydasi varlik adi tasiyan mesajlarda.
+     * Test bunu gosteriyor: durak adi + cogul alan kelimesi.
+     */
+    @Test
+    void hatlarKelimesiVarlikAdiylaBirlesinceGuzergahaGider() {
+        seedShuttle();
+
+        assertThat(matcher.match("kadıköy hatları").get().intent()).isEqualTo("servis_guzergah");
+    }
+
     private void seedShuttle() {
         lenient().when(shuttleService.getAllRoutes())
                 .thenReturn(List.of(route(1, "Anadolu Yakasi - Kadikoy Hatti", "34 SR 101")));
