@@ -17,6 +17,7 @@ import com.company.assistant.hr.HrProcedureResolution;
 import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
 import com.company.assistant.announcement.AnnouncementVariableResolver;
+import com.company.assistant.directory.CountVariableResolver;
 import com.company.assistant.directory.DepartmentVariableResolver;
 import com.company.assistant.directory.DirectoryVariableResolver;
 import com.company.assistant.schedule.ScheduleVariableResolver;
@@ -49,6 +50,7 @@ public class ChatMessageService {
     private final ScheduleVariableResolver scheduleVariableResolver;
     private final DirectoryVariableResolver directoryVariableResolver;
     private final DepartmentVariableResolver departmentVariableResolver;
+    private final CountVariableResolver countVariableResolver;
     private final AnnouncementVariableResolver announcementVariableResolver;
     private final SurveyVariableResolver surveyVariableResolver;
     private final IntentSuggestionRepository suggestionRepository;
@@ -63,6 +65,7 @@ public class ChatMessageService {
                               ScheduleVariableResolver scheduleVariableResolver,
                               DirectoryVariableResolver directoryVariableResolver,
                               DepartmentVariableResolver departmentVariableResolver,
+                              CountVariableResolver countVariableResolver,
                               AnnouncementVariableResolver announcementVariableResolver,
                               SurveyVariableResolver surveyVariableResolver,
                               IntentSuggestionRepository suggestionRepository,
@@ -76,6 +79,7 @@ public class ChatMessageService {
         this.scheduleVariableResolver = scheduleVariableResolver;
         this.directoryVariableResolver = directoryVariableResolver;
         this.departmentVariableResolver = departmentVariableResolver;
+        this.countVariableResolver = countVariableResolver;
         this.announcementVariableResolver = announcementVariableResolver;
         this.surveyVariableResolver = surveyVariableResolver;
         this.suggestionRepository = suggestionRepository;
@@ -124,6 +128,9 @@ public class ChatMessageService {
         // A-18 (#127): departman iletisimi, duyurular ve aktif anketler. Duyuru/anket
         // resolver'lari mesaji kullanmaz — intent tek basina ne istendigini belirtiyor.
         variables.putAll(departmentVariableResolver.resolve(result.intent(), message));
+        // A-39 (#212): mevcut sayimi soran sorular ("toplam kac calisan var"). Durum sayimi
+        // ("kac kisi ofiste") BURAYA AIT DEGIL, calisma_duzeni'nde kaliyor.
+        variables.putAll(countVariableResolver.resolve(result.intent(), message));
         variables.putAll(announcementVariableResolver.resolve(result.intent()));
         variables.putAll(surveyVariableResolver.resolve(result.intent()));
         // A-30: resolver farkli bir buton istediyse burada alinir ve haritadan cikarilir.

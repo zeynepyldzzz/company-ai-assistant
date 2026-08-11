@@ -556,6 +556,49 @@ class RuleBasedIntentMatcherTest {
         verifyNoInteractions(departmentService, shuttleService);
     }
 
+    // --- A-39 (#212): kisi hakkinda departman sorusu ---
+
+    /**
+     * Olculdu: "Ayşe Kaya hangi departmanda" 0.567 ile intent_bulunamadi donuyordu ve en
+     * yakini ZATEN ayni kalibi tasiyan bir ornekti ('Elif Şahin hangi departmanda çalışıyor').
+     * Yani ornek eksikligi degil — A-19'un tespiti: ozel isim skoru asagi cekiyor ve sonsuz
+     * sayida calisan adi oldugu icin ornek eklemek bu vakayi hicbir zaman cozmez.
+     */
+    @Test
+    void kisiHakkindaDepartmanSorusuKisiIntentineGider() {
+        when(directoryService.existsActiveEmployeeNamed(anyString())).thenReturn(true);
+
+        var result = matcher.match("Ayşe Kaya hangi departmanda");
+
+        assertThat(result.get().intent()).isEqualTo("rehber_kisi");
+        assertThat(result.get().matchedPhrase()).isEqualTo("[kural] çalışan adı + bilgi sorusu");
+        assertThat(matcher.match("Mehmet Demir hangi bölümde çalışıyor").get().intent())
+                .isEqualTo("rehber_kisi");
+    }
+
+    /**
+     * KRITIK NOBETCI: departman ADI gecen sorular departman intent'inde kalmali. Yeni
+     * kelimeler ("departmanda") kisi dalini actigi icin bu ayrimin bozulmadigi sabitleniyor —
+     * departman dali kural siralamasinda ONCE geliyor.
+     */
+    @Test
+    void departmanAdiGecenSorularDepartmanIntentindeKalir() {
+        seedDepartments();
+
+        assertThat(matcher.match("muhasebe departmanı yetkilisi").get().intent())
+                .isEqualTo("rehber_departman");
+        assertThat(matcher.match("muhasebe bölümü").get().intent())
+                .isEqualTo("rehber_departman");
+    }
+
+    // Isim yoksa kural tetiklenmez: "hangi departmanda çalışıyorum" kisi sorusu degil.
+    @Test
+    void isimYoksaDepartmanSorusuKisiKuralinaGitmez() {
+        when(directoryService.existsActiveEmployeeNamed(anyString())).thenReturn(false);
+
+        assertThat(matcher.match("hangi departmanda çalışıyorum")).isEmpty();
+    }
+
     private void seedShuttle() {
         lenient().when(shuttleService.getAllRoutes())
                 .thenReturn(List.of(route(1, "Anadolu Yakasi - Kadikoy Hatti", "34 SR 101")));

@@ -214,7 +214,21 @@ class IntentCalibrationIT {
             new Case("napiosun", "selamlama", "kural: selamlama kisaltmasi"),
             // OLCUM: uzun bicim kurala EKLENMEDI — V52'nin "ne yapıyorsun" ornegi bunu
             // tasiyabiliyor mu, olcelim. FAIL donerse kural listesine o zaman eklenir.
-            new Case("Napiyorsun", "selamlama", "OLCUM — uzun bicim, embedding tasiyabiliyor mu"));
+            new Case("Napiyorsun", "selamlama", "OLCUM — uzun bicim, embedding tasiyabiliyor mu"),
+
+            // --- A-39 (#212): kisi hakkinda DEPARTMAN sorusu ---
+            // Olculdu (2026-08-11): 0.567 ve 0.661 ile intent_bulunamadi donuyorlardi.
+            // Teshis birincinin en yakin komsusunda: 'Elif Şahin hangi departmanda çalışıyor'
+            // — yani ORNEK ZATEN VARDI ve yetmiyordu. A-19'un tespiti: ozel isim skoru asagi
+            // cekiyor, sonsuz sayida calisan adi oldugu icin ornek eklemek bu vakayi hicbir
+            // zaman cozmez. Cozum kural katmani (PERSON_INFO_WORDS'e departman cekimleri).
+            //
+            // Resolver tarafi zaten hazirdi: detectField "departman" ipucunu taniyor ve
+            // Field.DEPARTMENT donuyor. Eksik olan yalnizca yonlendirmeydi.
+            new Case("Ayşe Kaya hangi departmanda", "rehber_kisi",
+                    "0.567 — kural: calisan adi + bilgi sorusu"),
+            new Case("Mehmet Demir hangi bölümde çalışıyor", "rehber_kisi",
+                    "0.661 — en yakini AYNI KISININ baska cumlesiydi"));
 
     @Autowired
     private IntentClassificationService service;

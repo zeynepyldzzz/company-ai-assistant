@@ -46,7 +46,12 @@ public class DirectoryVariableResolver {
     private static final Set<String> STOP_WORDS = Set.of(
             "dahili", "dahilisi", "dahilisini", "telefon", "telefonu", "numara", "numarasi",
             "eposta", "email", "mail", "adresi", "bilgisi", "bilgileri", "iletisim",
-            "departman", "departmani", "departmaninda", "hangi", "kimin", "kimdir",
+            "departman", "departmani", "departmanda", "departmaninda",
+            // A-39 (#212): "bolum" cekimleri eksikti — kisi hakkinda departman sorusu kural
+            // katmanindan buraya yonlendirilmeye baslandi ve bu kelimeler isim adayi
+            // sayiliyordu (her mesajda gereksiz bir rehber sorgusu).
+            "bolum", "bolumu", "bolumde", "bolumunde",
+            "hangi", "kimin", "kimdir",
             "nerede", "nedir", "kacti", "ofiste", "calisiyor", "bulabilir", "miyim",
             "bey", "beyin", "hanim", "hanimin", "bana", "lutfen", "acaba",
             // A-20 (#139): kural katmani artik "X ofiste mi / X uzaktan mi" sorularini da
