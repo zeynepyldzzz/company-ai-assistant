@@ -3,6 +3,7 @@ package com.company.assistant.chatbot;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -195,7 +196,12 @@ public class RuleBasedIntentMatcher {
     private static final List<String> GENERIC_WORDS = Stream.concat(
             Stream.of("servis", "servisi", "hat", "hatti", "yakasi", "iskele", "durak", "duragi",
                     "departman", "departmani", "birim", "bilgi", "bilgisi",
-                    "calisan", "calisanlar", "kisi", "kisiler", "personel"),
+                    "calisan", "calisanlar", "kisi", "kisiler", "personel",
+                    // A-40 (#209): durak adlarinda tekrar eden jenerik kelimeler. "iskele" ve
+                    // "yakasi" ayni sebeple zaten listedeydi. Bunlar olmadan "merkez" yazan biri
+                    // dort ayri duraga birden eslesir, "sirket" yazan biri de
+                    // "Yasarbilgi (Sirket Merkezi)" duragina — ikisi de durak sorusu degil.
+                    "merkez", "merkezi", "mahallesi", "metro", "sirket"),
             DateExpression.monthNames().stream()).toList();
 
     /**
@@ -320,6 +326,18 @@ public class RuleBasedIntentMatcher {
         if (containsAny(text, PERSON_WORDS) && matchesEmployee(text)) {
             return rule(INTENT_PERSON, "çalışan adı");
         }
+        // A-40 (#209): sirf varlik adindan ibaret mesajlar. Departman once: adlari tek
+        // sorguyla geliyor, durak/hat icin iki sorgu gerekiyor (rota + duraklar).
+        //
+        // Ayri bir DURUM kelimesi guard'i gerekmiyor: kural tek kelimelik mesajlarla sinirli,
+        // dolayisiyla "muhasebe ofiste" gibi durum sorulari zaten disarida kaliyor. Tek
+        // kelimelik durum kelimesi ("ofiste") ise nameTokens tarafindan eleniyor.
+        if (isBareEntityName(text, departmentService::getDepartmentNames)) {
+            return rule(INTENT_DEPARTMENT, "sadece departman adı");
+        }
+        if (isBareEntityName(text, this::shuttleEntityNames)) {
+            return rule(INTENT_SHUTTLE_ROUTE, "sadece durak/hat adı");
+        }
         // Asagidaki uc dal yalnizca TEKIL kisi sorulari icindir: "kimler ofiste" bir liste
         // sorusudur ve calisma_duzeni'nde kalmalidir (A-14 rehber kaynakli yanit). Guard
         // disarida duruyor ki hicbir dal onu atlamasin — ve liste sorularinda DB'ye hic
@@ -347,11 +365,73 @@ public class RuleBasedIntentMatcher {
      * kisa devre olur, "deniz" gercek bir calisan adi olsa bile). Kelime siniri da var:
      * uzun cumlelerde zaten alan kelimesi bulunur, orada bu dala ihtiyac yok.
      */
+    /**
+     * A-40 (#209): mesaj SIRF bir departman ya da durak adindan mi ibaret ("Muhasebe",
+     * "Finans", "kadıköy"). Olculdu: sirasiyla 0.605 / 0.504 / 0.449 ile intent_bulunamadi.
+     *
+     * <p>{@link #isBareEmployeeName} ile ayni fikir, farkli kaynak — o yuzden varlik listesi
+     * disaridan geliyor. Kosul sert: anlamli kelimelerin TAMAMI tek bir varligin adinda
+     * gecmeli. "muhasebede kimler var" bu kurala takilmaz, cunku "kimler" hicbir departman
+     * adinin parcasi degil (ve zaten yukaridaki roster dali onu once yakalar).
+     *
+     * <p><b>YALNIZCA tek kelimelik mesajlar.</b> Cok kelimeliye acmak, bu sinifin iki asamali
+     * tetikleme korumasini varlik sorgulari icin tamamen kaldirirdi: alan kelimesi tasimayan
+     * her kisa mesajda ("canım sıkıldı") departman + rota + durak sorgusu atilirdi. Kisi
+     * tarafinda A-20 bu takasi bilerek yapmisti ama orada bedel 1-3 ucuz varlik kontrolu;
+     * burada tum durak listesinin cekilmesi.
+     *
+     * <p>Olculmus uc vakanin da (Muhasebe, Finans, kadikoy) tek kelimelik olmasi bu daralmayi
+     * bedava kiliyor. Cok kelimeli varlik adlari ("kadıköy iskele") olculmedi; ihtiyac
+     * gorulurse ayri ele alinir.
+     *
+     * <p>Liste {@link Supplier} olarak aliniyor ki kelime sayisi kontrolunden gecmeyen
+     * mesajlarda sorgu HIC atilmasin.
+     */
+    private boolean isBareEntityName(String text, Supplier<List<String>> entityNames) {
+        if (words(text).size() != 1) {
+            return false;
+        }
+        List<String> tokens = nameTokens(text, MIN_SHORT_NAME_LENGTH);
+        if (tokens.isEmpty()) {
+            return false;
+        }
+        return entityNames.get().stream().anyMatch(name -> nameWords(name).containsAll(tokens));
+    }
+
+    /** Varlik adinin ayirt edici kelimeleri; {@link #mentionsName} ile ayni eleme. */
+    private List<String> nameWords(String name) {
+        if (name == null) {
+            return List.of();
+        }
+        return List.of(TurkishText.foldToAscii(name).split("[^a-z0-9]+")).stream()
+                .filter(word -> !word.isEmpty())
+                .filter(word -> !GENERIC_WORDS.contains(word))
+                .toList();
+    }
+
+    private List<String> shuttleEntityNames() {
+        List<ShuttleRouteResponse> routes = shuttleService.getAllRoutes();
+        if (routes.isEmpty()) {
+            return List.of();
+        }
+        return Stream.concat(
+                routes.stream().map(ShuttleRouteResponse::getName),
+                shuttleService.getStopsByRoutes(routes.stream().map(ShuttleRouteResponse::getId).toList())
+                        .values().stream()
+                        .flatMap(List::stream)
+                        .map(ShuttleStopResponse::getName)).toList();
+    }
+
+    /**
+     * Tek kelimelik mesajda alan kelimesi OLAMAZ, dolayisiyla iki asamali tetiklemenin
+     * korumasi da yok; yerine "baska yorum yok" gercegi geciyor ve sinir orada gevser.
+     */
+    private int minNameTokenLength(String text) {
+        return words(text).size() == 1 ? MIN_SHORT_NAME_LENGTH : MIN_TOKEN_LENGTH;
+    }
+
     private boolean isBareEmployeeName(String text) {
-        // Tek kelimelik mesajda alan kelimesi OLAMAZ, dolayisiyla iki asamali tetiklemenin
-        // korumasi da yok; yerine "baska yorum yok" gercegi geciyor ve sinir orada gevser.
-        int minLength = words(text).size() == 1 ? MIN_SHORT_NAME_LENGTH : MIN_TOKEN_LENGTH;
-        List<String> tokens = nameTokens(text, minLength);
+        List<String> tokens = nameTokens(text, minNameTokenLength(text));
         return !tokens.isEmpty()
                 && tokens.size() <= BARE_NAME_MAX_TOKENS
                 && tokens.stream().allMatch(directoryService::existsActiveEmployeeNamed);

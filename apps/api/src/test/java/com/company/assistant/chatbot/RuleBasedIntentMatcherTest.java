@@ -489,6 +489,62 @@ class RuleBasedIntentMatcherTest {
         assertThat(matcher.match("kadıköy hatları").get().intent()).isEqualTo("servis_guzergah");
     }
 
+    // --- A-40 (#209): sirf varlik adindan ibaret mesajlar ---
+
+    // Olculdu: "Muhasebe" 0.605, "Finans" 0.504 ile intent_bulunamadi. Kisi icin
+    // isBareEmployeeName vardi, departman karsiligi yoktu.
+    @Test
+    void sirfDepartmanAdiDepartmanIntentineGider() {
+        seedDepartments();
+
+        var result = matcher.match("Muhasebe");
+
+        assertThat(result.get().intent()).isEqualTo("rehber_departman");
+        assertThat(result.get().matchedPhrase()).isEqualTo("[kural] sadece departman adı");
+        // Adin ikinci kelimesi de tek basina yeter: "Muhasebe ve Finans".
+        assertThat(matcher.match("Finans").get().intent()).isEqualTo("rehber_departman");
+    }
+
+    // Olculdu: "kadiköy" 0.449. Departmanla ayni desen, servis tarafinda.
+    @Test
+    void sirfDurakAdiGuzergahIntentineGider() {
+        seedDepartments();
+        seedShuttle();
+
+        var result = matcher.match("kadıköy");
+
+        assertThat(result.get().intent()).isEqualTo("servis_guzergah");
+        assertThat(result.get().matchedPhrase()).isEqualTo("[kural] sadece durak/hat adı");
+    }
+
+    /**
+     * KRITIK NOBETCI: kural TEK KELIMELIK mesajlarla sinirli ve cok kelimelide varlik listesi
+     * HIC cekilmez.
+     *
+     * <p>Cok kelimeliye acilsaydi, sinifin iki asamali tetikleme korumasi varlik sorgulari
+     * icin tamamen kalkardi: alan kelimesi tasimayan her kisa mesajda departman + rota +
+     * durak sorgusu atilirdi. Bu test yazilirken {@code alanKelimesiYoksaAlanBazliKurallar
+     * Calismaz} testi tam olarak bu yuzden kirilmisti — kurali daraltarak duzeltildi.
+     *
+     * <p>Ayrica "muhasebe ofiste" bir durum sorusudur ve departman KARTINA dusmemeli;
+     * kelime sayisi siniri bunu da kapatiyor.
+     */
+    @Test
+    void cokKelimelikMesajdaVarlikListesiCekilmez() {
+        assertThat(matcher.match("muhasebe ofiste")).isEmpty();
+        assertThat(matcher.match("bugün hava çok güzel")).isEmpty();
+
+        verifyNoInteractions(departmentService, shuttleService);
+    }
+
+    // Tek kelimelik DURUM kelimesi varlik adi sayilmaz: nameTokens onu eliyor, sorgu atilmaz.
+    @Test
+    void tekKelimelikDurumKelimesiVarlikSayilmaz() {
+        assertThat(matcher.match("ofiste")).isEmpty();
+
+        verifyNoInteractions(departmentService, shuttleService);
+    }
+
     private void seedShuttle() {
         lenient().when(shuttleService.getAllRoutes())
                 .thenReturn(List.of(route(1, "Anadolu Yakasi - Kadikoy Hatti", "34 SR 101")));
