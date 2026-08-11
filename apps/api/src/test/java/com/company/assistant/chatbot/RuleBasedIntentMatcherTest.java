@@ -90,14 +90,15 @@ class RuleBasedIntentMatcherTest {
      * kastettigini soylemez. O durum takip sorusu mekanizmasina ait (FollowUpDetector),
      * kurala degil.
      *
-     * <p>Not: burada {@code verifyNoInteractions} KULLANILAMAZ. Tarih kurali eslesmese de
-     * asagidaki isim dali devreye giriyor ve "agustos" kelimesini olasi bir calisan adi
-     * sanip DB'ye soruyor ({@code nameTokens} dort harften uzun her kelimeyi aday sayar).
-     * Sonuc bos donuyor, yani davranis dogru; yalnizca gereksiz bir sorgu atiliyor.
+     * <p>A-38 (#207): bu testin eski notu "burada verifyNoInteractions KULLANILAMAZ" diyordu,
+     * cunku "agustos" kelimesi olasi bir calisan adi sanilip DB'ye soruluyordu. Ay adlari
+     * artik {@code GENERIC_WORDS}'te; sorgu hic atilmiyor ve garanti sıkılastirildi.
      */
     @Test
     void tarihTekBasina_kuralDevreyeGirmez() {
         assertThat(matcher.match("18 ağustos")).isEmpty();
+
+        verifyNoInteractions(directoryService);
     }
 
     /** Tarih yoksa menu kelimesi tek basina bu kurali tetiklemez; embedding'e kalir. */
@@ -324,6 +325,120 @@ class RuleBasedIntentMatcherTest {
         when(directoryService.existsActiveEmployeeNamed(anyString())).thenReturn(false);
 
         assertThat(matcher.match("telefon numarası nasıl bulunur")).isEmpty();
+    }
+
+    // --- A-38 (#207): jenerik kelimeler ve uc harfli isimler ---
+
+    /**
+     * Issue'nun olculmus vakasi: "çarşamba günü uzaktan çalışan kaç kişi var" sorusu
+     * {@code rehber_kisi} + "[kural] çalışan adı + durum" donuyordu.
+     *
+     * <p>Iki kusur ust uste binmisti: (1) "calisan" isim adayi sayiliyor ve soyadi Calisan
+     * olan kayda carpiyordu, (2) "kaç kişi" tekil oldugu icin ucuncu sahis guard'i devreye
+     * girmiyordu. Kullanici bir SAYI soruyor, tek bir kisinin kartini aliyordu.
+     *
+     * <p>{@code verifyNoInteractions}: guard artik DB'ye hic gidilmeden kapatiyor.
+     */
+    @Test
+    void jenerikKisiKelimesiIsimAdayiSayilmaz() {
+        assertThat(matcher.match("çarşamba günü uzaktan çalışan kaç kişi var")).isEmpty();
+
+        verifyNoInteractions(directoryService);
+    }
+
+    // Ay adi artik isim adayi degil: her tarihli mesajda bosuna bir rehber sorgusu atiliyordu.
+    // Menu kurali zaten once eslesiyor, ama kural silinse bile isim sorgusu atilmamali.
+    @Test
+    void ayAdiIcerenMesajIsimSorgusuAtmaz() {
+        assertThat(matcher.match("18 ağustos menü").get().intent()).isEqualTo("yemek_menusu");
+
+        verifyNoInteractions(directoryService);
+    }
+
+    // Rehberde Can Ozturk ve Yahya Can var; "can" uc harf oldugu icin hicbir zaman
+    // bulunamiyordu.
+    @Test
+    void ucHarfliIsimTekKelimelikMesajdaBulunur() {
+        when(directoryService.existsActiveEmployeeNamed("can")).thenReturn(true);
+
+        var result = matcher.match("can");
+
+        assertThat(result.get().intent()).isEqualTo("rehber_kisi");
+        assertThat(result.get().matchedPhrase()).isEqualTo("[kural] sadece çalışan adı");
+    }
+
+    // Tek kelimelik mesajda bile eslesme sart; gevseme "her uc harfi kabul et" demek degil.
+    @Test
+    void tekKelimelikMesajRehberdeYoksaKuralEslesmez() {
+        when(directoryService.existsActiveEmployeeNamed(anyString())).thenReturn(false);
+
+        assertThat(matcher.match("abc")).isEmpty();
+    }
+
+    /**
+     * Alan kelimesi dogrulanmis dallarda sinir 3: "can bey ofiste mi" artik kisi sorusu.
+     *
+     * <p>Hitaplar ("bey", "abi") aday sayilmamali, yoksa aranan kelime "can" degil "bey"
+     * olurdu. {@code DirectoryVariableResolver} bu sorulari bastan beri cevaplayabiliyordu
+     * (orada sinir zaten 3 ve "bey"/"hanim" stop-word) — tek engel kural katmaniydi.
+     */
+    @Test
+    void ucHarfliIsimAlanKelimesiVarsaBulunur() {
+        when(directoryService.existsActiveEmployeeNamed("can")).thenReturn(true);
+
+        assertThat(matcher.match("can bey ofiste mi").get().matchedPhrase())
+                .isEqualTo("[kural] çalışan adı + durum");
+        assertThat(matcher.match("can abi ofiste mi").get().intent()).isEqualTo("rehber_kisi");
+        assertThat(matcher.match("can kimdir").get().matchedPhrase())
+                .isEqualTo("[kural] çalışan adı + bilgi sorusu");
+    }
+
+    @Test
+    void hitapliUzunIsimDeBulunur() {
+        when(directoryService.existsActiveEmployeeNamed("cansu")).thenReturn(true);
+
+        assertThat(matcher.match("cansu abla ofiste mi").get().intent()).isEqualTo("rehber_kisi");
+    }
+
+    /**
+     * Hitap kelimeleri TEK BASINA kisi sorusu yapmaz — aranan bir isim olmali.
+     *
+     * <p>Bu test hitap listesinin gercekten calistigini kanitlayan yer: "cansu abla" ornegi
+     * kanitlamaz, cunku orada "cansu" ilk token ve {@code anyMatch} kisa devre yapar; "abla"
+     * listede olmasa bile sorgulanmazdi. Burada isim hic yok, dolayisiyla eleme calismazsa
+     * hitap kelimesi DB'ye gider ve test patlar.
+     */
+    @Test
+    void yalnizcaHitapIcerenMesajKisiSorusuSayilmaz() {
+        assertThat(matcher.match("abla ofiste mi")).isEmpty();
+        assertThat(matcher.match("hocam nerede")).isEmpty();
+
+        verifyNoInteractions(directoryService);
+    }
+
+    /**
+     * KRITIK NOBETCI: gevseme alan kelimesine BAGLI. Sinir global olarak 3'e inseydi
+     * "canım sıkıldı", "sağol dostum", "ali gel bak" gibi cumlelerde siradan uc harfli
+     * kelimeler isim adayi olur ve her mesajda gereksiz rehber sorgusu atilirdi.
+     */
+    @Test
+    void alanKelimesiYoksaUcHarfliKelimeAdaySayilmaz() {
+        assertThat(matcher.match("ali gel bak")).isEmpty();
+
+        verifyNoInteractions(directoryService);
+    }
+
+    /**
+     * KRITIK NOBETCI: birinci sahis durum sorusu REHBER sorusu degildir — kullanicinin kendi
+     * plani, {@code calisma_duzeni}'ne ait. Alan kelimesi ("ofiste") var, yani dal aciliyor;
+     * kuralı tutan tek sey "ben"/"miyim" kelimelerinin isim adayi sayilmamasi. Aksi halde
+     * rehberde adi "Ben..." ile baslayan biri varsa kullanici baskasinin kartini alirdi.
+     */
+    @Test
+    void birinciSahisDurumSorusuKisiKuralinaGitmez() {
+        assertThat(matcher.match("ben ofiste miyim")).isEmpty();
+
+        verifyNoInteractions(directoryService);
     }
 
     private void seedShuttle() {

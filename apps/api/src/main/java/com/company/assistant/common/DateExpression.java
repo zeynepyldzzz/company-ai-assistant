@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,6 +68,18 @@ public final class DateExpression {
             List.of(DAY_MONTH, MONTH_DAY, NUMERIC, BARE_MONTH);
 
     private DateExpression() {
+    }
+
+    /**
+     * A-38 (#207): ay adlari kural katmaninda da gerekli — "18 agustos menu" mesajinda
+     * "agustos" isim adayi sayilip her tarihli mesajda bosuna bir rehber sorgusu atiliyordu.
+     * Sonuc dogruydu (bos donuyordu), sorgu gereksizdi.
+     *
+     * <p>Liste disari buradan veriliyor, kopyalanmiyor: ayni degerin iki yerde yasamasi,
+     * biri degisip digeri unutuldugunda sessiz bir davranis farki demek.
+     */
+    public static Set<String> monthNames() {
+        return MONTHS.keySet();
     }
 
     /**

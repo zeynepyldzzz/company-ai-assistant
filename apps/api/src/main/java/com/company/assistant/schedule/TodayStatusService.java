@@ -82,9 +82,21 @@ public class TodayStatusService {
         return dayKey != null && VALID_DAY_KEYS.contains(dayKey.toLowerCase(Locale.ROOT));
     }
 
+    /**
+     * A-38 (#207): "bugun" tek noktadan okunur.
+     *
+     * <p>Cagiranlar {@code LocalDate.now()} yazdiginda davranis takvime bagimli hale geliyor:
+     * gun cikarimi yapan bir resolver, hafta sonu kostugunda bambaska bir dala giriyor ve
+     * testleri Cumartesi kiriliyor. Bu sinif zaten bugunun sahibi; tarihi de buradan vermek
+     * hem tekrari kaldiriyor hem cagiranlari mock'lanabilir kiliyor.
+     */
+    public LocalDate today() {
+        return LocalDate.now();
+    }
+
     /** Bugun plan tutulan bir gun mu (Pazartesi-Cuma). */
     public boolean isWorkday() {
-        DayOfWeek today = LocalDate.now().getDayOfWeek();
+        DayOfWeek today = today().getDayOfWeek();
         return today != DayOfWeek.SATURDAY && today != DayOfWeek.SUNDAY;
     }
 
@@ -100,6 +112,6 @@ public class TodayStatusService {
 
     /** {@code schedule_day.day_of_week} degerleriyle ayni bicim: kucuk harf Ingilizce gun adi. */
     public String todayKey() {
-        return LocalDate.now().getDayOfWeek().name().toLowerCase(Locale.ROOT);
+        return today().getDayOfWeek().name().toLowerCase(Locale.ROOT);
     }
 }

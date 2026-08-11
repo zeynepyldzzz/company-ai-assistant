@@ -1,6 +1,11 @@
 package com.company.assistant.directory;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -8,15 +13,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.company.assistant.common.DateExpression;
+import com.company.assistant.common.DayExpression;
 import com.company.assistant.common.PagedResponse;
 import com.company.assistant.common.TurkishText;
+import com.company.assistant.schedule.TodayStatusService;
 
 /**
  * A-14 (#115): "kimler ofiste / kimler uzaktan" sorulari icin rehber kaynakli yanit uretir.
  *
- * Veri kaynagi employee.office_status — GET /employees ile employee rolune ZATEN acik ve ofis
+ * Veri kaynagi DirectoryService — GET /employees ile employee rolune ZATEN acik ve ofis
  * durumuna gore filtrelenebilir durumda (rehber ekrani). Haftalik plan (weekly_schedule) toplu
  * gorunumu bu sinifta KULLANILMAZ; o /admin/schedules altinda admin bilgisi olarak kalir.
+ *
+ * A-32 (#188): durum artik {@code employee.office_status} kolonundan degil, o gunun
+ * {@code schedule_day} kaydindan geliyor (bkz. TodayStatusService). A-38 (#207): hangi GUNUN
+ * sorulduğu da mesajdan cikariliyor; B-32'de (#204) gelen {@code day} parametresi bu sinifin
+ * sorgularina da baglandi — servis yeniden yazilmadi, var olan uc kullanildi.
  *
  * Liste her zaman tek bir departmanla sinirlidir: sirket buyudukce "kimler ofiste" 80 satirlik
  * bir liste uretir ve alfabetik ilk N kisiyi kesmek keyfi olur. Departman kapsami + sirket
@@ -56,17 +69,37 @@ public class OfficeStatusVariableResolver {
      */
     private static final Pattern COMPANY_WIDE = Pattern.compile("\\b(sirket|tum|butun|herkes)");
 
+    /**
+     * A-38 (#207): gun cikarimi eklenince gereken mesajlar. ScheduleVariableResolver'daki
+     * karsiliklariyla ayni ayrimi yapiyorlar; metinler bilerek kopya degil, cunku burada soru
+     * BASKALARI hakkinda ("sorduğun gün" / "çalışma düzenin" farki).
+     */
+    private static final String UNRESOLVED_DATE =
+            "Hangi günü sorduğunu tam anlayamadım. \"bugün\", \"yarın\" ya da \"çarşamba\" "
+                    + "gibi yazabilirsin.";
+    private static final String ONLY_CURRENT_WEEK =
+            "Şu an yalnızca içinde bulunduğumuz haftanın durumunu görebiliyorum.";
+    private static final String WEEKEND =
+            "Çalışma düzeni yalnızca Pazartesi-Cuma günleri için tanımlanıyor; sorduğun gün "
+                    + "hafta sonuna denk geliyor.";
+
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy", new Locale("tr"));
+
     // Tek departman listesi icin ust sinir; asilirsa "ve N kisi daha" ile kesilir.
     private static final int MAX_NAMES = 25;
     private static final int MAX_DEPARTMENTS = 100;
 
     private final DirectoryService directoryService;
     private final DepartmentService departmentService;
+    private final TodayStatusService todayStatusService;
 
     public OfficeStatusVariableResolver(DirectoryService directoryService,
-                                        DepartmentService departmentService) {
+                                        DepartmentService departmentService,
+                                        TodayStatusService todayStatusService) {
         this.directoryService = directoryService;
         this.departmentService = departmentService;
+        this.todayStatusService = todayStatusService;
     }
 
     /**
@@ -93,6 +126,36 @@ public class OfficeStatusVariableResolver {
             return NEGATION_UNSUPPORTED;
         }
 
+        // A-38 (#207): gun cikarimi. Onceden hic yapilmiyordu — "çarşamba günü ofiste olacaklar
+        // kimler" sorusuna BUGUNUN listesi donuyordu. Bu, projedeki en tehlikeli hata turu:
+        // dolu bir liste, dogru formatta, yanlis gun. Kullanicinin fark etmesinin yolu yok.
+        // Ayni yapisal hata A-37'de menu ve calisma duzeni resolver'larinda duzeltilmisti;
+        // burasi ucuncu kardesiydi.
+        LocalDate today = todayStatusService.today();
+        Optional<LocalDate> resolved = DayExpression.resolveTargetDay(foldedText, today);
+        if (resolved.isEmpty()) {
+            // Tarih ifadesi VAR ama cozulemedi -> bugune dusulmez, durum acikca soylenir.
+            return UNRESOLVED_DATE;
+        }
+        LocalDate target = resolved.get();
+
+        // statusesForDay yalnizca icinde bulunulan haftayi okuyor (schedule_day + weekStart);
+        // disina tasan bir gun icin sessizce bu haftadan bir gun gostermek yanlis cevaptir.
+        LocalDate weekStart = todayStatusService.currentWeekStart();
+        if (target.isBefore(weekStart) || target.isAfter(weekStart.plusDays(6))) {
+            return ONLY_CURRENT_WEEK;
+        }
+        if (target.getDayOfWeek() == DayOfWeek.SATURDAY || target.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            return WEEKEND;
+        }
+
+        String dayKey = target.getDayOfWeek().name().toLowerCase(Locale.ROOT);
+        // Gun ACIKCA soruldugunda yanit hangi gunu gosterdigini SOYLEMELI — issue'nun tespiti
+        // tam olarak buydu. Gun belirtilmemisse metin aynen eskisi gibi kalir.
+        String dayPrefix = mentionsDay(foldedText)
+                ? TurkishText.dayName(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ") günü "
+                : "";
+
         String status = resolveStatus(foldedText);
         String department = departmentFromMessage(foldedText);
 
@@ -100,10 +163,10 @@ public class OfficeStatusVariableResolver {
         // Departman adi ACIKCA gectiyse o kazanir — daha dar kapsam her zaman daha
         // spesifik cevaptir ("tum satis ekibinden kimler ofiste" -> Satis).
         if (department == null && COMPANY_WIDE.matcher(foldedText).find()) {
-            return companyWideList(status);
+            return companyWideList(status, dayKey, dayPrefix);
         }
 
-        long companyTotal = countByStatus(status);
+        long companyTotal = countByStatus(status, dayKey);
         if (department == null) {
             department = ownDepartment(employeeId);
         }
@@ -114,9 +177,9 @@ public class OfficeStatusVariableResolver {
         }
 
         PagedResponse<EmployeeResponse> result =
-                directoryService.searchEmployees(null, department, status, 0, MAX_NAMES);
+                directoryService.searchEmployees(null, department, status, dayKey, 0, MAX_NAMES);
         if (result.data().isEmpty()) {
-            return department + " departmanında " + emptyLabel(status) + ". "
+            return dayPrefix + department + " departmanında " + emptyLabel(status) + ". "
                     + companySentence(status, companyTotal);
         }
 
@@ -127,8 +190,19 @@ public class OfficeStatusVariableResolver {
                 ? "\n• ve " + (result.total() - result.data().size()) + " kişi daha"
                 : "";
 
-        return department + " departmanında " + listLabel(status) + ":\n"
+        return dayPrefix + department + " departmanında " + listLabel(status) + ":\n"
                 + names + more + "\n\n" + companySentence(status, companyTotal);
+    }
+
+    /**
+     * Mesajda gun BELIRTILMIS mi. {@link DayExpression#hasSingleDayCue} goreli ifadeleri ve
+     * hafta gunu adlarini, {@link DateExpression#mentionsDate} acik tarihleri kapsar.
+     *
+     * <p>Yalnizca yanit metnini etkiler: gun belirtilmemisse ("kimler ofiste") yanit eskisi
+     * gibi kalir, cunku orada bugun ZATEN dogru cevaptir ve gunu yazmak gurultudur.
+     */
+    private boolean mentionsDay(String foldedText) {
+        return DayExpression.hasSingleDayCue(foldedText) || DateExpression.mentionsDate(foldedText);
     }
 
     /**
@@ -137,11 +211,11 @@ public class OfficeStatusVariableResolver {
      * "40 isim" duz bir yigin olur. Ayrica bu dalda ayri bir sayim sorgusu atilmaz;
      * result.total() zaten sirket toplamidir.
      */
-    private String companyWideList(String status) {
+    private String companyWideList(String status, String dayKey, String dayPrefix) {
         PagedResponse<EmployeeResponse> result =
-                directoryService.searchEmployees(null, null, status, 0, MAX_NAMES);
+                directoryService.searchEmployees(null, null, status, dayKey, 0, MAX_NAMES);
         if (result.data().isEmpty()) {
-            return "Şirket genelinde " + emptyLabel(status) + ".";
+            return companyScope(dayPrefix) + emptyLabel(status) + ".";
         }
 
         String names = result.data().stream()
@@ -151,8 +225,16 @@ public class OfficeStatusVariableResolver {
                 ? "\n• ve " + (result.total() - result.data().size()) + " kişi daha"
                 : "";
 
-        return "Şirket genelinde " + listLabel(status) + " (" + result.total() + " kişi):\n"
-                + names + more;
+        return companyScope(dayPrefix) + listLabel(status)
+                + " (" + result.total() + " kişi):\n" + names + more;
+    }
+
+    /**
+     * Sirket geneli basligi. Gun oneki varsa cumle onunla basladigi icin "şirket" kucuk
+     * harfle devam eder; onek yoksa metin eskisi gibi "Şirket genelinde" ile baslar.
+     */
+    private String companyScope(String dayPrefix) {
+        return dayPrefix.isEmpty() ? "Şirket genelinde " : dayPrefix + "şirket genelinde ";
     }
 
     private String departmentSuffix(EmployeeResponse employee) {
@@ -196,8 +278,11 @@ public class OfficeStatusVariableResolver {
 
     // office_status'u NULL olan calisanlar hicbir gruba dahil edilmez: sorgu tam esitlik
     // kullandigi icin NULL kayitlar zaten disarida kalir.
-    private long countByStatus(String status) {
-        return directoryService.searchEmployees(null, null, status, 0, 1).total();
+    //
+    // A-38 (#207): sayim da AYNI gunden okunur. Listeyi carsambaya cevirip toplami bugunden
+    // almak, yanitin iki yarisini birbiriyle celiskiye dusururdu.
+    private long countByStatus(String status, String dayKey) {
+        return directoryService.searchEmployees(null, null, status, dayKey, 0, 1).total();
     }
 
     private String companySentence(String status, long total) {

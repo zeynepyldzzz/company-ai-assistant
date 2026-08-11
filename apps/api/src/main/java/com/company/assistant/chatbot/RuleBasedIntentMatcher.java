@@ -3,6 +3,7 @@ package com.company.assistant.chatbot;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
@@ -149,12 +150,74 @@ public class RuleBasedIntentMatcher {
     private static final List<String> DEPARTMENT_ROSTER_WORDS =
             List.of("calisan", "kimler", "ekip", "personel");
 
-    /** Varlik adlarindan anahtar kelime turetirken elenen, ayirt edici olmayan kelimeler. */
-    private static final List<String> GENERIC_WORDS = List.of(
-            "servis", "servisi", "hat", "hatti", "yakasi", "iskele", "durak", "duragi",
-            "departman", "departmani", "birim", "bilgi", "bilgisi");
+    /**
+     * Varlik adlarindan anahtar kelime turetirken ve isim adayi ararken elenen, ayirt edici
+     * olmayan kelimeler.
+     *
+     * <p>A-38 (#207): jenerik KISI kelimeleri eklendi. Olculdu — "çarşamba günü uzaktan
+     * çalışan kaç kişi var" sorusu {@code rehber_kisi}'ye gidiyordu: "calisan" isim adayi
+     * sayiliyor ve A-34'ten beri arama kelime basi eslesmesi yaptigi icin soyadi Calisan olan
+     * kayda ({@code LIKE 'calisan%'}) carpiyordu. Kullanici bir SAYI soruyor, tek bir kisinin
+     * kartini aliyordu.
+     *
+     * <p>Ay adlari {@link DateExpression#monthNames()}'den geliyor, kopyalanmiyor.
+     *
+     * <p>Bedeli bilinerek kabul edildi: soyadi "Calisan" olan biri artik YALNIZCA soyadiyla
+     * bulunamaz (adiyla bulunur). Jenerik bir kelimenin her mesajda yanlis tetiklemesi, nadir
+     * bir soyadin kaybindan pahali.
+     */
+    private static final List<String> GENERIC_WORDS = Stream.concat(
+            Stream.of("servis", "servisi", "hat", "hatti", "yakasi", "iskele", "durak", "duragi",
+                    "departman", "departmani", "birim", "bilgi", "bilgisi",
+                    "calisan", "calisanlar", "kisi", "kisiler", "personel"),
+            DateExpression.monthNames().stream()).toList();
 
+    /**
+     * Alan kelimesi OLMAYAN dalda ({@link #isBareEmployeeName}) isim adayi siniri.
+     *
+     * <p>Global olarak 3'e indirilemez: "canım sıkıldı", "sağol dostum" gibi cumlelerde
+     * siradan uc harfli kelimeler isim adayi olur ve her mesajda gereksiz rehber sorgusu
+     * atilir. Orada kuralı tutan tek sey uzunluk.
+     */
     private static final int MIN_TOKEN_LENGTH = 4;
+
+    /**
+     * A-38 (#207): uc harfli isimler icin gevsetilmis sinir. Rehberde Can Ozturk ve Yahya Can
+     * var ama "can" uc harf oldugu icin aday listesinden eleniyordu — bu isim hicbir zaman
+     * bulunamiyordu.
+     *
+     * <p>Iki yerde gecerli, ikisinde de baska bir koruma zaten devrede:
+     * <ul>
+     *   <li>Alan kelimesi DOGRULANMIS dallar ({@link #matchesEmployee}): iki asamali
+     *       tetikleme sarti saglanmis demektir. "can bey ofiste mi" bu sayede calisir;
+     *       "canım sıkıldı" cumlesinde alan kelimesi olmadigi icin dal hic acilmaz.</li>
+     *   <li>TEK KELIMELIK mesajlar: orada zaten baska yorum yok, kullanici ya bir isim ya bir
+     *       anahtar kelime yazmistir.</li>
+     * </ul>
+     */
+    private static final int MIN_SHORT_NAME_LENGTH = 3;
+
+    /**
+     * A-38 (#207): sinir 3'e inince aday olmaya baslayan, isim OLMAYAN kelimeler.
+     *
+     * <p>{@code DirectoryVariableResolver.STOP_WORDS}'un kural katmanindaki aynasi — orada
+     * "bey"/"hanim"/"bana"/"miyim" zaten eleniyordu, cunku o sinifin siniri bastan beri 3'tu.
+     * Iki katman ayni kelimeleri elemezse kural, resolver'in reddedecegi bir ismi eslestirir.
+     *
+     * <p>Hitaplar ("bey", "abi") KRITIK: "can bey ofiste mi" sorusunda aranmasi gereken tek
+     * kelime "can". Birinci sahis kaliplari da burada — "ben ofiste miyim" bir REHBER sorusu
+     * degil, kullanicinin kendi plani; kural devreye girerse baskasinin kartina kayar.
+     */
+    private static final List<String> NON_NAME_WORDS = List.of(
+            // Hitaplar. Cekimli/seslenme bicimleri de burada: Turkce sondan eklemeli ve
+            // eleme TAM kelime eslesmesiyle calisiyor, yani "abi" yazmak "abim"i elemez.
+            "bey", "beyin", "beyefendi", "hanim", "hanimin", "hanimefendi",
+            "abi", "abim", "abicim", "agabey", "abla", "ablam", "ablacim",
+            "kardes", "kardesim", "hoca", "hocam", "amca", "teyze",
+            // Birinci/ikinci sahis: soru rehbere degil kullanicinin kendisine ait.
+            "ben", "sen", "biz", "siz", "bana", "beni", "benim", "miyim", "miydim", "misin",
+            "bir", "var", "yok", "kac", "gun", "ama", "ise", "nin", "nun", "den", "dan");
+
     /** Her isim adayi bir DB sorgusu; ust sinir performans icin. */
     private static final int MAX_NAME_TOKENS = 5;
 
@@ -168,6 +231,19 @@ public class RuleBasedIntentMatcher {
         this.shuttleService = shuttleService;
         this.directoryService = directoryService;
         this.departmentService = departmentService;
+    }
+
+    /**
+     * A-38 (#207): isim adayi olamayacak kelimelerin tamami. Disariya YALNIZCA bekci test
+     * icin aciliyor (RuleBasedIntentMatcherNameCollisionIntegrationTest).
+     *
+     * <p>Gerekce: rehbere bu kelimelerden biriyle AYNI adda biri eklendigi gun o kisi kural
+     * katmaninda bulunamaz hale gelir — sessizce, hicbir hata vermeden. Listeyi teste
+     * kopyalamak bu riski kapatmaz, cunku kopya ile asil liste zamanla ayrisir; tek kaynak
+     * okunmali.
+     */
+    static List<String> reservedNameWords() {
+        return Stream.concat(GENERIC_WORDS.stream(), NON_NAME_WORDS.stream()).distinct().toList();
     }
 
     public Optional<IntentClassificationService.IntentResult> match(String message) {
@@ -239,7 +315,10 @@ public class RuleBasedIntentMatcher {
      * uzun cumlelerde zaten alan kelimesi bulunur, orada bu dala ihtiyac yok.
      */
     private boolean isBareEmployeeName(String text) {
-        List<String> tokens = nameTokens(text);
+        // Tek kelimelik mesajda alan kelimesi OLAMAZ, dolayisiyla iki asamali tetiklemenin
+        // korumasi da yok; yerine "baska yorum yok" gercegi geciyor ve sinir orada gevser.
+        int minLength = words(text).size() == 1 ? MIN_SHORT_NAME_LENGTH : MIN_TOKEN_LENGTH;
+        List<String> tokens = nameTokens(text, minLength);
         return !tokens.isEmpty()
                 && tokens.size() <= BARE_NAME_MAX_TOKENS
                 && tokens.stream().allMatch(directoryService::existsActiveEmployeeNamed);
@@ -293,17 +372,34 @@ public class RuleBasedIntentMatcher {
      * tetiklemesi pratikte kalmaz.
      */
     private boolean matchesEmployee(String text) {
-        return nameTokens(text).stream().anyMatch(directoryService::existsActiveEmployeeNamed);
+        // A-38 (#207): sinir burada 3 — bu metoda YALNIZCA alan kelimesi dogrulandiktan sonra
+        // giriliyor (dahili/telefon/ofiste/kimdir...), yani iki asamali tetiklemenin korumasi
+        // zaten devrede. "can bey ofiste mi" bu sayede calisiyor; alan kelimesi tasimayan
+        // "canım sıkıldı" cumlesinde bu dal hic acilmadigi icin risk olusmuyor.
+        return nameTokens(text, MIN_SHORT_NAME_LENGTH).stream()
+                .anyMatch(directoryService::existsActiveEmployeeNamed);
     }
 
     /**
      * Isim adayi kelimeler. Ust sinir var cunku her aday bir DB sorgusu demek; 3 cok dardi
      * ("lütfen bana Ayşe Kaya'nın telefonunu ver" gibi cumlede isim 4. sirada kalabiliyor).
      */
-    private List<String> nameTokens(String text) {
+    /**
+     * Mesajin anlamli kelimeleri. Bos parcalar atilir: bastaki/sondaki noktalama
+     * {@code split()}'te bos token uretir ve "can?" mesajini tek kelimelik saymaktan
+     * alikoyardi.
+     */
+    private List<String> words(String text) {
         return List.of(text.split("[^a-z0-9]+")).stream()
-                .filter(token -> token.length() >= MIN_TOKEN_LENGTH)
+                .filter(word -> !word.isEmpty())
+                .toList();
+    }
+
+    private List<String> nameTokens(String text, int minLength) {
+        return words(text).stream()
+                .filter(token -> token.length() >= minLength)
                 .filter(token -> !GENERIC_WORDS.contains(token))
+                .filter(token -> !NON_NAME_WORDS.contains(token))
                 .filter(token -> !PERSON_WORDS.contains(token))
                 .filter(token -> !PERSON_STATUS_WORDS.contains(token))
                 .filter(token -> !PERSON_INFO_WORDS.contains(token))
