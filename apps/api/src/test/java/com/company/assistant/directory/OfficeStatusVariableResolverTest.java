@@ -9,6 +9,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.schedule.TodayStatusService;
 
 /**
  * A-14 (#115): "kimler ofiste" rehber kaynakli yanit. Odak, issue'nun is kurallari:
@@ -28,16 +31,31 @@ class OfficeStatusVariableResolverTest {
 
     private static final int EMPLOYEE_ID = 7;
 
+    /**
+     * A-38 (#207): sabit referans gun. Resolver artik mesajdan GUN cikardigi icin gercek
+     * takvim testin hangi dala girdigini belirliyordu — Cumartesi kosan bir CI'da "kimler
+     * ofiste" hafta sonu mesajina duser ve alakasiz testler kirilirdi.
+     *
+     * <p>PAZARTESI secildi: "carsamba" sorgusu bugunden AYRISMALI, yoksa test yanlis gunun
+     * donduruldugunu yakalayamaz — ki bu issue'nun tam konusu.
+     */
+    private static final LocalDate TODAY = LocalDate.of(2026, 8, 1).with(DayOfWeek.MONDAY);
+    private static final LocalDate WEEK_START = TODAY.with(DayOfWeek.MONDAY);
+    private static final String TODAY_KEY = "monday";
+
     @Mock
     private DirectoryService directoryService;
     @Mock
     private DepartmentService departmentService;
+    @Mock
+    private TodayStatusService todayStatusService;
 
     private OfficeStatusVariableResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new OfficeStatusVariableResolver(directoryService, departmentService);
+        resolver = new OfficeStatusVariableResolver(
+                directoryService, departmentService, todayStatusService);
         // Mock'lar disarida kurulur: when(...) argumani icinde mock stub'lamak Mockito'da
         // "UnfinishedStubbing" hatasi verir.
         List<DepartmentResponse> departments = List.of(
@@ -46,6 +64,8 @@ class OfficeStatusVariableResolverTest {
                 department("Satis ve Pazarlama"));
         lenient().when(departmentService.searchDepartments(isNull(), anyInt(), anyInt()))
                 .thenReturn(new PagedResponse<>(departments, 0, 100, 3));
+        lenient().when(todayStatusService.today()).thenReturn(TODAY);
+        lenient().when(todayStatusService.currentWeekStart()).thenReturn(WEEK_START);
     }
 
     @Test
@@ -248,26 +268,136 @@ class OfficeStatusVariableResolverTest {
                 .contains("Bilgi Teknolojileri departmanında ofiste görünenler");
     }
 
+    // --- A-38 (#207): gun cikarimi ---
+
+    /**
+     * Issue'nun en sinsi bulgusu: liste DOLU geliyordu, dogru formattaydi, ama yanlis gundu.
+     * Kullanicinin fark etmesinin hicbir yolu yoktu.
+     *
+     * <p>Stub bilerek {@code wednesday} anahtarina bagli: resolver eskisi gibi bugunu
+     * ({@code monday}) sorarsa stub eslesmez ve test patlar.
+     */
+    @Test
+    void sorulanGununListesiDoner() {
+        whenOwnDepartment("Bilgi Teknolojileri");
+        whenSearch("Bilgi Teknolojileri", "Ofiste", "wednesday", List.of(employee("Ayse Kaya")), 1);
+        whenCompanyTotal("Ofiste", "wednesday", 9);
+
+        String reply = resolver.resolve("carsamba gunu ofiste olanlar", EMPLOYEE_ID);
+
+        assertThat(reply)
+                .contains("Çarşamba")
+                .contains("Bilgi Teknolojileri departmanında ofiste görünenler")
+                .contains("• Ayse Kaya")
+                // Sayim da AYNI gunden: listeyi carsambaya cevirip toplami bugunden almak
+                // yanitin iki yarisini celiskiye dusururdu.
+                .contains("Şirket genelinde 9 kişi ofiste görünüyor.");
+    }
+
+    // NOBETCI: gun belirtilmemisse davranis DEGISMEZ — bugun zaten dogru cevap ve gunu
+    // basliga yazmak gurultu olurdu (issue: "gün belirtilmemişse mevcut davranış").
+    @Test
+    void gunBelirtilmezseYanitEskisiGibiKalir() {
+        whenOwnDepartment("Bilgi Teknolojileri");
+        whenSearch("Bilgi Teknolojileri", "Ofiste", List.of(employee("Ayse Kaya")), 1);
+        whenCompanyTotal("Ofiste", 5);
+
+        String reply = resolver.resolve("kimler ofiste", EMPLOYEE_ID);
+
+        assertThat(reply)
+                .startsWith("Bilgi Teknolojileri departmanında")
+                .doesNotContain("günü");
+    }
+
+    // A-37 deseni: tarih ifadesi VAR ama cozulemedi -> bugune dusulmez.
+    @Test
+    void cozulemeyenTarihBugunuDondurmez() {
+        String reply = resolver.resolve("agustos ofiste kimler", EMPLOYEE_ID);
+
+        assertThat(reply).contains("Hangi günü sorduğunu tam anlayamadım");
+    }
+
+    @Test
+    void cozulemeyenTarihVeriTabaninaGitmez() {
+        resolver.resolve("agustos ofiste kimler", EMPLOYEE_ID);
+
+        verifyNoInteractions(directoryService);
+    }
+
+    // schedule_day yalnizca Pazartesi-Cuma tutuyor; hafta sonu icin bos liste dondurmek
+    // "kimse ofiste degil" gibi okunurdu.
+    @Test
+    void haftaSonuSorulursaAcikMesajDoner() {
+        String reply = resolver.resolve("cumartesi kimler ofiste", EMPLOYEE_ID);
+
+        assertThat(reply).contains("hafta sonuna denk geliyor");
+        verifyNoInteractions(directoryService);
+    }
+
+    // statusesForDay yalnizca icinde bulunulan haftayi okuyor.
+    @Test
+    void gelecekHaftaKapsamDisiMesajiDoner() {
+        String reply = resolver.resolve("haftaya carsamba kimler ofiste", EMPLOYEE_ID);
+
+        assertThat(reply).contains("yalnızca içinde bulunduğumuz haftanın");
+        verifyNoInteractions(directoryService);
+    }
+
+    /**
+     * A-38 Sorun 2: tekil sayim formlari. Desen yalnizca cogullari taniyordu ve "kaç kişi
+     * ofiste" guard'i deliyordu — soru {@code rehber_kisi}'ye, tek bir kisinin kartina
+     * kayiyordu.
+     */
+    @Test
+    void tekilSayimFormlariUcuncuSahisSayilir() {
+        assertThat(resolver.isThirdPersonQuestion("kac kisi ofiste")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("carsamba gunu uzaktan calisan kac kisi var")).isTrue();
+        assertThat(resolver.isThirdPersonQuestion("kac calisan izinde")).isTrue();
+    }
+
+    // NOBETCI: "kac" tek basina yeterli olmamali, yoksa servis saati sorusu ucuncu sahis
+    // sayilir ve calisma duzeni dalina kayardi.
+    @Test
+    void kacKelimesiTekBasinaUcuncuSahisYapmaz() {
+        assertThat(resolver.isThirdPersonQuestion("servis kacta kalkiyor")).isFalse();
+        assertThat(resolver.isThirdPersonQuestion("kac gun izin hakkim var")).isFalse();
+    }
+
     private void whenOwnDepartment(String departmentName) {
         EmployeeResponse response = mock(EmployeeResponse.class);
         when(response.getDepartmentName()).thenReturn(departmentName);
         when(directoryService.getEmployeeById(EMPLOYEE_ID)).thenReturn(response);
     }
 
+    // A-38 (#207): gun parametresi stub'in AYRILMAZ parcasi. Bilerek any() degil eq(day):
+    // resolver yanlis gunu sorarsa stub eslesmez ve test patlar — issue'nun tam olarak
+    // yakalamak istedigi hata bu.
     private void whenSearch(String department, String status, List<EmployeeResponse> data, long total) {
-        when(directoryService.searchEmployees(isNull(), eq(department), eq(status), eq(0), anyInt()))
+        whenSearch(department, status, TODAY_KEY, data, total);
+    }
+
+    private void whenSearch(String department, String status, String day,
+                            List<EmployeeResponse> data, long total) {
+        when(directoryService.searchEmployees(
+                isNull(), eq(department), eq(status), eq(day), eq(0), anyInt()))
                 .thenReturn(new PagedResponse<>(data, 0, 25, total));
     }
 
     private void whenCompanyTotal(String status, long total) {
-        when(directoryService.searchEmployees(isNull(), isNull(), eq(status), eq(0), eq(1)))
+        whenCompanyTotal(status, TODAY_KEY, total);
+    }
+
+    private void whenCompanyTotal(String status, String day, long total) {
+        when(directoryService.searchEmployees(
+                isNull(), isNull(), eq(status), eq(day), eq(0), eq(1)))
                 .thenReturn(new PagedResponse<>(List.of(), 0, 1, total));
     }
 
     // Sirket geneli LISTE sorgusu: departman filtresi yok, sayfa boyutu MAX_NAMES (25).
     // whenCompanyTotal ile karismaz — o eq(1) sayfa boyutuyla yalnizca sayim yapar.
     private void whenCompanySearch(String status, List<EmployeeResponse> data, long total) {
-        when(directoryService.searchEmployees(isNull(), isNull(), eq(status), eq(0), eq(25)))
+        when(directoryService.searchEmployees(
+                isNull(), isNull(), eq(status), eq(TODAY_KEY), eq(0), eq(25)))
                 .thenReturn(new PagedResponse<>(data, 0, 25, total));
     }
 

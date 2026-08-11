@@ -54,9 +54,18 @@ public final class TurkishText {
      * kapsam secmek icin, RuleBasedIntentMatcher ise TERSINE, kisi kurali icin. "kimler
      * ofiste" liste sorusudur ve tek kisilik rehber yanitina KAYMAMALIDIR. Iki taraf ayni
      * deseni okumazsa aradaki bosluktan yanlis intent sizar.
+     *
+     * <p>A-38 (#207): ucuncu grup — TEKIL sayim formlari. Desen yalnizca cogullari taniyordu,
+     * oysa "kaç kişi ofiste" tanim geregi bir liste/sayi sorusudur. Guard delinince soru tek
+     * kisi dalina kayiyordu ("çarşamba günü uzaktan çalışan kaç kişi var" -> rehber_kisi).
+     *
+     * <p>"kac" TEK BASINA yeterli degil, ardindan kisi ismi gelmeli: "servis kaçta kalkıyor"
+     * bir kisi sorusu degil. "personel" zaten ikinci grupta oldugu icin "kaç personel"
+     * tekrar yazilmadi.
      */
     private static final Pattern THIRD_PERSON_GROUP = Pattern.compile(
-            "\\bkim(ler(in)?)?\\b|\\b(kisiler|calisanlar|personel|olanlar|herkes)");
+            "\\bkim(ler(in)?)?\\b|\\b(kisiler|calisanlar|personel|olanlar|herkes)"
+                    + "|\\bkac\\s+(kisi|calisan)");
 
     /**
      * A-26 (#173): olumsuzlama belirtecleri.
