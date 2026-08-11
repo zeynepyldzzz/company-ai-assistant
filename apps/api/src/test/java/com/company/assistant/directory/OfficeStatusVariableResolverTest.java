@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.schedule.StatusDayResolver;
 import com.company.assistant.schedule.TodayStatusService;
 
 /**
@@ -54,8 +55,12 @@ class OfficeStatusVariableResolverTest {
 
     @BeforeEach
     void setUp() {
+        // StatusDayResolver MOCK'LANMIYOR: o bir karar nesnesi, sahtesi verilirse asagidaki
+        // testlerin hepsinde resolve() stub'lamak gerekir ve testler gun mantigini degil
+        // stub'i dogrulamis olur. Takvim bagimliligi zaten TodayStatusService mock'uyla
+        // kesiliyor.
         resolver = new OfficeStatusVariableResolver(
-                directoryService, departmentService, todayStatusService);
+                directoryService, departmentService, new StatusDayResolver(todayStatusService));
         // Mock'lar disarida kurulur: when(...) argumani icinde mock stub'lamak Mockito'da
         // "UnfinishedStubbing" hatasi verir.
         List<DepartmentResponse> departments = List.of(

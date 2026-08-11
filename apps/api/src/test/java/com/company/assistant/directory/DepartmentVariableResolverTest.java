@@ -1,6 +1,7 @@
 package com.company.assistant.directory;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -9,6 +10,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +21,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.schedule.StatusDayResolver;
+import com.company.assistant.schedule.TodayStatusService;
 
 /**
  * A-18 (#127): departman iletisim bilgisi. Odak: departman eslestirme, anlasilmayan
@@ -26,16 +31,26 @@ import com.company.assistant.common.PagedResponse;
 @ExtendWith(MockitoExtension.class)
 class DepartmentVariableResolverTest {
 
+    /** Sabit referans: gun cikarimi takvime bagli olmasin (bkz. StatusDayResolverTest). */
+    private static final LocalDate TODAY = LocalDate.of(2026, 8, 1).with(DayOfWeek.MONDAY);
+
     @Mock
     private DepartmentService departmentService;
     @Mock
     private DirectoryService directoryService;
+    @Mock
+    private TodayStatusService todayStatusService;
 
     private DepartmentVariableResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new DepartmentVariableResolver(departmentService, directoryService);
+        // StatusDayResolver gercegi veriliyor (bkz. OfficeStatusVariableResolverTest'teki
+        // ayni gerekce); takvim bagimliligi TodayStatusService mock'uyla kesiliyor.
+        resolver = new DepartmentVariableResolver(
+                departmentService, directoryService, new StatusDayResolver(todayStatusService));
+        lenient().when(todayStatusService.today()).thenReturn(TODAY);
+        lenient().when(todayStatusService.currentWeekStart()).thenReturn(TODAY);
     }
 
     @Test
@@ -280,10 +295,52 @@ class DepartmentVariableResolverTest {
         whenEmployeeSearch(department, null, data, total);
     }
 
+    // --- A-40 (#209): departman listesinde gun ---
+
+    /**
+     * Olculdu (elle test): "muhasebe departmanında çarşamba günü ofiste olanlar kimler"
+     * sorusuna BUGUNUN listesi donuyordu. Dolu liste, dogru format, yanlis gun.
+     *
+     * <p>Stub bilerek {@code wednesday} anahtarina bagli (referans gun Pazartesi).
+     */
+    @Test
+    void sorulanGununListesiDoner() {
+        seedDepartments();
+        whenEmployeeSearchOnDay("Muhasebe ve Finans", "Ofiste", "wednesday",
+                List.of(employee("Ayse Kaya", "Ofiste")), 1);
+
+        String reply = resolver.resolve("rehber_departman",
+                        "muhasebe departmanında çarşamba günü ofiste olanlar kimler")
+                .get("departman_bilgisi");
+
+        assertThat(reply).contains("Çarşamba").contains("Ayse Kaya");
+    }
+
+    // A-37 deseni: tarih ifadesi VAR ama cozulemedi -> bugune dusulmez, sorgu hic atilmaz.
+    @Test
+    void cozulemeyenTarihBugunuDondurmez() {
+        seedDepartments();
+
+        String reply = resolver.resolve("rehber_departman",
+                        "muhasebe departmanında ağustos ofiste olanlar")
+                .get("departman_bilgisi");
+
+        assertThat(reply).contains("Hangi günü sorduğunu");
+        verifyNoInteractions(directoryService);
+    }
+
+    private void whenEmployeeSearchOnDay(String department, String status, String day,
+                                         List<EmployeeResponse> data, long total) {
+        when(directoryService.searchEmployees(isNull(), eq(department), eq(status),
+                eq(day), eq(0), anyInt()))
+                .thenReturn(new PagedResponse<>(data, 0, 25, total));
+    }
+
     private void whenEmployeeSearch(String department, String status,
                                     List<EmployeeResponse> data, long total) {
+        // A-40: gun parametresi any() — gun belirtilmeyen testlerde bugunun anahtari gelir.
         when(directoryService.searchEmployees(isNull(), eq(department),
-                status == null ? isNull() : eq(status), eq(0), anyInt()))
+                status == null ? isNull() : eq(status), any(), eq(0), anyInt()))
                 .thenReturn(new PagedResponse<>(data, 0, 25, total));
     }
 
