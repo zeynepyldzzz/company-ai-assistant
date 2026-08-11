@@ -28,6 +28,10 @@ const ACTION_ROUTES: Record<string, string> = {
   // Intent'in varsayilan butonu calisan listesine goturuyordu; hedefi resolver secince
   // burada da karsiligi gerekti.
   my_schedule: "/my-schedule",
+  // A-39: sifre degistirme yonlendirmesi. Chatbot dinamik veri uretmiyor, yalnizca ekrani
+  // gosteriyor — bu yuzden intent'in kendi butonu (intents.action_target), resolver
+  // override'i degil.
+  change_password: "/change-password",
   dashboard: "/",
 };
 

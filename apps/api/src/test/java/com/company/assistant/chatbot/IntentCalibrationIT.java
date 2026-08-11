@@ -228,7 +228,18 @@ class IntentCalibrationIT {
             new Case("Ayşe Kaya hangi departmanda", "rehber_kisi",
                     "0.567 — kural: calisan adi + bilgi sorusu"),
             new Case("Mehmet Demir hangi bölümde çalışıyor", "rehber_kisi",
-                    "0.661 — en yakini AYNI KISININ baska cumlesiydi"));
+                    "0.661 — en yakini AYNI KISININ baska cumlesiydi"),
+
+            // --- A-39 (#212): sayim ve sifre degistirme (V54) ---
+            new Case("toplam kaç çalışan var", "sayim", "mevcut kadro — durum sayimi DEGIL"),
+            new Case("kaç departman var", "sayim", "departman sayisi"),
+            new Case("şifremi nasıl değiştiririm", "sifre_degistirme", "yonlendirme + buton"),
+            // KRITIK NOBETCI: durum sayimi calisma_duzeni'nde KALMALI. "sayim" intent'i
+            // anlamca komsu; ornekleri bilerek durum kelimesi icermiyor ama ayrimin gercekten
+            // tuttugunu olcmek gerekiyor. Bu vaka kirilirsa sayim ornekleri geri alinmali.
+            new Case("kaç kişi ofiste", "calisma_duzeni",
+                    "NOBETCI — durum sayimi sayim intent'ine KAYMAMALI"),
+            new Case("kaç kişi uzaktan", "calisma_duzeni", "NOBETCI — durum sayimi"));
 
     @Autowired
     private IntentClassificationService service;
