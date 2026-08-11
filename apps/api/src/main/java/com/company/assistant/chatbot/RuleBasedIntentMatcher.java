@@ -71,7 +71,13 @@ public class RuleBasedIntentMatcher {
      * eslesmesi.
      */
     private static final Set<String> GREETING_SHORTHANDS =
-            Set.of("sa", "slm", "slmlr", "mrb", "mrhb");
+            Set.of("sa", "slm", "slmlr", "mrb", "mrhb",
+                    // A-40 ikinci tur: "napion" 0.596 -> V52 ornekleriyle 0.649'a cikti ama
+                    // esigi (0.68) gecemedi. Olculdu — en yakin komsu artik DOGRU cumle
+                    // ("naptın"), yani seed yone calisti; yetmeyen sey genelleme. Agir
+                    // kisaltmalar "sa" ile ayni sinifta: embedding'in tutunacagi sinyal yok.
+                    // Daha fazla ornek eklemek "Hatlar" duvarina carpar.
+                    "napion", "napiyon", "napiosun");
 
     /**
      * A-37 (#203): ACIK TARIH + alan kelimesi. Bu kalip embedding'e birakilamaz.

@@ -451,7 +451,11 @@ class RuleBasedIntentMatcherTest {
      */
     @Test
     void selamlamaKisaltmalariSelamlamayaGider() {
-        for (String kisaltma : List.of("sa", "SA", "slm", "mrb", "s.a.", "sa!")) {
+        for (String kisaltma : List.of("sa", "SA", "slm", "mrb", "s.a.", "sa!",
+                // A-40 ikinci tur: V52 ornekleri "napion"u 0.649'a cikardi ama esigi
+                // gecemedi ve en yakin komsu zaten dogru cumleydi — sorun ornek eksikligi
+                // degil, kisaltmanin sinyal tasimamasi.
+                "napion", "napıyon", "napiosun")) {
             assertThat(matcher.match(kisaltma))
                     .as("kısaltma '%s'", kisaltma)
                     .isPresent()
@@ -505,7 +509,14 @@ class RuleBasedIntentMatcherTest {
         assertThat(matcher.match("Finans").get().intent()).isEqualTo("rehber_departman");
     }
 
-    // Olculdu: "kadiköy" 0.449. Departmanla ayni desen, servis tarafinda.
+    /**
+     * Departmanla ayni desen, servis tarafinda.
+     *
+     * <p>Durak adi burada MOCK: seedShuttle "Kadikoy Iskele" veriyor. Gercek seed'de Kadikoy
+     * duragi YOK (B-22 / V42-V43 ile hatlar Izmir'e tasindi) — olcumdeki "kadiköy" 0.449
+     * sorgusu var olmayan bir duragi soruyor ve eslesmemesi DOGRU. Kuralin gercek veriyle
+     * calistigi IntentCalibrationIT'de "Bornova" vakasiyla dogrulaniyor.
+     */
     @Test
     void sirfDurakAdiGuzergahIntentineGider() {
         seedDepartments();
