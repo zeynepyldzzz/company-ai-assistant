@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.schedule.StatusDayResolver;
 import com.company.assistant.common.TurkishText;
 
 /**
@@ -47,9 +48,14 @@ public class DepartmentVariableResolver {
      * kimler var"). A-20'de kisi yanitlarinda kullandigimiz alan tespiti deseni burada da gecerli:
      * sorulan sey belliyse ona gore yanit uretilir.
      *
-     * <p>Durum kelimesi ("ofiste", "uzaktan") iceren sorular BURAYA GELMEZ; onlar calisma_duzeni
-     * intent'ine ait ve OfficeStatusVariableResolver tarafindan durum filtresiyle yanitlanir.
-     * Ayrim kural katmaninda yapiliyor.
+     * <p>A-40 (#209) DUZELTMESI: bu yorum eskiden "durum kelimesi iceren sorular BURAYA
+     * GELMEZ" diyordu. Dogru degil ve yanlis guven veriyordu. Kural katmanindaki iki departman
+     * dalindan yalnizca IKINCISINDE durum kelimesi guard'i var; "muhasebe departmanında kimler
+     * ofiste" birinci dala ("departman adi") takilip buraya geliyor. Embedding tarafi da
+     * gonderiyor (olculdu: "Muhasebede kimler uzaktan çalışıyor" 0.742).
+     *
+     * <p>Bu yuzden durum filtresi ve GUN cikarimi burada birer savunma katmani degil, normal
+     * calisma yolu. Ikisi de {@link #employeeList} icinde uygulaniyor.
      */
     private static final List<String> EMPLOYEE_LIST_CUES =
             List.of("calisan", "kimler", "ekip", "personel", "kisiler", "olanlar");
@@ -90,11 +96,14 @@ public class DepartmentVariableResolver {
 
     private final DepartmentService departmentService;
     private final DirectoryService directoryService;
+    private final StatusDayResolver statusDayResolver;
 
     public DepartmentVariableResolver(DepartmentService departmentService,
-                                      DirectoryService directoryService) {
+                                      DirectoryService directoryService,
+                                      StatusDayResolver statusDayResolver) {
         this.departmentService = departmentService;
         this.directoryService = directoryService;
+        this.statusDayResolver = statusDayResolver;
     }
 
     public Map<String, String> resolve(String intentName, String message) {
@@ -136,11 +145,20 @@ public class DepartmentVariableResolver {
      * kalan sayi acikca yazilir.
      */
     private String employeeList(DepartmentResponse department, String foldedText) {
+        // A-40 (#209): gun cikarimi. Onceden hic yapilmiyordu ve "muhasebe departmanında
+        // çarşamba günü ofiste olanlar kimler" sorusuna BUGUNUN listesi donuyordu. Gun,
+        // durum filtresi olmasa bile onemli: filtresiz listede her satirda ofis durumu
+        // yaziliyor ve o deger de gune bagli.
+        StatusDayResolver.DayScope day = statusDayResolver.resolve(foldedText);
+        if (day.failed()) {
+            return day.message();
+        }
+
         String status = detectStatus(foldedText);
-        PagedResponse<EmployeeResponse> result =
-                directoryService.searchEmployees(null, department.getName(), status, 0, MAX_NAMES);
+        PagedResponse<EmployeeResponse> result = directoryService.searchEmployees(
+                null, department.getName(), status, day.dayKey(), 0, MAX_NAMES);
         if (result.data().isEmpty()) {
-            return department.getName() + " departmanında " + emptyLabel(status) + ".";
+            return day.prefix() + department.getName() + " departmanında " + emptyLabel(status) + ".";
         }
 
         // Durum filtresi varsa her satirda tekrar yazmak gereksiz — bilgi zaten baslikta.
@@ -152,7 +170,7 @@ public class DepartmentVariableResolver {
                 ? "\n• ve " + (result.total() - result.data().size()) + " kişi daha"
                 : "";
 
-        return header(department, status, result.total()) + "\n" + names + more;
+        return day.prefix() + header(department, status, result.total()) + "\n" + names + more;
     }
 
     /** Mesajdaki durum ipucu; yoksa null (tum calisanlar listelenir). */

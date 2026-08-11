@@ -178,7 +178,43 @@ class IntentCalibrationIT {
             // model onu bizim kastettigimiz anlama sabitleyemiyor. Eklenecek her ornek ayni
             // duvara carpar. Tek basina "Hatlar" gercek kullanimda marjinal ve eslesmedigi
             // durumda A-22 oneri chip'leri devreye giriyor.
-            new Case("Hatlar", NO_INTENT, "0.628 — kelime cok anlamli, kasitli olarak birakildi"));
+            new Case("Hatlar", NO_INTENT, "0.628 — kelime cok anlamli, kasitli olarak birakildi"),
+
+            // --- A-40 (#209): sirf varlik adi kurali (chat_message_log, 2026-08-11) ---
+            new Case("Muhasebe", "rehber_departman", "0.605 — kural: sadece departman adi"),
+            new Case("Finans", "rehber_departman", "0.504 — departman adinin IKINCI kelimesi"),
+            new Case("Bornova", "servis_guzergah", "kural: sadece durak adi"),
+            // Olcumde "kadiköy" 0.449 ile intent_bulunamadi donuyordu. O TARIHTE Kadikoy
+            // duragi VARDI (deneme amacli eklenmis rastgele hatlardan) ve sistem gercekten
+            // anlayamamisti. B-22 (V42/V43) hatlari Izmir'e tasiyip o duragi kaldirdi, yani
+            // sorgu artik konusuz. Bugun eslesmemesi DOGRU; kuralin gercek durak adlariyla
+            // calistigi yukaridaki "Bornova" vakasinda gorunuyor.
+            new Case("kadıköy", NO_INTENT, "durak artik listede yok — eslesmemeli"),
+
+            // --- A-40 (#209): selamlama kisaltmalari, kural katmani ---
+            // Ornek eklemek cozmezdi: V39'un bulgusu, iki harflik dizgede embedding'in
+            // tutunacagi anlamsal sinyal yok. TAM ESLESME kurali.
+            new Case("sa", "selamlama", "0.547 — log'da 7 kez; kural"),
+            new Case("slm", "selamlama", "kural"),
+            new Case("s.a.", "selamlama", "kural — noktalama temizleniyor"),
+
+            // --- A-40 (#209): V52/V53 ornekleri ---
+            new Case("hellan sana", "selamlama", "0.552 -> 0.709 — V52 ile gecti"),
+            // "acim" V53'te DOGRUDAN seed edildi (gerekcesi migration basliginda): duz Turkce
+            // bir cumleyi cevapsiz birakmak icin sebep yoktu. Dolayisiyla bu vaka artik
+            // GENELLEME OLCMUYOR, yalnizca regresyon nobetcisi — 1.000 beklenir.
+            new Case("açım", "yemek_menusu", "REGRESYON — V53'te ornek olarak seed edildi"),
+            // Genellemeyi olcen vaka bu: seed EDILMEMIS varyant. "acim"in seed edilmesi olcum
+            // butunlugunu bozmasin diye eklendi.
+            new Case("karnım acıktı", "yemek_menusu", "OLCUM — seed edilmemis aclik varyanti"),
+            // "napion" ailesi kural katmanina tasindi: V52 sonrasi 0.649'a cikti ama esigi
+            // gecemedi ve en yakin komsu zaten dogru cumleydi — yani sorun ornek eksikligi
+            // degil, agir kisaltmanin embedding'de sinyal tasimamasi ("sa" ile ayni sinif).
+            new Case("napion", "selamlama", "kural: selamlama kisaltmasi"),
+            new Case("napiosun", "selamlama", "kural: selamlama kisaltmasi"),
+            // OLCUM: uzun bicim kurala EKLENMEDI — V52'nin "ne yapıyorsun" ornegi bunu
+            // tasiyabiliyor mu, olcelim. FAIL donerse kural listesine o zaman eklenir.
+            new Case("Napiyorsun", "selamlama", "OLCUM — uzun bicim, embedding tasiyabiliyor mu"));
 
     @Autowired
     private IntentClassificationService service;

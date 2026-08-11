@@ -2,6 +2,8 @@ package com.company.assistant.chatbot;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -52,6 +54,30 @@ public class RuleBasedIntentMatcher {
     private static final String INTENT_DEPARTMENT = "rehber_departman";
     private static final String INTENT_MENU = "yemek_menusu";
     private static final String INTENT_SCHEDULE = "calisma_duzeni";
+    private static final String INTENT_GREETING = "selamlama";
+
+    /**
+     * A-40 (#209): selamlama kisaltmalari. Olculdu — "sa" (log'da 7 kez), "slm", "mrb" 0.547
+     * ile esigin altinda kaliyordu.
+     *
+     * <p><b>Ornek eklemek bunu COZMEZ.</b> V39'un (A-24) kendi bulgusu: "kisa girdi kendi
+     * kategorisinde kisa ornek bulamayinca, anlamdan bagimsiz olarak selamlama cumlelerine
+     * dusuyor — uzunluk benzerligi anlami bastiriyor". Iki harflik bir dizgede embedding'in
+     * tutunacagi anlamsal sinyal yok; hangi ornegi eklersek ekleyelim bu etkiden kurtulamaz.
+     *
+     * <p><b>Bu kelimeler {@code containsAny} ile ARANAMAZ.</b> Kural katmanindaki her sey
+     * alt-dize eslesmesiyle calisiyor ve "sa" alt-dize olarak "sabah", "saat", "sagol"
+     * icinde de gecer — her birinde selamlama tetiklenirdi. Kosul, mesajin TAMAMININ
+     * eslesmesi.
+     */
+    private static final Set<String> GREETING_SHORTHANDS =
+            Set.of("sa", "slm", "slmlr", "mrb", "mrhb",
+                    // A-40 ikinci tur: "napion" 0.596 -> V52 ornekleriyle 0.649'a cikti ama
+                    // esigi (0.68) gecemedi. Olculdu — en yakin komsu artik DOGRU cumle
+                    // ("naptın"), yani seed yone calisti; yetmeyen sey genelleme. Agir
+                    // kisaltmalar "sa" ile ayni sinifta: embedding'in tutunacagi sinyal yok.
+                    // Daha fazla ornek eklemek "Hatlar" duvarina carpar.
+                    "napion", "napiyon", "napiosun");
 
     /**
      * A-37 (#203): ACIK TARIH + alan kelimesi. Bu kalip embedding'e birakilamaz.
@@ -82,8 +108,15 @@ public class RuleBasedIntentMatcher {
     // --- Alan kelimeleri: kural yalnizca bunlardan biri gecerse devreye girer ---
     // "hat" BILEREK yok: alt-dize olarak "hata", "hatta", "rahat" gibi kelimeleri yakalar ve
     // her birinde bosuna guzergah/durak sorgusu atardi. "hatti" yeterince ayirt edici.
+    // A-40 (#209): "hatlar" eklendi — "hatti" vardi, cogulu gozden kacmisti.
+    //
+    // DIKKAT, bu ekleme tek basina "Hatlar" sorgusunu servis_guzergah'a GONDERMEZ: bu liste
+    // bir siniflandirici degil, varlik aramasinin kapisi. "Hatlar" tek basina yazildiginda
+    // mentionsShuttleEntity bir durak/hat adi bulamaz ve kural bos doner. Faydasi
+    // "kadıköy hatları" gibi VARLIK ADI + alan kelimesi tasiyan mesajlarda.
+    // Tek kelimelik "Hatlar" vakasi ornek tarafinda ele alindi (V39, A-24).
     private static final List<String> SHUTTLE_WORDS =
-            List.of("servis", "guzergah", "durak", "hatti");
+            List.of("servis", "guzergah", "durak", "hatti", "hatlar");
     private static final List<String> SHUTTLE_TIME_WORDS = List.of("saat", "kacta", "kalkis", "kalkiyor");
 
     /**
@@ -169,7 +202,12 @@ public class RuleBasedIntentMatcher {
     private static final List<String> GENERIC_WORDS = Stream.concat(
             Stream.of("servis", "servisi", "hat", "hatti", "yakasi", "iskele", "durak", "duragi",
                     "departman", "departmani", "birim", "bilgi", "bilgisi",
-                    "calisan", "calisanlar", "kisi", "kisiler", "personel"),
+                    "calisan", "calisanlar", "kisi", "kisiler", "personel",
+                    // A-40 (#209): durak adlarinda tekrar eden jenerik kelimeler. "iskele" ve
+                    // "yakasi" ayni sebeple zaten listedeydi. Bunlar olmadan "merkez" yazan biri
+                    // dort ayri duraga birden eslesir, "sirket" yazan biri de
+                    // "Yasarbilgi (Sirket Merkezi)" duragina — ikisi de durak sorusu degil.
+                    "merkez", "merkezi", "mahallesi", "metro", "sirket"),
             DateExpression.monthNames().stream()).toList();
 
     /**
@@ -249,6 +287,13 @@ public class RuleBasedIntentMatcher {
     public Optional<IntentClassificationService.IntentResult> match(String message) {
         String text = TurkishText.foldToAscii(message);
 
+        // A-40 (#209): mesajin TAMAMI bir selamlama kisaltmasi mi. En basta, cunku "tamami X"
+        // mumkun olan en spesifik kosul — onune baska kural koymanin anlami yok.
+        // Alfanumerik disi karakterler atiliyor: "s.a." ve "sa!" da selamlamadir.
+        if (GREETING_SHORTHANDS.contains(text.replaceAll("[^a-z0-9]", ""))) {
+            return rule(INTENT_GREETING, "selamlama kısaltması");
+        }
+
         if (PLATE.matcher(text).find()) {
             return rule(INTENT_SHUTTLE_ROUTE, "plaka");
         }
@@ -287,6 +332,18 @@ public class RuleBasedIntentMatcher {
         if (containsAny(text, PERSON_WORDS) && matchesEmployee(text)) {
             return rule(INTENT_PERSON, "çalışan adı");
         }
+        // A-40 (#209): sirf varlik adindan ibaret mesajlar. Departman once: adlari tek
+        // sorguyla geliyor, durak/hat icin iki sorgu gerekiyor (rota + duraklar).
+        //
+        // Ayri bir DURUM kelimesi guard'i gerekmiyor: kural tek kelimelik mesajlarla sinirli,
+        // dolayisiyla "muhasebe ofiste" gibi durum sorulari zaten disarida kaliyor. Tek
+        // kelimelik durum kelimesi ("ofiste") ise nameTokens tarafindan eleniyor.
+        if (isBareEntityName(text, departmentService::getDepartmentNames)) {
+            return rule(INTENT_DEPARTMENT, "sadece departman adı");
+        }
+        if (isBareEntityName(text, this::shuttleEntityNames)) {
+            return rule(INTENT_SHUTTLE_ROUTE, "sadece durak/hat adı");
+        }
         // Asagidaki uc dal yalnizca TEKIL kisi sorulari icindir: "kimler ofiste" bir liste
         // sorusudur ve calisma_duzeni'nde kalmalidir (A-14 rehber kaynakli yanit). Guard
         // disarida duruyor ki hicbir dal onu atlamasin — ve liste sorularinda DB'ye hic
@@ -314,11 +371,73 @@ public class RuleBasedIntentMatcher {
      * kisa devre olur, "deniz" gercek bir calisan adi olsa bile). Kelime siniri da var:
      * uzun cumlelerde zaten alan kelimesi bulunur, orada bu dala ihtiyac yok.
      */
+    /**
+     * A-40 (#209): mesaj SIRF bir departman ya da durak adindan mi ibaret ("Muhasebe",
+     * "Finans", "kadıköy"). Olculdu: sirasiyla 0.605 / 0.504 / 0.449 ile intent_bulunamadi.
+     *
+     * <p>{@link #isBareEmployeeName} ile ayni fikir, farkli kaynak — o yuzden varlik listesi
+     * disaridan geliyor. Kosul sert: anlamli kelimelerin TAMAMI tek bir varligin adinda
+     * gecmeli. "muhasebede kimler var" bu kurala takilmaz, cunku "kimler" hicbir departman
+     * adinin parcasi degil (ve zaten yukaridaki roster dali onu once yakalar).
+     *
+     * <p><b>YALNIZCA tek kelimelik mesajlar.</b> Cok kelimeliye acmak, bu sinifin iki asamali
+     * tetikleme korumasini varlik sorgulari icin tamamen kaldirirdi: alan kelimesi tasimayan
+     * her kisa mesajda ("canım sıkıldı") departman + rota + durak sorgusu atilirdi. Kisi
+     * tarafinda A-20 bu takasi bilerek yapmisti ama orada bedel 1-3 ucuz varlik kontrolu;
+     * burada tum durak listesinin cekilmesi.
+     *
+     * <p>Olculmus uc vakanin da (Muhasebe, Finans, kadikoy) tek kelimelik olmasi bu daralmayi
+     * bedava kiliyor. Cok kelimeli varlik adlari ("kadıköy iskele") olculmedi; ihtiyac
+     * gorulurse ayri ele alinir.
+     *
+     * <p>Liste {@link Supplier} olarak aliniyor ki kelime sayisi kontrolunden gecmeyen
+     * mesajlarda sorgu HIC atilmasin.
+     */
+    private boolean isBareEntityName(String text, Supplier<List<String>> entityNames) {
+        if (words(text).size() != 1) {
+            return false;
+        }
+        List<String> tokens = nameTokens(text, MIN_SHORT_NAME_LENGTH);
+        if (tokens.isEmpty()) {
+            return false;
+        }
+        return entityNames.get().stream().anyMatch(name -> nameWords(name).containsAll(tokens));
+    }
+
+    /** Varlik adinin ayirt edici kelimeleri; {@link #mentionsName} ile ayni eleme. */
+    private List<String> nameWords(String name) {
+        if (name == null) {
+            return List.of();
+        }
+        return List.of(TurkishText.foldToAscii(name).split("[^a-z0-9]+")).stream()
+                .filter(word -> !word.isEmpty())
+                .filter(word -> !GENERIC_WORDS.contains(word))
+                .toList();
+    }
+
+    private List<String> shuttleEntityNames() {
+        List<ShuttleRouteResponse> routes = shuttleService.getAllRoutes();
+        if (routes.isEmpty()) {
+            return List.of();
+        }
+        return Stream.concat(
+                routes.stream().map(ShuttleRouteResponse::getName),
+                shuttleService.getStopsByRoutes(routes.stream().map(ShuttleRouteResponse::getId).toList())
+                        .values().stream()
+                        .flatMap(List::stream)
+                        .map(ShuttleStopResponse::getName)).toList();
+    }
+
+    /**
+     * Tek kelimelik mesajda alan kelimesi OLAMAZ, dolayisiyla iki asamali tetiklemenin
+     * korumasi da yok; yerine "baska yorum yok" gercegi geciyor ve sinir orada gevser.
+     */
+    private int minNameTokenLength(String text) {
+        return words(text).size() == 1 ? MIN_SHORT_NAME_LENGTH : MIN_TOKEN_LENGTH;
+    }
+
     private boolean isBareEmployeeName(String text) {
-        // Tek kelimelik mesajda alan kelimesi OLAMAZ, dolayisiyla iki asamali tetiklemenin
-        // korumasi da yok; yerine "baska yorum yok" gercegi geciyor ve sinir orada gevser.
-        int minLength = words(text).size() == 1 ? MIN_SHORT_NAME_LENGTH : MIN_TOKEN_LENGTH;
-        List<String> tokens = nameTokens(text, minLength);
+        List<String> tokens = nameTokens(text, minNameTokenLength(text));
         return !tokens.isEmpty()
                 && tokens.size() <= BARE_NAME_MAX_TOKENS
                 && tokens.stream().allMatch(directoryService::existsActiveEmployeeNamed);

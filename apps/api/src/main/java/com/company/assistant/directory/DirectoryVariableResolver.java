@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.company.assistant.common.TurkishText;
+import com.company.assistant.schedule.StatusDayResolver;
 
 /**
  * A-15 (#117): 'rehber_kisi' intent'i icin kisi arama yaniti uretir.
@@ -86,9 +87,12 @@ public class DirectoryVariableResolver {
             List.of("ofiste", "uzaktan", "izinde", "izinli", "evden", "durumu", "nerede");
 
     private final DirectoryService directoryService;
+    private final StatusDayResolver statusDayResolver;
 
-    public DirectoryVariableResolver(DirectoryService directoryService) {
+    public DirectoryVariableResolver(DirectoryService directoryService,
+                                     StatusDayResolver statusDayResolver) {
         this.directoryService = directoryService;
+        this.statusDayResolver = statusDayResolver;
     }
 
     public Map<String, String> resolve(String intentName, String message) {
@@ -102,7 +106,22 @@ public class DirectoryVariableResolver {
             return Map.of(VARIABLE, NO_NAME);
         }
 
-        List<EmployeeResponse> candidates = findCandidates(tokens);
+        // A-40 (#209): gun cikarimi. Onceden hic yapilmiyordu — "ayşe kaya çarşamba ofiste mi"
+        // sorusuna BUGUNUN durumu donuyordu, ustelik "şu an" diyerek. Tek satirlik, kendinden
+        // emin bir cevap; kullanicinin supheye dusmesi icin hicbir isaret yoktu.
+        //
+        // Cikarim YALNIZCA durum sorusunda yapiliyor: telefon/e-posta sorusuna uygulansaydi
+        // "ayşe kaya ağustos telefonu" gibi bir mesajda cozulemeyen tarih yuzunden telefon
+        // cevabi bloklanirdi — oysa soru gunle ilgili degil.
+        Field field = detectField(foldedText);
+        StatusDayResolver.DayScope day = field == Field.OFFICE_STATUS
+                ? statusDayResolver.resolve(foldedText)
+                : StatusDayResolver.DayScope.notAsked();
+        if (day.failed()) {
+            return Map.of(VARIABLE, day.message());
+        }
+
+        List<EmployeeResponse> candidates = findCandidates(tokens, day.dayKey());
         if (candidates.isEmpty()) {
             return Map.of(VARIABLE, NOT_FOUND);
         }
@@ -121,7 +140,7 @@ public class DirectoryVariableResolver {
         if (winners.size() > 1) {
             return Map.of(VARIABLE, ambiguityQuestion(winners));
         }
-        return Map.of(VARIABLE, answerFor(winners.get(0), detectField(foldedText)));
+        return Map.of(VARIABLE, answerFor(winners.get(0), field, day.prefix()));
     }
 
     /**
@@ -148,7 +167,7 @@ public class DirectoryVariableResolver {
         return cues.stream().anyMatch(foldedText::contains);
     }
 
-    private String answerFor(EmployeeResponse employee, Field field) {
+    private String answerFor(EmployeeResponse employee, Field field, String dayPrefix) {
         if (field == null) {
             return employeeCard(employee);
         }
@@ -165,7 +184,11 @@ public class DirectoryVariableResolver {
                     + "Rehberdeki bilgileri:\n" + employeeCard(employee);
         }
         if (field == Field.OFFICE_STATUS) {
-            return employee.getName() + " şu an " + value + " görünüyor.";
+            // A-40 (#209): gun soruldugunda "şu an" YANLIS olur — yanit baska bir gunun
+            // durumunu gosteriyor. Onceki hali hem yanlis gunu donduruyor hem de onu
+            // "şu an" diye sunuyordu; kullanicinin fark etmesi imkansizdi.
+            return employee.getName() + " " + (dayPrefix.isEmpty() ? "şu an " : dayPrefix)
+                    + value + " görünüyor.";
         }
         return employee.getName() + " — " + field.label + ": " + value;
     }
@@ -180,10 +203,10 @@ public class DirectoryVariableResolver {
 
     // Her aday kelime icin rehber sorgusu; tum calisanlari cekip bellekte aramak yerine
     // mevcut LIKE sorgusu kullanilir (buyuk rehberde her mesajda tam tablo cekilmez).
-    private List<EmployeeResponse> findCandidates(List<String> tokens) {
+    private List<EmployeeResponse> findCandidates(List<String> tokens, String dayKey) {
         Map<Integer, EmployeeResponse> byId = new LinkedHashMap<>();
         for (String token : tokens) {
-            directoryService.searchEmployees(token, null, null, 0, MAX_CANDIDATES).data()
+            directoryService.searchEmployees(token, null, null, dayKey, 0, MAX_CANDIDATES).data()
                     .forEach(employee -> byId.putIfAbsent(employee.getId(), employee));
         }
         return new ArrayList<>(byId.values());

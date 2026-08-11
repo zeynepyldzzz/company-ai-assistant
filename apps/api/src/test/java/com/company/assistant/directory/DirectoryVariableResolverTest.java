@@ -1,6 +1,7 @@
 package com.company.assistant.directory;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -9,6 +10,8 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +22,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.company.assistant.common.PagedResponse;
+import com.company.assistant.schedule.StatusDayResolver;
+import com.company.assistant.schedule.TodayStatusService;
 
 /**
  * A-15 (#117): kisi arama. Odak, issue'nun is kurallari: ad/soyad/tam ad eslesmesi,
@@ -27,16 +32,28 @@ import com.company.assistant.common.PagedResponse;
 @ExtendWith(MockitoExtension.class)
 class DirectoryVariableResolverTest {
 
+    /** Sabit referans: gun cikarimi takvime bagli olmasin (bkz. StatusDayResolverTest). */
+    private static final LocalDate TODAY = LocalDate.of(2026, 8, 1).with(DayOfWeek.MONDAY);
+
     @Mock
     private DirectoryService directoryService;
+    @Mock
+    private TodayStatusService todayStatusService;
 
     private DirectoryVariableResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new DirectoryVariableResolver(directoryService);
+        // StatusDayResolver gercegi veriliyor (bkz. OfficeStatusVariableResolverTest'teki
+        // ayni gerekce); takvim bagimliligi TodayStatusService mock'uyla kesiliyor.
+        resolver = new DirectoryVariableResolver(
+                directoryService, new StatusDayResolver(todayStatusService));
+        lenient().when(todayStatusService.today()).thenReturn(TODAY);
+        lenient().when(todayStatusService.currentWeekStart()).thenReturn(TODAY);
         // Varsayilan: hicbir kelime kimseyle eslesmez; testler kendi eslesmesini ekler.
-        lenient().when(directoryService.searchEmployees(anyString(), isNull(), isNull(), anyInt(), anyInt()))
+        // A-40: gun parametresi any() — durum sorusunda cozulmus gun, digerlerinde null gelir.
+        lenient().when(directoryService.searchEmployees(
+                anyString(), isNull(), isNull(), any(), anyInt(), anyInt()))
                 .thenReturn(empty());
     }
 
@@ -189,8 +206,60 @@ class DirectoryVariableResolverTest {
         assertThat(vars.get("kisi_bilgisi")).doesNotContain("hr_admin");
     }
 
+    // --- A-40 (#209): kisi durumunda gun ---
+
+    /**
+     * Olculdu (elle test): "ayşe kaya çarşamba ofiste mi" sorusuna BUGUNUN durumu donuyordu,
+     * ustelik "şu an" diyerek. Tek satirlik, kendinden emin bir cevap — kullanicinin supheye
+     * dusmesi icin hicbir isaret yoktu.
+     *
+     * <p>Stub bilerek {@code wednesday} anahtarina bagli (referans gun Pazartesi): resolver
+     * eskisi gibi bugunu sorarsa stub eslesmez ve test patlar.
+     */
+    @Test
+    void kisiDurumuSorulanGundenOkunur() {
+        whenSearchOnDay("wednesday", "kaya",
+                employee(1, "Ayse Kaya", "BT", "1234", "ayse@x.com", "Uzaktan"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "ayşe kaya çarşamba ofiste mi");
+
+        assertThat(vars.get("kisi_bilgisi"))
+                .contains("Çarşamba")
+                .contains("Uzaktan")
+                .doesNotContain("şu an");
+    }
+
+    // NOBETCI: gun belirtilmemisse metin eskisi gibi "şu an" der ve bugunu gosterir.
+    @Test
+    void gunBelirtilmezseSuAnIfadesiKorunur() {
+        whenSearch("kaya", employee(1, "Ayse Kaya", "BT", "1234", "ayse@x.com", "Ofiste"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "ayşe kaya ofiste mi");
+
+        assertThat(vars.get("kisi_bilgisi")).contains("şu an Ofiste");
+    }
+
+    /**
+     * KRITIK NOBETCI: gun cikarimi YALNIZCA durum sorusunda calisir. Telefon sorusuna da
+     * uygulansaydi, cozulemeyen tarih ("agustos") yuzunden telefon cevabi bloklanirdi —
+     * oysa soru gunle ilgili degil.
+     */
+    @Test
+    void tarihCozulemese_bileAlanSorusuCevaplanir() {
+        whenSearch("kaya", employee(1, "Ayse Kaya", "BT", "1234", "ayse@x.com", "Ofiste"));
+
+        Map<String, String> vars = resolver.resolve("rehber_kisi", "ayşe kaya ağustos telefonu");
+
+        assertThat(vars.get("kisi_bilgisi")).contains("1234");
+    }
+
     private void whenSearch(String token, EmployeeResponse... employees) {
-        when(directoryService.searchEmployees(eq(token), isNull(), isNull(), eq(0), anyInt()))
+        when(directoryService.searchEmployees(eq(token), isNull(), isNull(), any(), eq(0), anyInt()))
+                .thenReturn(new PagedResponse<>(List.of(employees), 0, 25, employees.length));
+    }
+
+    private void whenSearchOnDay(String day, String token, EmployeeResponse... employees) {
+        when(directoryService.searchEmployees(eq(token), isNull(), isNull(), eq(day), eq(0), anyInt()))
                 .thenReturn(new PagedResponse<>(List.of(employees), 0, 25, employees.length));
     }
 

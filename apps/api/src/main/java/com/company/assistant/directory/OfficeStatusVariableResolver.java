@@ -1,11 +1,6 @@
 package com.company.assistant.directory;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -13,11 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.company.assistant.common.DateExpression;
-import com.company.assistant.common.DayExpression;
 import com.company.assistant.common.PagedResponse;
 import com.company.assistant.common.TurkishText;
-import com.company.assistant.schedule.TodayStatusService;
+import com.company.assistant.schedule.StatusDayResolver;
 
 /**
  * A-14 (#115): "kimler ofiste / kimler uzaktan" sorulari icin rehber kaynakli yanit uretir.
@@ -69,37 +62,20 @@ public class OfficeStatusVariableResolver {
      */
     private static final Pattern COMPANY_WIDE = Pattern.compile("\\b(sirket|tum|butun|herkes)");
 
-    /**
-     * A-38 (#207): gun cikarimi eklenince gereken mesajlar. ScheduleVariableResolver'daki
-     * karsiliklariyla ayni ayrimi yapiyorlar; metinler bilerek kopya degil, cunku burada soru
-     * BASKALARI hakkinda ("sorduğun gün" / "çalışma düzenin" farki).
-     */
-    private static final String UNRESOLVED_DATE =
-            "Hangi günü sorduğunu tam anlayamadım. \"bugün\", \"yarın\" ya da \"çarşamba\" "
-                    + "gibi yazabilirsin.";
-    private static final String ONLY_CURRENT_WEEK =
-            "Şu an yalnızca içinde bulunduğumuz haftanın durumunu görebiliyorum.";
-    private static final String WEEKEND =
-            "Çalışma düzeni yalnızca Pazartesi-Cuma günleri için tanımlanıyor; sorduğun gün "
-                    + "hafta sonuna denk geliyor.";
-
-    private static final DateTimeFormatter DATE_FMT =
-            DateTimeFormatter.ofPattern("dd.MM.yyyy", new Locale("tr"));
-
     // Tek departman listesi icin ust sinir; asilirsa "ve N kisi daha" ile kesilir.
     private static final int MAX_NAMES = 25;
     private static final int MAX_DEPARTMENTS = 100;
 
     private final DirectoryService directoryService;
     private final DepartmentService departmentService;
-    private final TodayStatusService todayStatusService;
+    private final StatusDayResolver statusDayResolver;
 
     public OfficeStatusVariableResolver(DirectoryService directoryService,
                                         DepartmentService departmentService,
-                                        TodayStatusService todayStatusService) {
+                                        StatusDayResolver statusDayResolver) {
         this.directoryService = directoryService;
         this.departmentService = departmentService;
-        this.todayStatusService = todayStatusService;
+        this.statusDayResolver = statusDayResolver;
     }
 
     /**
@@ -131,30 +107,16 @@ public class OfficeStatusVariableResolver {
         // dolu bir liste, dogru formatta, yanlis gun. Kullanicinin fark etmesinin yolu yok.
         // Ayni yapisal hata A-37'de menu ve calisma duzeni resolver'larinda duzeltilmisti;
         // burasi ucuncu kardesiydi.
-        LocalDate today = todayStatusService.today();
-        Optional<LocalDate> resolved = DayExpression.resolveTargetDay(foldedText, today);
-        if (resolved.isEmpty()) {
-            // Tarih ifadesi VAR ama cozulemedi -> bugune dusulmez, durum acikca soylenir.
-            return UNRESOLVED_DATE;
+        // A-40 (#209): karar StatusDayResolver'a tasindi — ayni blok DepartmentVariable ve
+        // DirectoryVariable resolver'larina da gerekiyordu ve ucuncu kopya, A-37'de iki
+        // resolver'da birden yasayan hatanin uretilme bicimiydi.
+        StatusDayResolver.DayScope day = statusDayResolver.resolve(foldedText);
+        if (day.failed()) {
+            // Gun anlasilamadi / kapsam disi -> sorgu HIC calistirilmaz, bugune dusulmez.
+            return day.message();
         }
-        LocalDate target = resolved.get();
-
-        // statusesForDay yalnizca icinde bulunulan haftayi okuyor (schedule_day + weekStart);
-        // disina tasan bir gun icin sessizce bu haftadan bir gun gostermek yanlis cevaptir.
-        LocalDate weekStart = todayStatusService.currentWeekStart();
-        if (target.isBefore(weekStart) || target.isAfter(weekStart.plusDays(6))) {
-            return ONLY_CURRENT_WEEK;
-        }
-        if (target.getDayOfWeek() == DayOfWeek.SATURDAY || target.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            return WEEKEND;
-        }
-
-        String dayKey = target.getDayOfWeek().name().toLowerCase(Locale.ROOT);
-        // Gun ACIKCA soruldugunda yanit hangi gunu gosterdigini SOYLEMELI — issue'nun tespiti
-        // tam olarak buydu. Gun belirtilmemisse metin aynen eskisi gibi kalir.
-        String dayPrefix = mentionsDay(foldedText)
-                ? TurkishText.dayName(target.getDayOfWeek()) + " (" + target.format(DATE_FMT) + ") günü "
-                : "";
+        String dayKey = day.dayKey();
+        String dayPrefix = day.prefix();
 
         String status = resolveStatus(foldedText);
         String department = departmentFromMessage(foldedText);
@@ -194,16 +156,6 @@ public class OfficeStatusVariableResolver {
                 + names + more + "\n\n" + companySentence(status, companyTotal);
     }
 
-    /**
-     * Mesajda gun BELIRTILMIS mi. {@link DayExpression#hasSingleDayCue} goreli ifadeleri ve
-     * hafta gunu adlarini, {@link DateExpression#mentionsDate} acik tarihleri kapsar.
-     *
-     * <p>Yalnizca yanit metnini etkiler: gun belirtilmemisse ("kimler ofiste") yanit eskisi
-     * gibi kalir, cunku orada bugun ZATEN dogru cevaptir ve gunu yazmak gurultudur.
-     */
-    private boolean mentionsDay(String foldedText) {
-        return DayExpression.hasSingleDayCue(foldedText) || DateExpression.mentionsDate(foldedText);
-    }
 
     /**
      * Sirket geneli liste. Departman kapsamli daldan ayri bir metot: orada departman adi
