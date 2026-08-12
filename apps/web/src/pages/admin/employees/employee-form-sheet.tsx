@@ -9,6 +9,7 @@ import type {
   Employee,
 } from "@company/shared";
 import { Button } from "@/components/ui/button";
+import { FIELD_LIMITS } from "@/lib/field-limits";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -178,6 +179,7 @@ export function EmployeeFormSheet({
               <Label htmlFor="employee-first-name">Ad</Label>
               <Input
                 id="employee-first-name"
+                maxLength={FIELD_LIMITS.employeeFirstName}
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
               />
@@ -186,6 +188,7 @@ export function EmployeeFormSheet({
               <Label htmlFor="employee-last-name">Soyad</Label>
               <Input
                 id="employee-last-name"
+                maxLength={FIELD_LIMITS.employeeLastName}
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
               />
@@ -197,6 +200,7 @@ export function EmployeeFormSheet({
             <Input
               id="employee-email"
               type="email"
+              maxLength={FIELD_LIMITS.employeeEmail}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
@@ -210,7 +214,7 @@ export function EmployeeFormSheet({
             <Input
               id="employee-phone"
               inputMode="tel"
-              maxLength={20}
+              maxLength={FIELD_LIMITS.employeePhone}
               placeholder="0532 111 22 33 veya 1005"
               value={phone ?? ""}
               onChange={(event) => setPhone(event.target.value.replace(/[^\d\s()+-]/g, ""))}

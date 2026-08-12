@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FIELD_LIMITS } from "@/lib/field-limits";
 import {
   Sheet,
   SheetContent,
@@ -101,6 +102,7 @@ export function AnnouncementEditSheet({ announcement }: { announcement: Announce
             <Label htmlFor="announcement-edit-title">Başlık</Label>
             <Input
               id="announcement-edit-title"
+              maxLength={FIELD_LIMITS.announcementTitle}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
             />
@@ -110,6 +112,7 @@ export function AnnouncementEditSheet({ announcement }: { announcement: Announce
             <Label htmlFor="announcement-edit-content">İçerik</Label>
             <Textarea
               id="announcement-edit-content"
+              maxLength={FIELD_LIMITS.announcementContent}
               value={content}
               onChange={(event) => setContent(event.target.value)}
               rows={5}

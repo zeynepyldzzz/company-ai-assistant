@@ -5,6 +5,7 @@ import { Plus, Pencil } from "lucide-react";
 import type { AdminDepartmentRequest, Department, Employee } from "@company/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FIELD_LIMITS } from "@/lib/field-limits";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -103,13 +104,19 @@ export function DepartmentFormSheet({
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">
           <div className="space-y-1.5">
             <Label htmlFor="department-name">Ad</Label>
-            <Input id="department-name" value={name} onChange={(event) => setName(event.target.value)} />
+            <Input
+              id="department-name"
+              maxLength={FIELD_LIMITS.departmentName}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="department-resp">Sorumluluklar</Label>
             <Input
               id="department-resp"
+              maxLength={FIELD_LIMITS.departmentResponsibilities}
               value={responsibilities ?? ""}
               onChange={(event) => setResponsibilities(event.target.value)}
             />
