@@ -26,6 +26,7 @@ import com.company.assistant.hr.HrProcedureVariableResolver;
 import com.company.assistant.menu.MenuVariableResolver;
 import com.company.assistant.announcement.AnnouncementVariableResolver;
 import com.company.assistant.directory.CountVariableResolver;
+import com.company.assistant.vehicle.VehicleVariableResolver;
 import com.company.assistant.directory.DepartmentVariableResolver;
 import com.company.assistant.directory.DirectoryVariableResolver;
 import com.company.assistant.survey.SurveyVariableResolver;
@@ -55,6 +56,8 @@ class ChatMessageServiceTest {
     private DepartmentVariableResolver departmentVariableResolver;
     @Mock
     private CountVariableResolver countVariableResolver;
+    @Mock
+    private VehicleVariableResolver vehicleVariableResolver;
     @Mock
     private AnnouncementVariableResolver announcementVariableResolver;
     @Mock
