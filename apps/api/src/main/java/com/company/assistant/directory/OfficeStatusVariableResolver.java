@@ -24,9 +24,13 @@ import com.company.assistant.schedule.StatusDayResolver;
  * sorulduğu da mesajdan cikariliyor; B-32'de (#204) gelen {@code day} parametresi bu sinifin
  * sorgularina da baglandi — servis yeniden yazilmadi, var olan uc kullanildi.
  *
- * Liste her zaman tek bir departmanla sinirlidir: sirket buyudukce "kimler ofiste" 80 satirlik
- * bir liste uretir ve alfabetik ilk N kisiyi kesmek keyfi olur. Departman kapsami + sirket
- * geneli sayi, hem anlamli hem sinirli bir yanit verir.
+ * Liste kural olarak tek bir departmanla sinirlidir: sirket buyudukce "kimler ofiste" 80
+ * satirlik bir liste uretir ve alfabetik ilk N kisiyi kesmek keyfi olur. Departman kapsami +
+ * sirket geneli sayi, hem anlamli hem sinirli bir yanit verir.
+ *
+ * <p>A-46 (#210) ISTISNASI: kullanicinin departmani YOKSA sirket geneli liste doner. Orada
+ * daralacak bir kapsam zaten yok; eskiden sorulan "hangi departmani soruyorsun" sorusunun
+ * cevabi ise hicbir yere baglanmiyordu.
  *
  * Sinif directory paketinde: sorgular rehber verisine ait. ScheduleVariableResolver ucuncu
  * sahis ipucu gordugunde buraya delege eder, boylece {{calisma_duzenim}} degiskeninin tek bir
@@ -128,15 +132,33 @@ public class OfficeStatusVariableResolver {
             return companyWideList(status, dayKey, dayPrefix);
         }
 
-        long companyTotal = countByStatus(status, dayKey);
         if (department == null) {
             department = ownDepartment(employeeId);
         }
         if (department == null) {
-            // Departmani olmayan kayitlar var; rastgele bir departman secmek yerine soruyoruz.
-            return "Hangi departmanı sorduğunu yazarsan listeleyebilirim. "
-                    + companySentence(status, companyTotal);
+            // A-46 (#210): burada eskiden SORU soruluyordu — "Hangi departmanı sorduğunu
+            // yazarsan listeleyebilirim". Ama kullanicinin cevabi hicbir yere baglanmiyordu:
+            // mesaj bagimsiz degerlendiriliyor ve intent_bulunamadi'ya dusuyordu. Cevabini
+            // duyamayacagin bir soru sormak, hic sormamaktan kotudur.
+            //
+            // Departmani OLMAYAN kullanici icin zaten daha dar bir kapsam yok; sirket geneli
+            // liste bu kullanici icin dogru kapsamin kendisi.
+            //
+            // OLCEK NOTU: sirket 100+ kisi. A-14'un "sirket geneli liste cok uzar" kaygisi
+            // burada GECERLI ve karsiligi mevcut: baslikta toplam yaziyor, kesilme "ve N kisi
+            // daha" ile acikca belirtiliyor ve intent'in butonu ("Tüm çalışanları gör" ->
+            // directory_employees) tam listeye goturuyor. Kesilmis liste + toplam + buton,
+            // cevaplanamayan bir sorudan iyidir.
+            //
+            // Departmani OLAN kullanicinin davranisi DEGISMEDI — kendi departmani listeleniyor.
+            // "kimler ofiste" sorusunu HERKES icin sirket geneline cevirmek ise ayri bir sey
+            // ve bu olcekte dogru degil.
+            return companyWideList(status, dayKey, dayPrefix);
         }
+
+        // Sayim yalnizca departman kapsamli dalda gerekiyor; sirket geneli dal result.total()
+        // uzerinden zaten toplami biliyor. Bu yuzden cagrildigi yer asagi tasindi.
+        long companyTotal = countByStatus(status, dayKey);
 
         PagedResponse<EmployeeResponse> result =
                 directoryService.searchEmployees(null, department, status, dayKey, 0, MAX_NAMES);
