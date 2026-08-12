@@ -239,7 +239,19 @@ class IntentCalibrationIT {
             // tuttugunu olcmek gerekiyor. Bu vaka kirilirsa sayim ornekleri geri alinmali.
             new Case("kaç kişi ofiste", "calisma_duzeni",
                     "NOBETCI — durum sayimi sayim intent'ine KAYMAMALI"),
-            new Case("kaç kişi uzaktan", "calisma_duzeni", "NOBETCI — durum sayimi"));
+            new Case("kaç kişi uzaktan", "calisma_duzeni", "NOBETCI — durum sayimi"),
+
+            // --- A-41 (#213): arac resolver'i (V55) ---
+            new Case("hangi araçlar müsait", "arac_rezervasyon", "0.627 — esigin altindaydi"),
+            new Case("rezervasyonum var mı", "arac_rezervasyon", "kullanicinin kendi kayitlari"),
+            new Case("kaç araç var", "arac_rezervasyon", "filo buyuklugu"),
+            // KRITIK NOBETCI, IKI YONLU: A-39'da 'sayim' intent'ine "toplam çalışan sayısı"
+            // ornegi eklendi, burada da filo sayimi var — iki intent birbirini calabilir.
+            // Yukaridaki "kaç araç var" bu yonu, A-39 bolumundeki "toplam kaç çalışan var"
+            // ise diger yonu tutuyor. Ikisi birden gecmezse cozum V55 yorumunda: ornek
+            // metinleri birbirinden uzaklastirilir ("toplam araç sayısı" bilerek yazilmadi).
+            new Case("filoda kaç araç var", "arac_rezervasyon",
+                    "NOBETCI — 'filo' ayirt edici olmali"));
 
     @Autowired
     private IntentClassificationService service;

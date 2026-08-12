@@ -20,6 +20,7 @@ import com.company.assistant.announcement.AnnouncementVariableResolver;
 import com.company.assistant.directory.CountVariableResolver;
 import com.company.assistant.directory.DepartmentVariableResolver;
 import com.company.assistant.directory.DirectoryVariableResolver;
+import com.company.assistant.vehicle.VehicleVariableResolver;
 import com.company.assistant.schedule.ScheduleVariableResolver;
 import com.company.assistant.shuttle.ShuttleVariableResolver;
 import com.company.assistant.survey.SurveyVariableResolver;
@@ -51,6 +52,7 @@ public class ChatMessageService {
     private final DirectoryVariableResolver directoryVariableResolver;
     private final DepartmentVariableResolver departmentVariableResolver;
     private final CountVariableResolver countVariableResolver;
+    private final VehicleVariableResolver vehicleVariableResolver;
     private final AnnouncementVariableResolver announcementVariableResolver;
     private final SurveyVariableResolver surveyVariableResolver;
     private final IntentSuggestionRepository suggestionRepository;
@@ -66,6 +68,7 @@ public class ChatMessageService {
                               DirectoryVariableResolver directoryVariableResolver,
                               DepartmentVariableResolver departmentVariableResolver,
                               CountVariableResolver countVariableResolver,
+                              VehicleVariableResolver vehicleVariableResolver,
                               AnnouncementVariableResolver announcementVariableResolver,
                               SurveyVariableResolver surveyVariableResolver,
                               IntentSuggestionRepository suggestionRepository,
@@ -80,6 +83,7 @@ public class ChatMessageService {
         this.directoryVariableResolver = directoryVariableResolver;
         this.departmentVariableResolver = departmentVariableResolver;
         this.countVariableResolver = countVariableResolver;
+        this.vehicleVariableResolver = vehicleVariableResolver;
         this.announcementVariableResolver = announcementVariableResolver;
         this.surveyVariableResolver = surveyVariableResolver;
         this.suggestionRepository = suggestionRepository;
@@ -131,6 +135,9 @@ public class ChatMessageService {
         // A-39 (#212): mevcut sayimi soran sorular ("toplam kac calisan var"). Durum sayimi
         // ("kac kisi ofiste") BURAYA AIT DEGIL, calisma_duzeni'nde kaliyor.
         variables.putAll(countVariableResolver.resolve(result.intent(), message));
+        // A-41 (#213): arac musaitligi ve kullanicinin KENDI rezervasyonlari. Kimlik
+        // mesajdan degil authentication'dan geliyor (FR-63).
+        variables.putAll(vehicleVariableResolver.resolve(result.intent(), message, authentication));
         variables.putAll(announcementVariableResolver.resolve(result.intent()));
         variables.putAll(surveyVariableResolver.resolve(result.intent()));
         // A-30: resolver farkli bir buton istediyse burada alinir ve haritadan cikarilir.
