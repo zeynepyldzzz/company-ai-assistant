@@ -46,9 +46,25 @@ public class VehicleVariableResolver {
     private static final DateTimeFormatter STAMP =
             DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", new Locale("tr"));
 
-    /** "rezervasyonum", "rezervasyonlarim" — kok yeterli. */
-    private static final List<String> RESERVATION_CUES = List.of("rezervasyon");
-    private static final List<String> AVAILABILITY_CUES = List.of("musait", "bos", "uygun");
+    /**
+     * Rezervasyon dali IYELIK ekli bicimleri arar, ciplak "rezervasyon"u DEGIL.
+     *
+     * <p>Elle test (2026-08-12): ilk yazimda kok olarak "rezervasyon" araniyordu ve
+     * "rezervasyon yapabileceğim boştaki araçlar" sorusu kullanicinin KENDI kayitlarini
+     * donduruyordu. Cumlede "rezervasyon" geciyor ama iyelik eki "yapabileceğim"de —
+     * soru kaydi hakkinda degil, yapabilecekleri hakkinda.
+     *
+     * <p>Alt-dize eslesmesi cekimleri kapsiyor: "rezervasyonum" -> "rezervasyonumu",
+     * "rezervasyonlarim" -> "rezervasyonlarimi".
+     */
+    private static final List<String> RESERVATION_CUES =
+            List.of("rezervasyonum", "rezervasyonlarim");
+    /**
+     * "yapabilecegim" burada: "rezervasyon yapabileceğim araçlar" bir MUSAITLIK sorusudur —
+     * kullanici neyi rezerve edebilecegini soruyor.
+     */
+    private static final List<String> AVAILABILITY_CUES =
+            List.of("musait", "bos", "uygun", "yapabilecegim");
     private static final List<String> COUNT_CUES = List.of("kac", "sayisi", "toplam");
 
     /**
@@ -59,6 +75,9 @@ public class VehicleVariableResolver {
 
     private static final String NO_IDENTITY =
             "Rezervasyonlarını görebilmem için giriş yapmış olman gerekiyor.";
+    private static final String NO_AVAILABLE =
+            "Şu anda müsait araç görünmüyor. Bakımda olmayan bir araç açıldığında "
+                    + "Araçlar ekranından görebilirsin.";
     /**
      * Alan ipucu yoksa eski YONLENDIRME metni korunuyor: "araç" diye soran ama ne istedigini
      * belirtmeyen kullaniciya rastgele bir liste basmak yerine nereye gidecegini soylemek
@@ -86,7 +105,8 @@ public class VehicleVariableResolver {
         String text = TurkishText.foldToAscii(message);
 
         // Rezervasyon dali ONCE: "rezervasyonum var mı" ifadesinde "var mi" bir musaitlik
-        // ipucu gibi gorunebilir, oysa soru kullanicinin KENDI kaydi hakkinda.
+        // ipucu gibi gorunebilir, oysa soru kullanicinin KENDI kaydi hakkinda. Siralamanin
+        // guvenli olmasi ipucunun IYELIK ekli olmasina bagli — bkz. RESERVATION_CUES.
         if (containsAny(text, RESERVATION_CUES)) {
             return Map.of(VARIABLE, myReservations(authentication));
         }
@@ -102,10 +122,13 @@ public class VehicleVariableResolver {
     private String availableVehicles() {
         List<VehicleResponse> vehicles = vehicleService.listVehicles(true);
         if (vehicles.isEmpty()) {
-            return "Şu anda müsait araç görünmüyor. Bakımda olmayan bir araç açıldığında "
-                    + "Araçlar ekranından görebilirsin.";
+            return NO_AVAILABLE;
         }
-        return "Müsait araçlar (" + vehicles.size() + "):\n" + rows(vehicles.stream()
+        return "Müsait araçlar (" + vehicles.size() + "):\n" + vehicleRows(vehicles);
+    }
+
+    private String vehicleRows(List<VehicleResponse> vehicles) {
+        return rows(vehicles.stream()
                 .map(v -> "• " + v.getPlate() + " — " + v.getModel())
                 .toList());
     }
@@ -135,7 +158,15 @@ public class VehicleVariableResolver {
                 .toList();
 
         if (upcoming.isEmpty()) {
-            return "Yaklaşan bir araç rezervasyonun görünmüyor.";
+            // "Yok" tek basina cikmaz sokak: kullanici rezervasyonunu soruyorsa asil niyeti
+            // buyuk ihtimalle rezervasyon YAPMAK. Musait araclari da basmak cevabi
+            // eyleme donusturuyor; intent'in butonu zaten Araclar ekranina goturuyor.
+            List<VehicleResponse> available = vehicleService.listVehicles(true);
+            if (available.isEmpty()) {
+                return "Yaklaşan bir araç rezervasyonun görünmüyor. Şu anda müsait araç da yok.";
+            }
+            return "Yaklaşan bir araç rezervasyonun görünmüyor.\n\n"
+                    + "Rezervasyon yapabileceğin müsait araçlar:\n" + vehicleRows(available);
         }
         return "Yaklaşan rezervasyonların:\n" + rows(upcoming.stream()
                 .map(r -> "• " + r.getVehiclePlate() + " — "

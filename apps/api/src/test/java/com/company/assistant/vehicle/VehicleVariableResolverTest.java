@@ -71,6 +71,38 @@ class VehicleVariableResolverTest {
         verify(vehicleService).listVehicles(true);
     }
 
+    /**
+     * REGRESYON (elle test, 2026-08-12): "rezervasyon yapabileceğim boştaki araçlar" sorusu
+     * kullanicinin KENDI rezervasyonlarini donduruyordu.
+     *
+     * <p>Sebep: rezervasyon ipucu ciplak "rezervasyon" kokuydu ve cumlede o kelime geciyor —
+     * ama iyelik eki "yapabileceğim"de, yani soru kayit hakkinda degil. Ipucu iyelik ekli
+     * bicimlerle sinirlandi.
+     */
+    @Test
+    void rezervasyonYapabilecegimAraclar_musaitlikDalinaGider() {
+        VehicleResponse ford = vehicle("34 ABC 123", "Ford");
+        when(vehicleService.listVehicles(true)).thenReturn(List.of(ford));
+
+        String reply = resolver.resolve(
+                "arac_rezervasyon", "rezervasyon yapabileceğim boştaki araçlar", authentication)
+                .get(VARIABLE);
+
+        assertThat(reply).contains("Müsait araçlar").contains("34 ABC 123");
+        verifyNoInteractions(reservationService);
+    }
+
+    // "boş" kelimesi olmadan da ayni soru: "yapabilecegim" tek basina musaitlik ipucu.
+    @Test
+    void rezervasyonYapabilecegimAraclar_bosKelimesiOlmadanDaCalisir() {
+        VehicleResponse ford = vehicle("34 ABC 123", "Ford");
+        when(vehicleService.listVehicles(true)).thenReturn(List.of(ford));
+
+        assertThat(resolver.resolve(
+                "arac_rezervasyon", "rezervasyon yapabileceğim araçlar", authentication)
+                .get(VARIABLE)).contains("34 ABC 123");
+    }
+
     @Test
     void musaitAracYoksaAcikMesajDoner() {
         when(vehicleService.listVehicles(true)).thenReturn(List.of());
@@ -125,12 +157,34 @@ class VehicleVariableResolverTest {
                 .doesNotContain("06 QQQ 1");
     }
 
+    /**
+     * "Yok" tek basina cikmaz sokak: rezervasyonunu soran kullanicinin asil niyeti buyuk
+     * ihtimalle rezervasyon YAPMAK. Bos durumda musait araclar da basiliyor ve cevap eyleme
+     * donusuyor.
+     */
     @Test
-    void yaklasanRezervasyonYoksaAcikMesajDoner() {
+    void yaklasanRezervasyonYoksaMusaitAraclarOnerilir() {
+        VehicleResponse ford = vehicle("34 ABC 123", "Ford");
         when(reservationService.listMyReservations(EMPLOYEE_ID)).thenReturn(List.of());
+        when(vehicleService.listVehicles(true)).thenReturn(List.of(ford));
+
+        String reply = resolver.resolve("arac_rezervasyon", "rezervasyonum var mı", authentication)
+                .get(VARIABLE);
+
+        assertThat(reply)
+                .contains("Yaklaşan bir araç rezervasyonun görünmüyor")
+                .contains("Rezervasyon yapabileceğin müsait araçlar")
+                .contains("34 ABC 123");
+    }
+
+    // Ne rezervasyon ne musait arac varsa ikisi de acikca soylenir; bos oneri listesi basilmaz.
+    @Test
+    void neRezervasyonNeMusaitAracVarsaIkisiDeSoylenir() {
+        when(reservationService.listMyReservations(EMPLOYEE_ID)).thenReturn(List.of());
+        when(vehicleService.listVehicles(true)).thenReturn(List.of());
 
         assertThat(resolver.resolve("arac_rezervasyon", "rezervasyonum var mı", authentication)
-                .get(VARIABLE)).contains("Yaklaşan bir araç rezervasyonun görünmüyor");
+                .get(VARIABLE)).contains("müsait araç da yok");
     }
 
     // Kimlik yoksa BASKASININ rezervasyonu donmemeli; sorgu hic atilmaz.
@@ -144,11 +198,18 @@ class VehicleVariableResolverTest {
 
     /**
      * NOBETCI: "rezervasyonum var mı" ifadesindeki "var mı" bir musaitlik ipucu gibi
-     * gorunebilir. Rezervasyon dali ONCE calisiyor; arac listesi sorgusu atilmamali.
+     * gorunebilir; rezervasyon dali ONCE calismali.
+     *
+     * <p>Test KAYDI OLAN kullaniciyla yaziliyor: bos durumda arac listesi zaten bilerek
+     * cekiliyor (oneri icin), dolayisiyla orada {@code verifyNoInteractions} yonlendirmeyi
+     * degil oneri ozelligini olcerdi.
      */
     @Test
-    void rezervasyonSorusuMusaitlikDalinaKaymaz() {
-        when(reservationService.listMyReservations(EMPLOYEE_ID)).thenReturn(List.of());
+    void rezervasyonuOlanKullaniciyaAracListesiSorulmaz() {
+        LocalDateTime now = LocalDateTime.now();
+        ReservationResponse yaklasan = reservation("34 ABC 123",
+                now.plusDays(1), now.plusDays(1).plusHours(2), ReservationStatus.CONFIRMED);
+        when(reservationService.listMyReservations(EMPLOYEE_ID)).thenReturn(List.of(yaklasan));
 
         resolver.resolve("arac_rezervasyon", "rezervasyonum var mı", authentication);
 
