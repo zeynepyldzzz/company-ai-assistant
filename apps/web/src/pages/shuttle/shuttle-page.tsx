@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, useMap } from "react-leaflet";
 import type { LatLngBoundsExpression, LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { MapPin, Phone } from "lucide-react";
+import { MapPin, LocateFixed, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,7 @@ export function ShuttlePage() {
   const [isAddressInputFocused, setIsAddressInputFocused] = useState(false);
   const [highlightedStopId, setHighlightedStopId] = useState<number | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<LatLngTuple | null>(null);
+  const [geolocationError, setGeolocationError] = useState<string | null>(null);
 
   const debouncedAddressInput = useDebouncedValue(addressInput);
 
@@ -130,6 +131,36 @@ export function ShuttlePage() {
     recommendationMutation.mutate({ address });
   };
 
+  // B-33: kullanici adres yazmadan tarayici konumundan (GPS) en yakin servisi bulabilsin.
+  const handleUseMyLocation = () => {
+    setGeolocationError(null);
+    setIsAddressInputFocused(false);
+    if (!("geolocation" in navigator)) {
+      setGeolocationError("Tarayıcınız konum özelliğini desteklemiyor.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setAddressInput("");
+        setSelectedLocation({ lat: latitude, lng: longitude });
+        recommendationMutation.mutate({ lat: latitude, lng: longitude });
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setGeolocationError("Konum izni reddedildi. Devam etmek için tarayıcı ayarlarından izin verin.");
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setGeolocationError("Konumunuz alınamadı.");
+        } else if (error.code === error.TIMEOUT) {
+          setGeolocationError("Konum isteği zaman aşımına uğradı.");
+        } else {
+          setGeolocationError("Konum alınamadı.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10_000 }
+    );
+  };
+
   const selectedRoute = routes.find((route) => route.id === selectedRouteId) ?? null;
   const stops = [...(stopsQuery.data ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
   const stopsWithCoords = stops.filter(
@@ -192,12 +223,25 @@ export function ShuttlePage() {
         <Button
           type="button"
           variant="secondary"
+          size="icon"
+          onClick={handleUseMyLocation}
+          disabled={recommendationMutation.isPending}
+          title="Konumumu Kullan"
+          aria-label="Konumumu Kullan"
+        >
+          <LocateFixed className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
           onClick={handleFindRoute}
           disabled={recommendationMutation.isPending || !addressInput.trim()}
         >
           {recommendationMutation.isPending ? "Aranıyor…" : "En Yakını Bul"}
         </Button>
       </div>
+
+      {geolocationError && <p className="text-destructive text-sm">{geolocationError}</p>}
 
       {recommendationMutation.isError && (
         <p className="text-destructive text-sm">
