@@ -153,7 +153,19 @@ public class RuleBasedIntentMatcher {
      * TAM KART basar — istenen davranis zaten budur.
      */
     private static final List<String> PERSON_INFO_WORDS =
-            List.of("kimdir", "bilgileri", "iletisim", "hakkinda");
+            List.of("kimdir", "bilgileri", "iletisim", "hakkinda",
+                    // A-39 (#212): kisi hakkinda DEPARTMAN sorusu. Olculdu —
+                    // "Ayşe Kaya hangi departmanda" 0.567, en yakini 'Elif Şahin hangi
+                    // departmanda çalışıyor'. Yani ORNEK ZATEN VAR ve yetmiyor: A-19'un
+                    // tespiti, ozel isim skoru asagi cekiyor ve sonsuz sayida calisan adi
+                    // oldugu icin ornek eklemek bu vakayi hicbir zaman cozmez.
+                    //
+                    // Cekimli bicimler tek tek yaziliyor: bu liste hem containsAny (alt-dize)
+                    // hem nameTokens (TAM kelime elemesi) tarafindan okunuyor. Yalnizca
+                    // "departman" yazmak ikincisinde ise yaramaz — "departmanda" tokeni
+                    // elenmez ve her boyle mesajda gereksiz bir rehber sorgusu atilir.
+                    "departmani", "departmanda", "departmaninda",
+                    "bolumu", "bolumde", "bolumunde");
 
     /** "ayşe kaya" gibi sirf isimden ibaret mesajlarda kontrol edilecek en fazla kelime. */
     private static final int BARE_NAME_MAX_TOKENS = 3;
