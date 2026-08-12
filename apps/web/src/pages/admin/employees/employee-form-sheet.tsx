@@ -131,7 +131,9 @@ export function EmployeeFormSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{isEdit ? "Çalışanı Düzenle" : "Yeni Çalışan"}</SheetTitle>
-          <SheetDescription>Yalnızca hr_admin / system_admin erişebilir (FR-68-71).</SheetDescription>
+          <SheetDescription>
+            Bu ekrana yalnızca İK Yöneticisi ve Sistem Yöneticisi erişebilir.
+          </SheetDescription>
         </SheetHeader>
 
         {/* A-29: sistem sifre urettiginde form yerine bu panel gosterilir. Sifre yalnizca

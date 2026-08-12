@@ -22,7 +22,6 @@ export function AnnouncementsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold">Duyurular</h1>
         <p className="text-muted-foreground text-sm">Şirket duyurularının tamamını buradan görüntüleyebilirsiniz..</p>
       </div>
 
@@ -39,14 +38,16 @@ export function AnnouncementsPage() {
             <Card key={announcement.id}>
               <CardContent className="space-y-1.5 py-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{announcement.title}</span>
+                  <span className="font-medium break-words">{announcement.title}</span>
                   {announcement.pinned && (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                       Sabitlendi
                     </span>
                   )}
                 </div>
-                <p className="text-sm whitespace-pre-wrap">{announcement.content}</p>
+                {/* whitespace-pre-wrap satir sonlarini korur ama BOSLUKSUZ uzun bir dizeyi
+                    bolmez; break-words onun icin gerekli (bkz. dashboard-page). */}
+                <p className="text-sm break-words whitespace-pre-wrap">{announcement.content}</p>
                 <p className="text-muted-foreground text-xs">
                   {formatDate(announcement.publishedAt)}
                 </p>

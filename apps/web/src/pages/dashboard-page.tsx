@@ -187,14 +187,17 @@ export function DashboardPage() {
               <Card key={announcement.id}>
                 <CardContent className="space-y-1 py-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{announcement.title}</span>
+                    {/* A-44 (#219): break-words SART. Bosluksuz uzun bir duyuru metni
+                        ("testtesttest…") sarmalanmayinca karti sagA itiyor ve TUM SAYFADA
+                        yatay kaydirma cubugu cikiyordu. */}
+                    <span className="text-sm font-medium break-words">{announcement.title}</span>
                     {announcement.pinned && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                         Sabitlendi
                       </span>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-sm">{announcement.content}</p>
+                  <p className="text-muted-foreground text-sm break-words">{announcement.content}</p>
                 </CardContent>
               </Card>
             ))}

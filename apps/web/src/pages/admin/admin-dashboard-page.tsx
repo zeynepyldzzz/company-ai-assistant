@@ -74,8 +74,6 @@ export function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-[22px] font-extrabold">Yönetim Paneli</h1>
-
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
           label="Toplam Çalışan"

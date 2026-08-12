@@ -24,13 +24,28 @@ const subRoleLabels: Record<AdminSubRole, string> = {
   canteen_admin: "Kantin Yöneticisi",
 };
 
+/**
+ * A-44 (#219): sayfa basliginin SAHIBI bu serittir.
+ *
+ * Sayfalar kendi <h1>'ini yalnizca seridin soyleyemeyecegi bir sey varsa basar:
+ *   - dinamik ad      -> /directory/departments/:id departman adini gosteriyor
+ *   - farkli cerceve  -> ana sayfa "Hoş geldin, {ad}" diyor
+ *   - alt sayfa       -> /admin/employees "Çalışan Yönetimi"; serit yalnizca "Yönetim" diyebilir
+ *
+ * Oncesinde sekiz sayfa kendi basligini da basiyordu ve ayni metin ekranda iki kez
+ * gorunuyordu ("Departmanlar" / "Departmanlar").
+ *
+ * Bilinmeyen rotada UYGULAMA ADI donulmuyor: eskiden "Yaşar Bilgi Ofis Asistanı" doniyordu ve
+ * /change-password gibi sayfalarda seritte sayfa basligi yerine uygulama adi yaziyordu. Bos
+ * donmek dogru — o sayfalarin kendi basligi zaten var.
+ */
 function pageTitleFor(pathname: string): string {
   const exact = navItems.find((item) => item.to === pathname);
   if (exact) return exact.label;
   const nested = navItems
     .filter((item) => item.to !== "/" && pathname.startsWith(`${item.to}/`))
     .sort((a, b) => b.to.length - a.to.length)[0];
-  return nested?.label ?? "Yaşar Bilgi Ofis Asistanı";
+  return nested?.label ?? "";
 }
 
 export function Header() {

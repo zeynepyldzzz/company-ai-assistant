@@ -95,7 +95,9 @@ export function DepartmentFormSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{isEdit ? "Departmanı Düzenle" : "Yeni Departman"}</SheetTitle>
-          <SheetDescription>Yalnızca hr_admin / system_admin erişebilir (FR-68-71).</SheetDescription>
+          <SheetDescription>
+            Bu ekrana yalnızca İK Yöneticisi ve Sistem Yöneticisi erişebilir.
+          </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">

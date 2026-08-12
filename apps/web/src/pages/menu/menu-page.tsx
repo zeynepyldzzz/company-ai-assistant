@@ -224,8 +224,6 @@ export function MenuPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Yemek Menüsü</h1>
-
       <div className="inline-flex rounded-lg border p-1">
         <button
           type="button"

@@ -11,6 +11,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // A-44 (#219): sonner varsayilani SAG ALT. Kullanici formun ustunde calisirken
+      // ekranin diger kosesinde beliren hata bildirimini kaciriyordu. Ustten gostermek
+      // gorunurlugu artiriyor. {...props} asagida oldugu icin cagiran taraf ezebilir.
+      position="top-center"
       icons={{
         success: (
           <CircleCheckIcon className="size-4" />

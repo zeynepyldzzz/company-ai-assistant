@@ -178,7 +178,9 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
       <DialogContent className="w-full overflow-y-auto sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Güzergahı Düzenle" : "Yeni Güzergah"}</DialogTitle>
-          <DialogDescription>Yalnızca shuttle_admin / system_admin erişebilir (FR-73).</DialogDescription>
+          <DialogDescription>
+            Bu ekrana yalnızca Servis Yöneticisi ve Sistem Yöneticisi erişebilir.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">

@@ -183,8 +183,6 @@ export function ShuttlePage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Servisler</h1>
-
       <div className="bg-primary text-primary-foreground flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center">
         <div className="flex shrink-0 items-center gap-2 text-sm font-semibold">
           <MapPin className="size-4" />
