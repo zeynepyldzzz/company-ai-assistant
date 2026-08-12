@@ -171,17 +171,40 @@ class OfficeStatusVariableResolverTest {
                 .contains("Şirket genelinde 5 kişi");
     }
 
-    // Departmani olmayan calisan kayitlari var; rastgele departman secilmemeli.
+    /**
+     * A-46 (#210): departmani olmayan kullaniciya SORU sorulmuyor, sirket geneli liste
+     * doniyor.
+     *
+     * <p>Eskiden "Hangi departmanı sorduğunu yazarsan listeleyebilirim" deniyordu ama
+     * kullanicinin cevabi hicbir yere baglanmiyordu — mesaj bagimsiz degerlendirilip
+     * intent_bulunamadi'ya dusuyordu. Departmani olmayan kullanici icin daralacak bir kapsam
+     * zaten yok.
+     */
     @Test
-    void kullanicininDepartmaniYoksaDepartmanSorulur() {
+    void kullanicininDepartmaniYoksaSirketGeneliListeDoner() {
         whenOwnDepartment(null);
-        whenCompanyTotal("Ofiste", 5);
+        whenCompanySearch("Ofiste",
+                List.of(employee("Ayse Kaya", "Bilgi Teknolojileri"),
+                        employee("Emre Koc", "Satis ve Pazarlama")), 2);
 
         String reply = resolver.resolve("kimler ofiste", EMPLOYEE_ID);
 
         assertThat(reply)
-                .contains("Hangi departmanı sorduğunu yazarsan")
-                .contains("Şirket genelinde 5 kişi ofiste görünüyor.");
+                .doesNotContain("Hangi departmanı sorduğunu")
+                .contains("Şirket genelinde ofiste görünenler (2 kişi)")
+                .contains("• Ayse Kaya — Bilgi Teknolojileri");
+    }
+
+    // NOBETCI: departmani OLAN kullanicinin davranisi degismedi.
+    @Test
+    void departmaniOlanKullaniciIcinKapsamDaralmayaDevamEder() {
+        whenOwnDepartment("Bilgi Teknolojileri");
+        whenSearch("Bilgi Teknolojileri", "Ofiste", List.of(employee("Ayse Kaya")), 1);
+        whenCompanyTotal("Ofiste", 5);
+
+        assertThat(resolver.resolve("kimler ofiste", EMPLOYEE_ID))
+                .contains("Bilgi Teknolojileri departmanında")
+                .doesNotContain("Şirket genelinde ofiste görünenler");
     }
 
     @Test
