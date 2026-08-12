@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import type { AdminShuttleStopRequest, RoutePoint } from "@company/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FIELD_LIMITS } from "@/lib/field-limits";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { RouteMapEditor, type MapMode } from "./route-map-editor";
@@ -117,6 +118,7 @@ export function StopsEditor({
                 <div className="flex gap-1.5">
                   <Input
                     value={stop.name}
+                    maxLength={FIELD_LIMITS.shuttleStopName}
                     onChange={(event) => updateStop(index, { name: event.target.value })}
                     placeholder="Durak adı"
                   />

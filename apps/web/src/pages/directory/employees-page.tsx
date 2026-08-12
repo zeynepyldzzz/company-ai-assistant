@@ -87,8 +87,6 @@ export function EmployeesPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-[22px] font-extrabold">Çalışanlar</h1>
-
       {/* B-32 (#204): gun secim barı - bir gune tiklayinca liste/rozetler o gunun planina gore hesaplanir. */}
       <div className="inline-flex rounded-lg border p-1">
         {WEEKDAYS.map(({ key, label }) => {

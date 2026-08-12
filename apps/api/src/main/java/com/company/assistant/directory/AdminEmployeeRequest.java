@@ -3,6 +3,7 @@ package com.company.assistant.directory;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * POST/PUT /admin/employees govdesi.
@@ -27,11 +28,13 @@ public record AdminEmployeeRequest(
          * nullable olmasinin tek sebebi V50 oncesinde tek kelimeli kaydedilmis calisanlar
          * (hepsi test hesabi). Eski veri esnek, yeni veri kati.
          */
-        @NotBlank String firstName,
-        @NotBlank String lastName,
+        // A-44 (#219): sinirlarin kaynagi migration'daki kolon genisligi
+        // (V50: first_name/last_name VARCHAR(100), V1: email VARCHAR(150), phone VARCHAR(30)).
+        @NotBlank @Size(max = 100, message = "Ad 100 karakteri aşamaz") String firstName,
+        @NotBlank @Size(max = 100, message = "Soyad 100 karakteri aşamaz") String lastName,
 
-        @NotBlank @Email String email,
-        String phone,
+        @NotBlank @Email @Size(max = 150, message = "E-posta 150 karakteri aşamaz") String email,
+        @Size(max = 30, message = "Telefon 30 karakteri aşamaz") String phone,
 
         /**
          * A-30 (#185): departman ZORUNLU.

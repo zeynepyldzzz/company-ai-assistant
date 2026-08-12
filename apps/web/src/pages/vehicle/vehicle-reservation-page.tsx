@@ -115,7 +115,6 @@ export function VehicleReservationPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Araç Rezervasyonu</h1>
         <p className="text-muted-foreground text-sm">
           Uygun şirket araçlarını görüntüle, rezervasyon oluştur veya iptal et.
         </p>

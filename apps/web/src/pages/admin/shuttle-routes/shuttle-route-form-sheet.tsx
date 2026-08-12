@@ -6,6 +6,7 @@ import type { ShuttleRoute, RoutePoint } from "@company/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FIELD_LIMITS } from "@/lib/field-limits";
 import {
   Dialog,
   DialogContent,
@@ -178,14 +179,21 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
       <DialogContent className="w-full overflow-y-auto sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Güzergahı Düzenle" : "Yeni Güzergah"}</DialogTitle>
-          <DialogDescription>Yalnızca shuttle_admin / system_admin erişebilir (FR-73).</DialogDescription>
+          <DialogDescription>
+            Bu ekrana yalnızca Servis Yöneticisi ve Sistem Yöneticisi erişebilir.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 px-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <Label htmlFor="route-name">Güzergah Adı</Label>
-              <Input id="route-name" value={name} onChange={(event) => setName(event.target.value)} />
+              <Input
+                id="route-name"
+                maxLength={FIELD_LIMITS.shuttleRouteName}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -195,8 +203,12 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
                 value={plateNumber}
                 // Plaka her zaman BUYUK harf; kullanici kucuk yazsa da duzeltiyoruz, cunku
                 // chatbot plaka eslestirmesi ve listeler bu degeri oldugu gibi gosteriyor.
-                onChange={(event) => setPlateNumber(event.target.value.toUpperCase().slice(0, 12))}
-                maxLength={12}
+                onChange={(event) =>
+                  setPlateNumber(
+                    event.target.value.toUpperCase().slice(0, FIELD_LIMITS.shuttlePlateNumber),
+                  )
+                }
+                maxLength={FIELD_LIMITS.shuttlePlateNumber}
                 placeholder="34 ABC 123"
               />
             </div>
@@ -205,6 +217,7 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
               <Label htmlFor="route-driver-name">Şoför Adı</Label>
               <Input
                 id="route-driver-name"
+                maxLength={FIELD_LIMITS.shuttleDriverName}
                 value={driverName}
                 onChange={(event) => setDriverName(event.target.value)}
               />
@@ -215,7 +228,7 @@ export function ShuttleRouteFormSheet({ route }: { route?: ShuttleRoute }) {
               <Input
                 id="route-driver-phone"
                 inputMode="tel"
-                maxLength={20}
+                maxLength={FIELD_LIMITS.shuttleDriverPhone}
                 placeholder="0532 111 22 33"
                 value={driverPhone}
                 onChange={(event) => setDriverPhone(event.target.value.replace(/[^\d\s()+-]/g, ""))}

@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FIELD_LIMITS } from "@/lib/field-limits";
 import {
   Sheet,
   SheetContent,
@@ -100,6 +101,7 @@ export function SurveyCreateSheet() {
             <Label htmlFor="survey-title">Başlık (soru)</Label>
             <Input
               id="survey-title"
+              maxLength={FIELD_LIMITS.surveyTitle}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Örn. Yeni kafeterya menüsünden memnun musunuz?"
@@ -122,6 +124,7 @@ export function SurveyCreateSheet() {
               <div key={index} className="flex items-center gap-2">
                 <Input
                   value={option}
+                  maxLength={FIELD_LIMITS.surveyOption}
                   onChange={(event) => updateOption(index, event.target.value)}
                   placeholder={`Seçenek ${index + 1}`}
                 />

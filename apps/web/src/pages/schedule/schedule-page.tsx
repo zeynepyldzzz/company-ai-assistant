@@ -94,7 +94,6 @@ export function SchedulePage() {
   return (
     <div className="max-w-xl space-y-4">
       <div>
-        <h1 className="text-xl font-semibold">Haftalık Çalışma Düzenim</h1>
         <p className="text-muted-foreground text-sm">Her gün için nerede çalışacağını seç</p>
       </div>
 

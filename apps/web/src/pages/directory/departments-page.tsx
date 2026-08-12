@@ -27,8 +27,6 @@ export function DepartmentsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-[22px] font-extrabold">Departmanlar</h1>
-
       <div className="max-w-sm space-y-1.5">
         <Label htmlFor="department-search">Ara</Label>
         <Input
