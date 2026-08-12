@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { KeyRound, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -48,10 +49,32 @@ function pageTitleFor(pathname: string): string {
   return nested?.label ?? "";
 }
 
+/** Sekme basliginda her zaman gorunen uygulama adi. */
+const APP_NAME = "Yaşar Bilgi Asistan";
+
 export function Header() {
   const { user, clearAuth } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const pageTitle = pageTitleFor(pathname);
+
+  /**
+   * A-44 (#219): sekme basligi tum sayfalarda sabit "Yaşar Bilgi Asistan" idi; kullanici
+   * birden fazla sekme actiginda hangisinin hangi sayfa oldugunu ayirt edemiyordu.
+   *
+   * <p>Efekt Header'da: baslik mantigi zaten burada ve AppLayout'taki her sayfa bu bileseni
+   * mount ediyor. /login ve /change-password AppLayout DISINDA (A-29 karari) — orada sekmede
+   * yalnizca uygulama adinin yazmasi zaten dogru.
+   *
+   * <p>Temizlik, Header unmount oldugunda (o iki sayfaya gecerken) basligi uygulama adina
+   * geri aliyor; aksi halde onceki sayfanin adi sekmede takili kalirdi.
+   */
+  useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} · ${APP_NAME}` : APP_NAME;
+    return () => {
+      document.title = APP_NAME;
+    };
+  }, [pageTitle]);
 
   async function handleLogout() {
     const refreshToken = readAuth()?.refreshToken;
@@ -81,9 +104,7 @@ export function Header() {
   return (
     <>
       <header className="flex h-14 shrink-0 items-center justify-between border-b px-4 md:px-6">
-        <h1 className="min-w-0 flex-1 truncate pr-4 text-[19px] font-bold">
-          {pageTitleFor(pathname)}
-        </h1>
+        <h1 className="min-w-0 flex-1 truncate pr-4 text-[19px] font-bold">{pageTitle}</h1>
 
         <div className="flex shrink-0 items-center gap-2">
           <ThemeToggle />
