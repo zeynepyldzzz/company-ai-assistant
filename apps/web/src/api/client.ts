@@ -15,6 +15,17 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * A-47 (#221): 404 "böyle bir kayıt yok" demektir — çağıran taraf bunu hata değil BOŞ DURUM
+ * olarak gösterebilir.
+ *
+ * Örnek: yemekhane yalnızca iş günlerinde menü giriyor; hafta sonu "Menü yüklenemedi" yazmak
+ * yanlış. Diğer hatalar (ağ, 500) hata olarak kalmalı, o yüzden durum kodu ayırt ediliyor.
+ */
+export function isNotFound(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 404;
+}
+
 interface RequestOptions extends RequestInit {
   token?: string | null;
 }
