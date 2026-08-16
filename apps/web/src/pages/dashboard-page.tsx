@@ -22,7 +22,7 @@ import { getMySchedule, getMySummary } from "@/api/schedule";
 import { listActiveSurveys, submitSurveyResponse, submitFeedback } from "@/api/survey";
 import { getActiveAnnouncements } from "@/api/announcement";
 import type { ScheduleDay, Survey } from "@company/shared";
-import { ApiError } from "@/api/client";
+import { ApiError, isNotFound } from "@/api/client";
 import { cn } from "@/lib/utils";
 
 const dayLabels: Record<ScheduleDay["day"], string> = {
@@ -263,7 +263,10 @@ export function DashboardPage() {
             {menuQuery.isLoading && (
               <p className="text-muted-foreground px-4 py-3 text-sm">Yükleniyor…</p>
             )}
-            {menuQuery.data && menuQuery.data.items.length === 0 && (
+            {/* A-47 (#221): kayit YOKSA sorgu 404 doner ve kart eskiden bos kaliyordu — hafta
+                sonu hicbir sey yazmiyordu. Menu girilmis ama bos olan gunle ayni metin. */}
+            {((menuQuery.data && menuQuery.data.items.length === 0) ||
+              isNotFound(menuQuery.error)) && (
               <p className="text-muted-foreground px-4 py-3 text-sm">Bugün için menü girilmemiş.</p>
             )}
             {menuQuery.data && menuQuery.data.items.length > 0 && (

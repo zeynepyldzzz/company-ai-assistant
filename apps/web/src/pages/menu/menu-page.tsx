@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/auth/auth-context";
 import { getTodayMenu, getWeeklyMenu, getMonthlyMenu } from "@/api/menu";
 import type { Menu, MealItem } from "@company/shared";
+import { isNotFound } from "@/api/client";
 
 type Tab = "today" | "weekly" | "monthly";
 
@@ -222,6 +223,16 @@ export function MenuPage() {
 
   const active = tab === "today" ? todayQuery : tab === "weekly" ? weeklyQuery : monthlyQuery;
 
+  /**
+   * A-47 (#221): "bugün için menü yok" bir HATA değil, beklenen durum — yemekhane yalnızca iş
+   * günlerinde menü giriyor ve hafta sonu ekranda "Menü yüklenemedi" yazıyordu.
+   *
+   * Backend 404 dönmeye devam ediyor; var olmayan bir kayıt için doğru yanıt o. Değişen şey,
+   * arayüzün 404'ü hata değil BOŞ DURUM olarak göstermesi. Diğer hatalar (ağ, 500) hâlâ hata
+   * olarak görünüyor.
+   */
+  const todayMenuMissing = tab === "today" && isNotFound(todayQuery.error);
+
   return (
     <div className="space-y-4">
       <div className="inline-flex rounded-lg border p-1">
@@ -255,7 +266,17 @@ export function MenuPage() {
       </div>
 
       {active.isLoading && <p className="text-muted-foreground text-sm">Yükleniyor…</p>}
-      {active.isError && <p className="text-destructive text-sm">Menü yüklenemedi.</p>}
+      {active.isError && !todayMenuMissing && (
+        <p className="text-destructive text-sm">Menü yüklenemedi.</p>
+      )}
+
+      {/* A-47 (#221): menü kaydı YOKSA bu bir hata degil. Yemekhane yalnizca is gunlerinde
+          menu giriyor; hafta sonu ekranda "Menü yüklenemedi" yaziyordu. */}
+      {todayMenuMissing && (
+        <p className="text-muted-foreground text-sm">
+          Bugün için menü girilmemiş. Yemekhane yalnızca iş günlerinde menü yayınlıyor.
+        </p>
+      )}
 
       {tab === "today" && todayQuery.data && <MenuCard menu={todayQuery.data} />}
 

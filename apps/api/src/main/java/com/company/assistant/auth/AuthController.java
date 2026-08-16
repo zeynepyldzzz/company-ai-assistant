@@ -27,6 +27,20 @@ public class AuthController {
      */
     private static final int MIN_PASSWORD_LENGTH = 8;
 
+    /**
+     * A-47 (#221): giris akisi mesajlari. Oncesinde "Invalid credentials" / "Invalid code" /
+     * INVALID_CHALLENGE doniyordu — uygulamanin tamami Turkce ve giris, kullanicinin ilk
+     * karsilastigi ekran.
+     *
+     * <p><b>HANGISININ yanlis oldugu BILEREK soylenmiyor.</b> "Bu e-posta kayitli degil" gibi
+     * bir metin, bir adresin sistemde olup olmadigini disari sizdirir ve hesap kesfetmeyi
+     * kolaylastirir. Mesaj degistirilecekse bu ayrim korunmali.
+     */
+    private static final String INVALID_CREDENTIALS = "E-posta veya şifre hatalı.";
+    private static final String INVALID_CODE = "Doğrulama kodu hatalı.";
+    private static final String INVALID_CHALLENGE =
+            "Doğrulama oturumu geçersiz ya da süresi dolmuş. Lütfen tekrar giriş yapın.";
+
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -119,13 +133,13 @@ public class AuthController {
         try {
             employeeId = jwtService.parseChallengeToken(challengeToken);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid challenge");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, INVALID_CHALLENGE);
         }
 
         Employee employee = employeeRepository.findById(employeeId)
                 .filter(Employee::isActive)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Invalid challenge"));
+                        HttpStatus.UNAUTHORIZED, INVALID_CHALLENGE));
 
         if (employee.getTotpSecret() == null) {
             throw new ResponseStatusException(
@@ -146,17 +160,17 @@ public class AuthController {
         try {
             employeeId = jwtService.parseChallengeToken(request.challengeToken());
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid challenge");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, INVALID_CHALLENGE);
         }
 
         Employee employee = employeeRepository.findById(employeeId)
                 .filter(Employee::isActive)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED, "Invalid challenge"));
+                HttpStatus.UNAUTHORIZED, INVALID_CHALLENGE));
 
         if (employee.getTotpSecret() == null
                 || !totpService.verify(employee.getTotpSecret(), request.code())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid code");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, INVALID_CODE);
         }
 
         // C-12 (#120): ilk basarili dogrulama = enrollment'in tamamlanmasi.
@@ -236,6 +250,6 @@ public class AuthController {
     }
 
     private ResponseStatusException invalidCredentials() {
-        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, INVALID_CREDENTIALS);
     }
 }
