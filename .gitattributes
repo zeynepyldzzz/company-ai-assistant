@@ -1,0 +1,18 @@
+# Windows'ta core.autocrlf=true, yani git calisma kopyasindaki dosyalari CRLF'e
+# cevirir. Cogu dosya icin zararsiz; asagidakiler icin degil, cunku bu dosyalar
+# ya Linux konteynerinde ya da satir sonuna duyarli bir ayristirici tarafindan
+# okunuyor.
+
+# En sinsi olani: .env.example kopyalanip .env yapildiginda satir sonundaki
+# gorunmez \r degerin PARCASI olur. DB_PASSWORD gercekte "app_password\r" olur
+# ve veritabani "sifre yanlis" der. Dosyaya bakinca her sey dogru gorunur.
+.env.example    text eol=lf
+
+# CRLF'li shell script Linux'ta "bad interpreter: no such file or directory"
+# hatasi verir (scripts/prepare-osrm-data.sh, apps/api/mvnw).
+*.sh            text eol=lf
+mvnw            text eol=lf
+
+Dockerfile      text eol=lf
+.dockerignore   text eol=lf
+*.conf          text eol=lf
