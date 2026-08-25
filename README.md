@@ -179,24 +179,5 @@ cd apps/api && ./mvnw verify    # CI'ın koştuğu komut
 ```bash
 INTENT_IT=true ./mvnw test -Dtest=<TestAdi>IT
 ```
-
-## Katkı
-
-Her değişiklik issue → branch → PR akışından geçer; `docs/` altındaki
-değişiklikler doğrudan `main`'e push edilebilir. Merge için takımdan bir onay
-gerekir, yazar kendi PR'ını onaylayamaz.
-
 Ayrıntılar: [docs/Contributing.md](docs/Contributing.md)
 
-## Dokümantasyon
-
-| Dosya | İçerik |
-|---|---|
-| [docs/Contributing.md](docs/Contributing.md) | Katkı kuralları, branch/PR akışı |
-| [docs/apiEndpoints.md](docs/apiEndpoints.md) | API sözleşmesi |
-| [docs/issue.md](docs/issue.md) | Backlog (faz 1) |
-| [docs/issuePhase2.md](docs/issuePhase2.md) | Backlog (faz 2) |
-| [docs/sprintPlan.md](docs/sprintPlan.md) | Sprint planı |
-| [docs/requirementAnalysis2.md](docs/requirementAnalysis2.md) | Gereksinim analizi |
-| [docs/businessProcessMapping.md](docs/businessProcessMapping.md) | İş süreçleri |
-| [docs/deployment.md](docs/deployment.md) | Sunucu kurulumu |
