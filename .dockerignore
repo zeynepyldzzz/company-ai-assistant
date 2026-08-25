@@ -1,0 +1,25 @@
+# Build context REPO KOKU oldugu icin (bkz. apps/web/Dockerfile) bu dosya kritik:
+# haric tutulmazsa Docker'a yuzlerce MB gereksiz veri gonderilir ve her build
+# dakikalarca surer.
+
+# 413 MB islenmis harita verisi + 45 MB kaynak .pbf. Imaja girmesi gereksiz;
+# OSRM konteyneri bunlari volume uzerinden okuyor.
+osrm-data/
+infra/osrm/
+
+# Bagimliliklar konteyner icinde `pnpm install` ile yeniden kurulur. Windows'ta
+# uretilmis node_modules'un Linux imajina kopyalanmasi ayrica HATALIDIR:
+# platforma ozgu native ikililer uyumsuz olur.
+node_modules/
+**/node_modules/
+
+# Maven build ciktisi
+apps/api/target/
+
+# Derleme icin gereksiz
+.git/
+.github/
+docs/
+*.md
+.idea/
+.vscode/

@@ -1,0 +1,120 @@
+# Production kurulumu. Gelistirme dosyasindan (docker-compose.yml) dort temel farki var:
+#
+#   1. Uygulamanin kendisi de konteynerde. Dev'de api ve web gelistiricinin
+#      makinesinden elle kosuyor; burada hepsi compose tarafindan yonetiliyor.
+#   2. Disariya YALNIZCA web (80) aciliyor. db, ollama, osrm ve api host'ta port
+#      acmiyor; sadece konteyner agi icinden erisilebiliyorlar.
+#   3. Sirlar dosyada degil .env'de (bkz. .env.example).
+#   4. Embedding modeli, api baslamadan ONCE indiriliyor (ollama-init).
+#
+# Kullanim:
+#   cp .env.example .env      # ve icini doldur
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: assistant-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # KRITIK: vector ve pg_trgm eklentilerini kurar. Bu satir olmadan Flyway
+      # migration'lari ilk acilista basarisiz olur.
+      - ./init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # ports YOK: veritabani disaridan erisilebilir olmamali.
+
+  ollama:
+    # Sabit surum: dev'deki "latest" etiketi, bugun calisan kurulumun yarin farkli
+    # bir surumle gelmesi anlamina gelir. 0.32.1 test edilmis surum.
+    image: ollama/ollama:0.32.1
+    container_name: assistant-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # Tek seferlik gorev: embedding modelini indirir ve cikar.
+  #
+  # NEDEN AYRI BIR SERVIS: IntentSeedRunner uygulama acilisinda intent
+  # ornekleri icin embedding uretiyor. Model hazir degilse bu SESSIZCE
+  # basarisiz oluyor - satirlar NULL kaliyor ve ilgili intent'ler hic
+  # eslesmiyor, ama uygulama saglikli gorunuyor. Bu servis, api baslamadan
+  # once modelin yerinde olmasini garanti eder.
+  ollama-init:
+    image: ollama/ollama:0.32.1
+    container_name: assistant-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull ${OLLAMA_EMBEDDING_MODEL:-bge-m3}"]
+    restart: "no"
+
+  osrm:
+    # TODO: sabit surum etiketine gecilmeli. Uygun tag dogrulanmadigi icin
+    # simdilik latest birakildi.
+    image: ghcr.io/project-osrm/osrm-backend
+    container_name: assistant-osrm
+    restart: unless-stopped
+    command: osrm-routed --algorithm mld /data/izmir-manisa.osrm
+    volumes:
+      # Veri git'e commit'lenmiyor; sunucuda bir kere uretilmeli:
+      #   ./scripts/prepare-osrm-data.sh
+      # Atlanirsa backend sessizce haversine'a duser ve rotalar yanlis gorunur.
+      - ./osrm-data:/data
+
+  api:
+    build:
+      context: ./apps/api
+    container_name: assistant-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      # Model indirilmeden api baslamasin.
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      # Konteyner agindaki servis adlari; "localhost" burada kendi konteyneri demek.
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-bge-m3}
+      # Dikkat: host'ta 5555, konteyner aginda 5000. osrm-routed'in kendi portu 5000,
+      # dev compose'daki 5555 yalnizca host eslemesiydi.
+      OSRM_BASE_URL: http://osrm:5000
+      JWT_SECRET: ${JWT_SECRET}
+      GEOCODING_USER_AGENT: ${GEOCODING_USER_AGENT:-company-assistant-api/1.0}
+    # ports YOK: disariya nginx uzerinden aciliyor.
+
+  web:
+    build:
+      # Context repo koku: apps/web, packages/shared'a workspace bagimliligiyla bagli.
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: assistant-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # Disariya acilan TEK port. TLS eklenince 443 de buraya gelir.
+      - "80:80"
+
+volumes:
+  pgdata:
+  ollama_data:

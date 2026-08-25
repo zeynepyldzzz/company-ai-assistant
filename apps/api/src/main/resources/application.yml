@@ -1,10 +1,12 @@
 spring:
   application:
     name: assistant-api
+  # Varsayilanlar lokal gelistirme icin; konteynerde "localhost" diye bir sey yok,
+  # compose bu degerleri env uzerinden ezer (bkz. docker-compose.prod.yml).
   datasource:
-    url: jdbc:postgresql://localhost:5432/company_ai_assistant
-    username: app_user
-    password: app_password
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/company_ai_assistant}
+    username: ${DB_USERNAME:app_user}
+    password: ${DB_PASSWORD:app_password}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -26,8 +28,8 @@ app:
     access-ttl-minutes: 15
     refresh-ttl-days: 7
   ollama:
-    base-url: http://localhost:11434
-    embedding-model: bge-m3
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    embedding-model: ${OLLAMA_EMBEDDING_MODEL:bge-m3}
   chatbot:
     similarity-threshold: 0.68
   geocoding:

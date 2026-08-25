@@ -1,0 +1,8 @@
+# Build ciktisi imaja girmemeli: hem gereksiz yer kaplar hem de yerel makinede
+# uretilmis bir jar, konteyner icinde derlenenin uzerine binebilir.
+target/
+
+# IDE artiklari
+.idea/
+*.iml
+.vscode/
